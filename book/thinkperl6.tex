@@ -1,0 +1,287 @@
+% LaTeX source for ``Think Perl 6: How to Think Like a Computer Scientist''
+
+% Copyright (c)  2017  Allen B. Downey and Laurent Rosenfeld.
+
+% License: Creative Commons Attribution-NonCommercial 3.0 Unported License.
+% http://creativecommons.org/licenses/by-nc/3.0/
+%
+
+%\documentclass[10pt,b5paper]{book}
+\documentclass[10pt]{book}
+\usepackage[width=5.5in,height=8.5in,
+  hmarginratio=3:2,vmarginratio=1:1]{geometry}
+
+% for some of these packages, you might have to install
+% texlive-latex-extra (in Ubuntu)
+
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{mathpazo}
+\usepackage{url}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+%\usepackage{amssymb}
+\usepackage{exercise}                   % texlive-latex-extra
+\usepackage{makeidx}
+%\usepackage{makeidx,showidx}
+\usepackage{setspace}
+\usepackage{hevea}                           
+\usepackage{upquote}
+\usepackage{appendix}
+\usepackage[bookmarks]{hyperref}
+\usepackage[english]{babel}
+\usepackage[mathletters]{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{fancyvrb}
+%\usepackage{moreverb}
+
+\title{Think Perl 6}
+\author{Laurent Rosenfeld, with Allen B. Downey }
+\newcommand{\thetitle}{Think Perl 6: How to Think Like a Computer Scientist}
+\newcommand{\theversion}{1st Edition, Version 0.5.0}
+\newcommand{\thedate}{Apr. 2017}
+
+% these styles get translated in CSS for the HTML version
+\newstyle{a:link}{color:black;}
+\newstyle{p+p}{margin-top:1em;margin-bottom:1em}
+\newstyle{img}{border:0px}
+
+% define verbatim environment with a left margin
+\DefineVerbatimEnvironment{verbatim}{Verbatim}{xleftmargin=.3in}
+
+% change the arrows
+\setlinkstext
+  {\imgsrc[ALT="Previous"]{back.png}}
+  {\imgsrc[ALT="Up"]{up.png}}
+  {\imgsrc[ALT="Next"]{next.png}}
+
+\setcounter{secnumdepth}{3}
+
+\makeindex
+
+\newif\ifplastex
+\plastexfalse
+
+\begin{document}
+
+\frontmatter
+
+% PLASTEX ONLY
+\ifplastex
+    \usepackage{localdef}
+    \maketitle
+
+\newcount\anchorcnt
+\newcommand*{\Anchor}[1]{%
+  \@bsphack%
+    \Hy@GlobalStepCount\anchorcnt%
+    \edef\@currentHref{anchor.\the\anchorcnt}% 
+    \Hy@raisedlink{\hyper@anchorstart{\@currentHref}\hyper@anchorend}% 
+    \M@gettitle{}\label{#1}% 
+    \@esphack%
+}
+
+
+\else
+% skip the following for plastex
+
+\newtheorem{exercise}{Exercise}[chapter]
+
+% LATEXONLY
+
+\input{latexonly}
+
+\begin{latexonly}
+
+\renewcommand{\blankpage}{\thispagestyle{empty} \quad \newpage}
+
+%\blankpage
+%\blankpage
+
+% TITLE PAGES FOR LATEX VERSION
+
+%-half title--------------------------------------------------
+\thispagestyle{empty}
+
+\begin{flushright}
+\vspace*{2.0in}
+
+\begin{spacing}{3}
+{\huge Think Perl 6}\\
+{\Large How to Think Like a Computer Scientist}
+\end{spacing}
+
+\vspace{0.25in}
+
+\theversion
+
+\thedate
+
+\vfill
+
+\end{flushright}
+
+%--verso------------------------------------------------------
+
+\blankpage
+\blankpage
+%\clearemptydoublepage
+%\pagebreak
+%\thispagestyle{empty}
+%\vspace*{6in}
+
+%--title page--------------------------------------------------
+\pagebreak
+\thispagestyle{empty}
+
+\begin{flushright}
+\vspace*{2.0in}
+
+\begin{spacing}{3}
+{\huge Think Perl 6}\\
+{\Large How to Think Like a Computer Scientist}
+\end{spacing}
+
+\vspace{0.25in}
+
+\theversion
+
+\thedate
+
+\vspace{1in}
+
+
+{\Large
+Laurent Rosenfeld,
+with Allen B. Downey\\
+}
+
+
+\vspace{0.5in}
+
+{\Large Green Tea Press}
+
+{\small Needham, Massachusetts}
+
+%\includegraphics[width=1in]{figs/logo1.pdf}
+\vfill
+
+\end{flushright}
+
+
+%--copyright--------------------------------------------------
+\pagebreak
+\thispagestyle{empty}
+
+{\small
+Copyright \copyright ~2016 Allen Downey, Laurent Rosenfeld.
+
+
+\vspace{0.2in}
+
+\begin{flushleft}
+Green Tea Press       \\
+9 Washburn Ave        \\
+Needham MA 02492
+\end{flushleft}
+
+Permission is granted to copy, distribute, and/or modify this document
+under the terms of the Creative Commons Attribution-NonCommercial 3.0 Unported
+License, which is available at \url{http://creativecommons.org/licenses/by-nc/3.0/}.
+
+The original form of this book is \LaTeX\ source code.  Compiling this
+\LaTeX\ source has the effect of generating a device-independent
+representation of a textbook, which can be converted to other formats
+and printed.
+
+The \LaTeX\ source for this book is available from
+\url{https://github.com/LaurentRosenfeld/thinkperl6/}
+
+\vspace{0.2in}
+
+} % end small
+
+\end{latexonly}
+
+
+% HTMLONLY
+
+\begin{htmlonly}
+
+% TITLE PAGE FOR HTML VERSION
+
+{\Large \thetitle}
+
+{\large Laurent Rosenfeld,
+with Allen B. Downey}
+
+\theversion
+
+\thedate
+
+\setcounter{chapter}{-1}
+
+\end{htmlonly}
+
+\fi
+% END OF THE PART WE SKIP FOR PLASTEX
+
+% \include{preface.tex}
+\input{preface}
+
+% START THE BOOK
+\mainmatter
+
+\part{Starting with the basics}
+
+\input{chapt1}
+
+\input{chapt_var_expr}
+
+\input{chapt_func}
+
+\input{Conditional_and_recursion}
+
+\input{Fruitful_func}
+
+\input{iteration}
+
+\input{Strings}
+
+\input{wordplay}
+
+\input{Arrays}
+
+\input{hashes}
+
+\input{data_struct_selection}
+
+
+\part{Moving forward}
+
+\include{intro_part_2}
+
+\input{objects}
+
+\input{grammars}
+
+\input{functional}
+
+\input{conclusion}
+
+\appendix
+
+\input{appendix_solutions}
+
+\printindex
+
+%\clearemptydoublepage
+%\clearemptydoublepage
+%\blankpage
+%\blankpage
+%\blankpage
+
+
+\end{document}
