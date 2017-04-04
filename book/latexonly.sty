@@ -1,0 +1,34 @@
+% This file contains global declarations that latex2html doesn't want to
+% see.  The latexonly environment doesn't work here because they need
+% to have global scope.  latex2html ignores this style option completely
+% as long as ``latexonly'' is listed in the $DONT_INCLUDE variable
+% in the .latex2html-init file.
+
+\sansfont{helvetica}
+\typewriterfont{cmtt}
+
+\newcommand{\bold}{\fontfamily{cmr}\series{bx}\shape{n}\size{12}{12pt}%
+  \selectfont}
+\newcommand{\smallfont}{\fontfamily{cmr}\series{m}\shape{n}\size{10}{11pt}%
+  \selectfont}
+\newcommand{\sem}{\fontfamily{cmr}\series{m}\shape{sl}\size{10}{11pt}%
+  \selectfont}
+
+\def\caps{\family{palatino}\size{12}{12pt}\selectfont}
+\def\nintt{\family{helvetica}\size{9}{11pt}\selectfont}
+\def\sanss{\family{helvetica}\size{11}{11pt}\selectfont}
+\def\smalltt{\family{courier}\size{9}{11pt}\selectfont}
+
+%
+% bigverb is used to typeset verbatim text that is wide and needs to
+% be typeset in a smaller font.  latex2html doesn't like the
+% \verbatim command and has bigverb support hardcoded into it already,
+% that's why it is here in latexonly.sty.
+%
+\newenvironment{bigverb}{\small\verbatim}{\endverbatim}
+
+\makeatletter
+\newcommand{\protspec}[2]{\addcontentsline{toc}{subsection}{#1}%
+  \subsection*{NAME} #2}
+\newcommand{\topic}[1]{\subsection*{#1}}
+\makeatother

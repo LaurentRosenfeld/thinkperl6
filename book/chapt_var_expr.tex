@@ -1,0 +1,985 @@
+\chapter{Variables, Expressions and Statements}
+
+One of the most powerful features of a programming language 
+is the ability to manipulate {\bf variables}.  Broadly 
+speaking, a variable is a name that refers to a value. It 
+might be more accurate to say that a variable is a container 
+that has a name and holds a value.
+\index{variable}
+
+
+\section{Assignment Statements}
+\label{variables}
+\index{assignment!statement}
+\index{statement!assignment}
+\index{$=$ assignment operator}
+\index{operator!assignment}
+
+An {\bf assignment statement} uses the equals sign {\tt =} 
+and  gives a value to a variable, but, before you can assign 
+a value to a variable, you first need to create the 
+variable by declaring it (if it does not already 
+exist):
+
+\begin{verbatim}
+> my $message;          # variable declaration, no value yet
+> $message = 'And now for something completely different';
+And now for something completely different
+> my $number = 42;      # variable declaration and assignment
+42
+> $number = 17;         # new assignment
+17
+> my $phi = 1.618033988;
+1.618033988
+>
+\end{verbatim}
+%
+\index{assignment}
+\index{statement!assignment}
+\index{declaration!variable}
+\index{variable!declaration}
+
+This example makes four assignment statements.  The first 
+assigns a string to a new variable named {\tt \$message}, 
+the second assigns the integer {\tt 42} to {\tt \$number}, the 
+third reassigns the integer 17 to {\tt \$number}, and the fourth 
+assigns the (approximate) value of the golden ratio to {\tt \$phi}.
+
+There are two important syntax features to understand here.
+
+First, in Perl, variable names start with a so-called 
+\emph{sigil}, i.e., a special non-alphanumeric character such 
+as \verb'$', \verb'@', \verb'%', \verb'&', and some others. 
+This special character 
+tells us and the Perl compiler (the program that reads 
+the code of our program and transforms it into computer 
+instructions) which kind of variable it is. For example, the 
+\$ character indicates that the variables above are all 
+\emph{scalar variables}, which means that they can contain 
+only one value at any given time. We'll see later other 
+types of variables that may contain more than one value.
+\index{sigil}
+\index{scalar}
+\index{variable!scalar}
+\index{scalar}
+
+Second, notice that all three variables above are first 
+introduced by the keyword {\tt my}, which is a way of 
+declaring a new variable. Whenever you create a new 
+variable in Perl, you need to \emph{declare} it, 
+i.e., tell Perl that you're going to use that new 
+variable; this is most commonly done with the 
+{\tt my} keyword, which declares a \emph{lexical} variable. 
+We will explain later what a lexical variable is; let's 
+just say for the time being that it enables you to 
+make your variable local to a limited part of your code. 
+One of the good consequences of the requirement to declare 
+variables before you use them is that, if you accidentally 
+make a typo when writing a variable name, the compiler 
+will usually be able to tell you that you are using a 
+variable that has not been declared previously and 
+thus help you find your error. This has other far-reaching 
+implications which we will examine later.
+\index{my}
+\index{declaring variables}
+\index{variable!declaration}
+\index{lexical}
+\index{variable!lexical}
+
+When we wrote at the beginning of this section that a variable has 
+to be declared before it is used (or just when it is used), it plainly 
+means that the declaration has to be before (or at the point of) the 
+variable's first use in the text file containing the program. We will see later that 
+programs don't necessarily run from top to bottom in the order in which 
+the lines or code appear in the program file; still, the variable 
+declaration must be before its use in the text file containing the program.
+
+If you neglect to declare a variable, you get a syntax error:
+\index{syntax error}
+
+\begin{verbatim}
+> $number = 5;
+===SORRY!=== Error while compiling <unknown file>
+Variable '$number' is not declared
+at <unknown file>:1
+------> <BOL><HERE>$number = 5;
+>
+\end{verbatim}
+%
+Please remember that you may obtain slightly different 
+error messages depending on the version of Rakudo you 
+run. The above message was obtained in February 2016; 
+with a newer version (October 2016), the same error 
+is now displayed somewhat more cleanly as:
+\begin{verbatim}
+>
+> $number = 5;
+===SORRY!=== Error while compiling:
+Variable '$number' is not declared
+at line 2
+------> <BOL><HERE>$number = 5;
+>
+\end{verbatim}
+
+\index{state diagram}
+\index{diagram!state}
+
+A common way to represent variables on paper is to write the name with
+an arrow pointing to its value.  This kind of figure is
+called a {\bf state diagram} because it shows what state each of the
+variables is in (think of it as the variable's state of mind).
+Figure~\ref{fig.state2} shows the result of the previous example.
+
+\begin{figure}
+\centerline
+{\includegraphics[scale=0.6]{figs/test_5.png}}
+\caption{State diagram.}
+\label{fig.state2}
+\end{figure}
+
+
+
+\section{Variable Names}
+\index{variable}
+
+Programmers generally choose names for their variables that
+are meaningful---they document what the variable is used for.
+
+Variable names can be as long as you like.  They can contain
+both letters and numbers, but user-defined variable names 
+can't begin with a number. Variable names are case-sensitive, 
+i.e., {\tt \$message} is not the same variable as {\tt \$Message} 
+or {\tt \$MESSAGE}. It is legal to use uppercase letters, but 
+it is conventional to use only lower case for most variables 
+names. Some people nonetheless like to use {\tt \$TitleCase} 
+for their variables or even pure {\tt \$UPPERCASE} for 
+some special variables.
+\index{lower case}
+\index{upper case}
+\index{title case}
+\index{case!lower}
+\index{case!upper}
+\index{case!title}
+
+
+\index{Unicode}
+\index{ASCII}
+Unlike most other programming languages, Perl~6 does not require 
+the letters and digits used in variable names to be plain ASCII. 
+You can use all kinds of Unicode letters, i.e., 
+letters from almost any language in the world, so that, for example,  
+{\tt \$brücke}, {\tt \$payé} or {\tt \$niño} are 
+valid variable names, which can be useful for non-English 
+programmers (provided that these Unicode characters are 
+handled correctly by your text editor and your 
+screen configuration). Similarly, instead of using 
+\verb"$phi" for the name of the golden ratio variable, 
+we might have used the \emph{Greek small letter phi}, \verb'φ' 
+(Unicode code point U+03C6), just as we could have used 
+the \emph{Greek small letter pi}, $\pi$,  for the well-known 
+circle circumference to diameter ratio:
+\index{golden ratio}
+\index{Unicode}
+\index{phi}
+\index{pi}
+
+\begin{verbatim}
+> my $φ = (5 ** .5 + 1)/2;       # golden ratio
+1.61803398874989
+> say 'Variable $φ = ', $φ;
+variable $φ = 1.61803398874989
+> my $π = 4 * atan 1; 
+3.14159265358979
+> # you could also use the pi or π built-in constant:
+> pi
+3.14159265358979
+\end{verbatim}
+
+The underscore character, \verb"_", can appear anywhere in a variable name.
+It is often used in names with multiple words, such as 
+\verb"$your_name" or \verb"$airspeed_of_unladen_swallow". 
+\index{underscore character}
+
+You may even use dashes to create so-called 
+``kebab case''\footnote{Because the 
+words appear to be skewered like pieces of food prepared for 
+a barbecue.} and name those variables 
+\verb"$your-name" or \verb"$airspeed-of-unladen-swallow", and this 
+might make them slightly easier to read: a dash \verb'-' is 
+valid in variable names provided it is immediately followed by an 
+alphabetical character and preceded by an alphanumerical character. 
+For example, \verb"$double-click" or \verb"$la-niña" are legitimate 
+variable names. Similarly, you can use an apostrophe \verb"'" (or single 
+quote) between letters, so \verb"$isn't" or \verb"$o'brien's-age" 
+are valid identifiers.
+\index{dash}
+\index{apostrophe}
+\index{single quote}
+\index{quote!single}
+\index{kebab case}
+\index{case!kebab}
+
+
+If you give a variable an illegal name, you get a syntax error:
+\index{syntax error}
+
+\begin{verbatim}
+> my $76trombones = 'big parade'
+===SORRY!=== Error while compiling <unknown file>
+Cannot declare a numeric variable
+at <unknown file>:1
+------> my $76<HERE>trombones = "big parade";
+>
+> my $more§ = 100000;
+===SORRY!=== Error while compiling <unknown file>
+Bogus postfix
+at <unknown file>:1
+------> my $more<HERE>§ = 100000;
+(...)
+\end{verbatim}
+%
+{\tt \$76trombones} is illegal because it begins with a number.
+{\tt \$more§} is illegal because it contains an illegal character, {\tt
+§}. 
+
+If you've ever used another programming language and stumbled 
+across a terse message such as {\tt"SyntaxError: invalid syntax"}, 
+you will notice that the Perl designers have made quite a bit 
+of effort to provide detailed, useful,  and meaningful error 
+messages. 
+\index{error message}
+
+Many programming languages have \emph{keywords} or \emph{reserved 
+words} that are part of the syntax, such as {\tt if}, {\tt while}, 
+or {\tt for}, and thus cannot be used for identifying variables 
+because this would create ambiguity. There is no such problem 
+in Perl: since variable names start with a sigil, the compiler 
+is always able to tell the difference between a keyword and a 
+variable. Names such as {\tt \$if} or {\tt \$while} are 
+syntactically valid variable identifiers in Perl (whether 
+such names make sense is a different matter).
+\index{sigil}
+\index{keyword}
+\index{reserved word}
+
+
+
+\section{Expressions and Statements}
+\label{expr_and_statements}
+
+An {\bf expression} is a combination of terms and operators.
+Terms may be variables or literals, i.e., constant values such as a number or a string. A value all by itself is considered an expression, and so is
+a variable, so the following are all legal expressions:
+\index{expression}
+\index{term}
+\index{literal}
+
+\begin{verbatim}
+> 42
+42
+> my $n = 17;
+17
+> $n;
+17
+> $n + 25;
+42
+>
+\end{verbatim}
+%
+When you type an expression at the prompt, the interpreter
+{\bf evaluates} it, which means that it finds the value of
+the expression.
+In this example, {\tt \$n} has the value 17 and
+{\tt \$n + 25} has the value 42.
+\index{evaluate}
+
+A {\bf statement} is a unit of code that has an effect, like
+creating a variable or displaying a value, and usually needs to end 
+with a semi-colon {\tt ;} (but the semi-colon can sometimes be omitted 
+as we will see later):
+\index{statement}
+\index{semi-colon}
+
+\begin{verbatim}
+> my $n = 17;
+17
+> say $n;
+17
+\end{verbatim}
+%
+
+The first line is an assignment statement that gives a value to
+{\tt \$n}.  The second line is a print statement that displays the
+value of {\tt \$n}.
+
+When you type a statement and then press {\tt Enter}, the 
+interpreter {\bf executes} it, which means that it does 
+whatever the statement says.
+\index{execute}
+
+An assignment can be combined with expressions using arithmetic 
+operators. For example, you might write:
+\index{operator}
+
+\begin{verbatim}
+> my $answer = 17 + 25;
+42
+> say $answer;
+42
+\end{verbatim}
+%
+
+The \verb'+' symbol is obviously the addition operator 
+and, after the assignment statement, the \verb'$answer' 
+variable contains the result 
+of the addition. The terms on each side of the operator 
+(here 17 and 25) are sometimes called the \emph{operands} 
+of the operation (an addition in this case).
+\index{operand}
+\index{addition operator}
+\index{assignment}
+
+Note that the REPL actually displays the result of the 
+assignment (the first line with ``42''), so that the 
+print statement was not really necessary in this 
+example \emph{under the REPL}; from now on, for the sake of 
+brevity, we will generally omit the print statements in the 
+examples where the REPL displays the result.
+\index{REPL}
+
+In some cases, you want to add something to a variable 
+and assign the result to that same variable. This could 
+be written:
+
+\begin{verbatim}
+> my $answer = 17;
+17
+> $answer = $answer + 25;
+42
+\end{verbatim}
+%
+
+Here, \verb"$answer" is first declared with a value of 17. The next 
+statement assigns to \verb"$answer" the current value of 
+\verb"$answer" (i.e., 17) + 25. This is such a common operation 
+that Perl, like many other programming languages, has a 
+shortcut for this:
+
+\begin{verbatim}
+> my $answer = 17;
+17
+> $answer += 25;
+42
+\end{verbatim}
+%
+
+\index{$+=$ augmented assignment operator}
+The \verb"+=" operator combines the arithmetic addition operator 
+and the assignment operator to modify a value and apply the result 
+to a variable in one go, so that \verb"$n += 2" means: take 
+the current value of \verb"$n", add 2, and assign the result to 
+\verb"$n". This syntax works with all other arithmetic operators. 
+For example, \verb"-=" similarly performs a subtraction and an 
+assignment, \verb"*=" a multiplication and an assignment, etc. It 
+can even be used with operators other than arithmetic operators, 
+such as the string concatenation operator that we will see later.
+
+Adding 1 to a variable is a very common version of this, so that 
+there is a shortcut to the shortcut, the \emph{increment} operator, 
+which increments its argument by one, and returns the incremented value:
+\index{increment operator}
+\index{++ increment operator}
+\index{operator!++ (increment)}
+
+\begin{verbatim}
+> my $n = 17;
+17
+> ++$n;
+18
+> say $n;
+18
+\end{verbatim}
+%
+This is called the prefix increment operator, because the \verb"++" 
+operator is placed before the variable to be incremented. There is 
+also a postfix version, \verb"$n++", which first returns the current 
+value and then increments the variable by one. It would not make 
+a difference in the code snippet above, but the result can be very different 
+in slightly more complex expressions. 
+
+There is also a decrement operator \verb"--", which decrements its 
+argument by one and also exists in a prefix and a postfix form. 
+\index{decrement operator}
+\index{\verb'--' decrement operator}
+\index{operator!$--$ (decrement)}
+
+
+
+\section{Script Mode}
+
+So far we have run Perl in {\bf interactive mode}, which
+means that you interact directly with the interpreter (the 
+REPL). Interactive mode is a good way to get started,
+but if you are working with more than a few lines of code, 
+it can be clumsy and even tedious.
+\index{interactive mode}
+
+The alternative is to use a text editor and save code in a file 
+called a {\bf script} and then run the interpreter in {\bf script mode} 
+to execute the script.  By convention, Perl~6 scripts have names that 
+end with {\tt .pl}, {\tt .p6} or {\tt .pl6}.
+\index{script}
+\index{script mode}
+
+Please make sure that you're really using a \emph{text editor} 
+and not a \emph{word-processing program} (such as MS Word, 
+OpenOffice or LibreOffice Writer). There is a very large 
+number of text editors available for free. On Linux, you might use 
+\emph{vi} (or \emph{vim}), \emph{emacs}, \emph{gEdit}, or 
+\emph{nano}. On Windows, you may use \emph{notepad} (very limited) 
+or \emph{notepad++}. There are also many cross-platform editors  
+or integrated development environments (IDEs) providing a 
+text editor functionality, including \emph{padre}, \emph{eclipse}, 
+or \emph{atom}. Many of these provide various syntax highlighting 
+capabilities, which might help you use correct syntax (and 
+find some syntax errors).
+\index{syntax!highlighting}
+\index{text editor!emacs}
+\index{text editor!vi}
+\index{text editor!vim}
+\index{text editor!gEdit}
+\index{text editor!padre}
+\index{text editor!eclipse}
+\index{text editor!nano}
+\index{text editor!notepad++}
+\index{text editor!atom}
+
+Once you've saved your code into a file (say, for example, 
+\verb'my_script.pl6'), you can run the program by issuing 
+the following command at the operating system prompt (for example 
+in a Linux console or in a \verb'cmd' window under Windows):
+\begin{verbatim}
+perl my_script.pl6
+\end{verbatim}
+
+Because Perl provides both modes,
+you can test bits of code in interactive mode before you put them
+in a script.  But there are differences between interactive mode
+and script mode that can be confusing.
+\index{interactive mode}
+\index{script mode}
+
+For example, if you are using the Perl~6 interpreter as a 
+calculator, you might type:
+
+\begin{verbatim}
+> my $miles = 26.2;
+26.2
+> $miles * 1.61;
+42.182
+\end{verbatim}
+
+The first line assigns a value to {\tt \$miles} and displays that value.  
+The second line is an expression, so the
+interpreter evaluates it and displays the result.  It turns out that a
+marathon is about 42~kilometers.
+
+But if you type the same code into a script and run it, you get no
+output at all.  In script mode, an expression, all by itself, has no
+visible effect.  Perl actually evaluates the expression, but it doesn't
+display the value unless you tell it to:
+
+\begin{verbatim}
+my $miles = 26.2;
+say $miles * 1.61;
+\end{verbatim}
+
+This behavior can be confusing at first. Let's examine why.
+
+A script usually contains a sequence of statements.  If there
+is more than one statement, the results appear one at a time
+as the print statements execute.
+
+For example, consider the following script:
+
+\begin{verbatim}
+say 1;
+my $x = 2;
+say $x;
+\end{verbatim}
+%
+It produces the following output:
+
+\begin{verbatim}
+1
+2
+\end{verbatim}
+%
+The assignment statement produces no output.
+
+To check your understanding, type the following statements in the
+Perl interpreter and see what they do:
+
+\begin{verbatim}
+5;
+my $x = 5;
+$x + 1;
+\end{verbatim}
+
+Now put the same statements in a script and run it.  What
+is the output?  Modify the script by transforming each
+expression into a print statement and then run it again.
+
+\section{One-Liner Mode}
+
+Perl also has a \emph{one-liner mode}, which enables you 
+to type directly a very short script at the operating 
+system prompt. Under Windows, it might look like this:
+\index{one-liner mode}
+\label{one-liner mode}
+
+\begin{verbatim}
+C:\Users\Laurent>perl6 -e "my $value = 42; say 'The answer is ', $value;"
+The answer is 42
+
+\end{verbatim}
+
+The {\tt -e} option tells the compiler that the script to 
+be run is not saved in a file but instead typed at the 
+prompt between quotation marks immediately after 
+this option.
+
+Under Unix and Linux, you would replace double quotation 
+marks with apostrophes (or single quotes) 
+and apostrophes with double quotation marks:
+\index{apostrophe}
+\index{quote mark}
+
+\begin{verbatim}
+$  perl6 -e 'my $value = 42; say "The answer is $value";'
+The answer is 42
+
+\end{verbatim}
+
+The one-liner above may not seem to be very useful, but 
+throwaway one-liners can be very practical to perform 
+simple one-off operations, such as quickly modifying 
+a file not properly formatted, without having to save a script 
+in a separate file before running it.
+
+We will not give any additional details about the one-liner 
+mode here, but will give some more useful examples 
+later in this book; for example, 
+Subsection~\ref{one-liner-example},
+Subsection~\ref{rot13_oneliner} (solving the ``rot-13'' exercise), or
+Subsection~\ref{sol_cartalk} (solving the exercise on 
+consecutive double letters). 
+
+
+
+\section{Order of Operations}
+\index{order of operations}
+\index{PEMDAS}
+\index{operator precedence}
+\index{precedence!operator}
+
+When an expression contains more than one operator, the order of
+evaluation depends on the {\bf order of operations} or \emph{operator precedence}. 
+For mathematical operators, Perl follows mathematical convention.
+The acronym {\bf PEMDAS}\footnote{US students are sometimes taught 
+to use the "Please Excuse My Dear Aunt Sally" mnemonics to remember 
+the right order of the letters in the acronym.} is a useful 
+way to remember the rules:
+
+\begin{itemize}
+
+\item {\bf P}arentheses have the highest (or tightest) precedence and can be used 
+to force an expression to evaluate in the order you want. Since
+expressions in parentheses are evaluated first, {\tt 2 * (3-1)} is 4,
+and {\tt (1+1)**(5-2)} is 8. You can also use parentheses to make an
+expression easier to read, as in {\tt (\$minute * 100) / 60}, even
+if it doesn't change the result.
+\index{$()$ parenthesis operator}
+
+\item {\bf E}xponentiation has the next highest precedence, so
+{\tt 1 + 2**3} is 9 (1 + 8), not 27, and {\tt 2 * 3**2} is 18, not 36.
+\index{$**$ exponentiation operator}
+\index{operator!$**$ (exponentiation)}
+
+\item {\bf M}ultiplication and {\bf D}ivision have higher precedence
+  than {\bf A}ddition and {\bf S}ubtraction.  So {\tt 2*3-1} is 5, not
+  4, and {\tt 6+4/2} is 8, not 5.
+\index{$*$ multiplication operator}
+\index{operator!$*$ (multiplication)}
+\index{$/$ division operator}
+\index{operator!$/$ (division)}
+
+\item Operators with the same precedence are usually evaluated 
+from left to right (except exponentiation).  So in the expression 
+{\tt \$degrees / 2 * pi}, the division happens first and the 
+result is multiplied by {\tt pi}, which is not the expected 
+result. (Note that {\tt pi} is not a variable, but a predefined 
+constant in Perl~6, and therefore does not require a sigil.)  To 
+divide by $2 \pi$, you can use parentheses:
+\index{sigil}
+\index{pi}
+  
+\begin{verbatim}
+my $result = $degrees / (2 * pi);  
+\end{verbatim}  
+ 
+or write
+  {\tt \$degrees / 2 / pi} or {\tt \$degrees / } $2 / \pi$, which 
+  will divide \verb'$degrees' by 2, and then divide the result of 
+  that operation by $\pi$ (which is equivalent \verb'$degrees' by 
+   $2 \pi$.
+
+\end{itemize}
+
+I don't work very hard to remember the precedence of
+operators.  If I can't tell by looking at the expression, I use
+parentheses to make it obvious. If I don't know for sure which of two operators 
+has the higher precedence, then the next person reading or maintaining 
+my code may also not know.
+\index{precedence}
+\index{parentheses}
+
+
+\section{String Operations}
+\label{string_operations}
+\index{string!operation}
+\index{operator!string}
+\index{coercion}
+\index{type!coercion}
+
+In general, you can't perform mathematical operations on strings, unless
+the strings look so much like numbers that Perl can transform or \emph{coerce} them into numbers and still make sense, so the 
+following are illegal:
+
+\begin{verbatim}
+'2'-'1a'    'eggs'/'easy'    'third'*'a charm'
+\end{verbatim}
+%
+
+For example, this produces an error:
+
+\begin{verbatim}
+> '2'-'1a'
+Cannot convert string to number: trailing characters after number 
+in '1?a' (indicated by ?)
+  in block <unit> at <unknown file>:1
+\end{verbatim}
+%
+  
+But the following expressions are valid because these strings 
+can be coerced to numbers without any ambiguity:
+\begin{verbatim}
+> '2'-'1'
+1
+> '3'/'4'
+0.75
+\end{verbatim}
+%
+
+The \verb'~' operator performs {\bf string concatenation}, which means
+it joins the strings by linking them end-to-end.  For example:
+\index{string concatenation}
+\index{string!concatenation}
+
+\begin{verbatim}
+> my $first = 'throat'
+throat
+> my $second = 'warbler'
+warbler
+> $first ~ $second
+throatwarbler
+\end{verbatim}
+%
+The {\tt x} operator also works on strings; it performs repetition.
+For example:
+\index{string repetition}
+
+\begin{verbatim}
+> 'ab' x 3;
+ababab
+> 42 x 3
+424242
+> 3 x 42
+333333333333333333333333333333333333333333
+\end{verbatim}
+
+Notice that, although the {\tt x} operator somewhat looks like 
+the multiplication operator when we write it by hand, {\tt x} 
+is obviously not commutative, contrary to the {\tt *} 
+multiplication operator. The first operator is a string or is 
+\emph{coerced} to a string (i.e., transformed into a string: 
+{\tt 42} is coerced to {\tt '42'}), and the second operator 
+has to be a number or something that can be transformed 
+into a number.
+\index{commutativity}
+\index{coercion}
+
+
+\section{Comments}
+\index{comment}
+
+As programs get bigger and more complicated, they get more difficult
+to read.  Formal languages are dense, and it is often difficult to
+look at a piece of code and figure out what it is doing, or why.
+
+For this reason, it is a good idea to add notes to your programs to explain
+in natural language what the program is doing.  These notes are called
+{\bf comments}, and they start with the \verb"#" symbol:
+
+\begin{verbatim}
+# compute the percentage of the hour that has elapsed
+my $percentage = ($minute * 100) / 60;
+\end{verbatim}
+%
+In this case, the comment appears on a line by itself.  You can also put
+comments at the end of a line:
+
+\begin{verbatim}
+$percentage = ($minute * 100) / 60;     # percentage of an hour
+\end{verbatim}
+%
+Everything from the {\tt \#} to the end of the line is ignored---it
+has no effect on the execution of the program.
+
+Comments are most useful when they document nonobvious features of
+the code.  It is reasonable to assume that the reader can figure out
+{\em what} the code does; it is more useful to explain {\em why}.
+
+This comment is redundant with the code and useless:
+
+\begin{verbatim}
+my $value = 5;        # assign 5 to $value
+\end{verbatim}
+%
+This comment, by contrast, contains useful information that 
+is not in the code:
+
+\begin{verbatim}
+my $velocity = 5;     # velocity in meters/second. 
+\end{verbatim}
+%
+Good variable names can reduce the need for comments, but
+long names can make complex expressions hard to read, so there is
+a tradeoff.
+\index{variable name}
+
+
+\section{Debugging}
+\index{debugging}
+\index{bug}
+
+Three kinds of errors can occur in a program: syntax errors, runtime 
+errors, and semantic errors.  It is useful
+to distinguish between them in order to track them down more quickly.
+
+\begin{description}
+
+\item[Syntax error] ``Syntax'' refers to the structure of a program
+  and the rules about that structure.  For example, parentheses have
+  to come in matching pairs, so {\tt (1 + 2)} is legal, but 
+{\tt 8)} is a \emph{syntax error}. \footnote{We are using 
+``syntax error'' here as a quasi-synonym for ``compile-time error''; 
+they are not exactly the same thing (you may in theory have 
+syntax errors that are not compile-time errors and the other way 
+around), but they can be deemed to be the same for 
+practical purposes here. In Perl~6, compile-time errors 
+have the ``===SORRY!==='' string at the beginning of 
+the error message.}
+
+\index{error!syntax}
+\index{error message}
+\index{syntax} 
+\index{syntax!error}
+
+If there is a syntax error
+anywhere in your program, Perl displays an error message and quits 
+without even starting to run your program, and you will 
+obviously not be able to run the program.  During the first few
+weeks of your programming career, you might spend a lot of
+time tracking down syntax errors.  As you gain experience, you will
+make fewer errors and find them faster.
+
+
+\item[Runtime error] The second type of error is a runtime error, so
+  called because the error does not appear until after the program has
+  started running.  These errors are also called \emph{exceptions}
+  because they usually indicate that something exceptional (and bad)
+  has happened.  \index{runtime error} \index{error!runtime}
+  \index{exception} \index{safe language} \index{language!safe}
+
+Runtime errors are rare in the simple programs you will see in the
+first few chapters, so it might be a while before you encounter one. 
+We have seen one example of such errors, though, at the beginning 
+of Section~\ref{string_operations} (p.~\pageref{string_operations}), 
+when we tried to subtract \verb"'2'-'1a'". 
+
+
+\item[Semantic error] The third type of error is \emph{semantic}, which
+  means related to meaning.  If there is a semantic error in your
+  program, it will run without generating error messages, but it will
+  not do the right thing.  It will do something else.  Specifically,
+  it will do what you \emph{told} it to do, but not what you 
+  \emph{intended} it to do.
+  \index{semantic error}
+  \index{error!semantic} \index{error message}
+
+Identifying semantic errors can be tricky because it requires you to work
+backward by looking at the output of the program and trying to figure
+out what it is doing.
+
+\end{description}
+
+
+\section{Glossary}
+
+\begin{description}
+
+\item[Variable]  Informally, a name that refers to a value. More 
+accurately, a variable is a container that has a name and holds a value.
+\index{variable}
+
+\item[Assignment]  A statement that assigns a value to a variable.
+\index{assignment}
+
+\item[State diagram]  A graphical representation of a set of variables and the
+values they refer to.
+\index{state diagram}
+
+\item[Keyword]  A reserved word that is used to parse a
+program; in many languages, you cannot use keywords like 
+{\tt if}, {\tt  for}, and {\tt while} as variable names. 
+This problem usually does not occur in Perl because variable
+names begin with a \emph{sigil}.
+\index{keyword}
+\index{sigil}
+
+\item[Operand]  One of the values on which an operator operates.
+\index{operand}
+
+\item[Term]  A variable or a literal value.
+\index{term}
+
+\item[Expression]  A combination of operators and terms that
+represents a single result.
+\index{expression}
+
+\item[Evaluate]  To simplify an expression by performing the operations
+in order to yield a single value.
+\index{evaluate}
+
+\item[Statement]  A section of code that represents a command or action.  So
+far, the statements we have seen are assignments and print statements. Statements usually end with a semi-colon.
+\index{statement}
+
+\item[Execute]  To run a statement and do what it says.
+\index{execute}
+
+\item[interactive mode (or interpreter mode):] A way of using the Perl 
+interpreter by typing code at the prompt.
+\index{interactive mode}
+
+\item[Script mode] A way of using the Perl interpreter to read
+code from a script and run it.
+\index{script mode}
+
+\item[one-liner mode:] A way of using the Perl interpreter to read
+code passed at the operating system prompt and run it.
+\index{one-liner mode}
+
+\item[Script] A program stored in a file.
+\index{script}
+
+\item[Order of operations]  Rules governing the order in which
+expressions involving multiple operators and operands are evaluated.
+It is also called operator precedence.
+\index{order of operations}
+\index{operator precedence}
+\index{precedence!operator}
+
+\item[Concatenate]  To join two operands end-to-end.
+\index{concatenation}
+
+\item[Comment]  Information in a program that is meant for other
+programmers (or anyone reading the source code) and has no effect on the
+execution of the program.
+\index{comment}
+
+\item[Syntax error]  An error in a program that makes it impossible
+to parse (and therefore impossible to compile and to run).
+\index{syntax!error}
+
+\item[Exception]  An error that is detected while the program is running.
+\index{exception}
+
+\item[Semantics]  The meaning of a program.
+\index{semantics}
+
+\item[Semantic error]   An error in a program that makes it do something
+other than what the programmer intended.
+\index{semantic error}
+
+\end{description}
+
+
+\section{Exercises}
+
+\begin{exercise}
+
+Repeating our advice from the previous chapter, whenever you learn
+a new feature, you should try it out in interactive mode (under 
+the REPL) and make errors on purpose to see what goes wrong.
+\index{interactive mode}
+\index{REPL}
+
+\begin{itemize}
+
+\item We've seen that {\tt \$n = 42} is legal.  What about {\tt 42 = \$n}?
+
+\item How about {\tt \$x = \$y = 1}? (Hint: note that you will 
+have to declare both variables, for example with a statement 
+such as {\tt my \$x; my \$y;} or possibly {\tt my (\$x, \$y);}, 
+before you can run the above.)
+
+\item In some languages, statements don't have to end with a semi-colon, 
+{\tt ;}. What happens in script mode if you omit a semi-colon at the end
+of a Perl statement?
+\index{semi-colon}
+
+\item What if you put a period at the end of a statement?
+
+\item In math notation you can multiply $x$ and $y$ like this: $x y$.
+What happens if you try that in Perl?
+
+\end{itemize}
+
+\end{exercise}
+
+
+\begin{exercise}
+
+Practice using the Perl interpreter as a calculator: 
+\index{calculator}
+
+\begin{enumerate}
+
+\item The volume of a sphere with radius $r$ is $\frac{4}{3} \pi r^3$.
+  What is the volume of a sphere with radius 5?
+
+\item Suppose the cover price of a book is \$24.95, but bookstores get a
+  40\% discount.  Shipping costs \$3 for the first copy and 75 cents
+  for each additional copy.  What is the total wholesale cost for
+  60 copies?
+
+\item If I leave my house at 6:52 a.m. and run 1 mile at an easy pace
+  (8:15 per mile), then 3 miles at tempo (7:12 per mile) and 1 mile at
+  easy pace again, what time do I get home for breakfast?
+\index{running pace}
+
+\end{enumerate}
+\end{exercise}
+
