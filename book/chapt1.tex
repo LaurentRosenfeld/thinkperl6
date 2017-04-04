@@ -1,0 +1,791 @@
+\chapter{The Way of the Program}
+
+The goal of this book is to teach you to think like a computer
+scientist.  This way of thinking combines some of the best features of
+mathematics, engineering, and natural science.  Like mathematicians,
+computer scientists use formal languages to denote ideas (specifically
+computations).  Like engineers, they design things, assembling
+components into systems and evaluating tradeoffs among alternatives.
+Like scientists, they observe the behavior of complex systems, form
+hypotheses, and test predictions.  
+\index{problem solving}
+\index{formal language}
+
+The single most important skill for a computer scientist is {\bf
+problem solving}.  Problem solving means the ability to formulate
+problems, think creatively about solutions, and express a solution
+clearly and accurately.  As it turns out, the process of learning to
+program is an excellent opportunity to practice problem-solving
+skills.  That's why this chapter is called, ``The Way of the
+Program.''
+
+On one level, you will be learning to program, a useful skill by
+itself.  On another level, you will use programming as a means to an
+end.  As we go along, that end will become clearer.
+\index{programming}
+
+
+\section{What is a Program?}
+
+A {\bf program} is a sequence of instructions that specifies how to
+perform a computation.  The computation might be something
+mathematical, such as solving a system of equations or finding the
+roots of a polynomial, but it can also be a symbolic computation, such
+as searching and replacing text in a document, or something
+graphical, like processing an image or playing a video.
+\index{program}
+
+The details look different in different languages, but a few basic
+instructions appear in just about every language:
+
+\begin{description}
+
+\item[Input] Get data from the keyboard, a file, the network, 
+a sensor, a GPS chip or some other device.
+\index{input}
+
+\item[Output] Display data on the screen, save it in a
+file, send it over the network, act on a mechanical device,  etc.
+\index{output}
+
+\item[Math] Perform basic mathematical operations like addition and
+multiplication.
+
+\item[Conditional execution] Check for certain conditions and
+run the appropriate code.
+\index{conditional!execution}
+
+\item[Repetition] Perform some action repeatedly, usually with
+some variation.
+\index{repetition}
+
+\end{description}
+
+Believe it or not, that's pretty much all there is to it.  Every
+program you've ever used, no matter how complicated, is made up of
+instructions that look pretty much like these.  So you can think of
+programming as the process of breaking a large, complex task
+into smaller and smaller subtasks until the subtasks are
+simple enough to be performed with one of these basic instructions.
+\index{instruction}
+
+\index{abstraction}
+\index{subtask}
+Using or calling these subtasks makes it possible to create 
+various levels of \emph{abstraction}. You have probably 
+been told that computers only use 0's and 1's at the 
+lowest level; but we usually don't have to worry about that. 
+When we use a word processor to write a letter or a report, 
+we are interested in files containing text and some 
+formatting instructions, and with commands to change the 
+file or to print it; fortunately, we don't have to care 
+about the underlying 0's and 1's; the word-processing 
+program offers us a much higher view (files, 
+commands, etc.) that hides the gory underlying details.
+
+Similarly, when we write a program, 
+we usually use and/or create several layers of abstraction, 
+so that, for example, once we have created a subtask that 
+queries a database and stores the relevant data in 
+memory, we no longer have to worry about the technical 
+details of the subtask. We can use it as a sort of black 
+box that will perform the desired operation for us. 
+The essence of programming is to a very large extent this 
+art of creating these successive layers of abstraction 
+so that performing the higher level tasks becomes 
+relatively easy.
+\index{subtask}
+\index{black box}
+
+
+\section{Running Perl~6}
+\label{running_perl_6}
+
+One of the challenges of getting started with Perl~6 is that you
+might have to install Perl~6 and related software on your computer. 
+If you are familiar with your operating system, and especially
+if you are comfortable with the shell or command-line interface, 
+you will have no trouble installing Perl~6.  But for beginners, 
+it can be painful to learn about system administration and 
+programming at the same time.
+
+To avoid that problem, you can start out running Perl~6 
+in a web browser. You might want to use a search engine 
+to find such a site. Currently, the easiest is probably 
+to connect to the \url{https://glot.io/new/perl6} site, 
+where you can type some Perl~6 code in the main window, run 
+it, and see the result in the output window below.
+\index{Perl~6 in a browser}
+
+Sooner or later, however, you will really need to install 
+Perl~6 on your computer.
+
+The easiest way to install Perl~6 on your system is to 
+download Rakudo Star (a distribution of Perl~6 that contains 
+the Rakudo Perl~6 {\bf compiler}, documentation and useful modules): 
+follow the instructions for your operating system at 
+\url{http://rakudo.org/how-to-get-rakudo/} and at 
+\url{https://perl6.org/downloads/}. 
+
+\index{Perl 6 version}
+As of this writing, the most recent specification of 
+the language is Perl~6 version 6c (v6.c), and the most 
+recent release available for download is Rakudo Star 2016.07; 
+the examples in this book should 
+all run with this version. You can find out the installed 
+version by issuing the following command at the operating 
+system prompt:
+\begin{verbatim}
+$ perl6 -v
+This is Rakudo version 2016.07.1 built on MoarVM version 2016.07
+implementing Perl 6.c.
+\end{verbatim}
+
+However, you should probably download and install the most recent 
+version you can find. The output (warnings, error messages, 
+etc.) you'll get from your version of Perl might in some 
+cases slightly differ from what is printed in this book, 
+but these possible differences should essentially be 
+only cosmetic. 
+
+Compared to Perl~5, Perl~6 is not just a new version of Perl. 
+It is more like the new little sister of Perl~5. It does not 
+aim at replacing Perl~5. Perl~6 is really a new programming language, 
+with a syntax that is similar to earlier versions of 
+Perl (such as Perl~5), but still markedly different. Unless 
+stated otherwise, this book is about Perl~6 only, not about Perl~5 
+and preceding versions of the Perl programming language. From now on, 
+whenever we speak about \emph{Perl} with no further qualification, 
+we mean Perl~6.
+
+The Perl~6 {\bf interpreter} is a program that reads and 
+executes Perl~6 code. It is sometimes called REPL (for ``read, 
+evaluate, print loop''). Depending on your environment, you 
+might start the interpreter by clicking on an icon, or by 
+typing {\tt perl6} on a command line.
+
+When it starts, you should see output like this:
+\index{interpreter}
+\index{REPL}
+
+\begin{verbatim}
+To exit type 'exit' or '^D'
+(Possibly some information about Perl and related software)
+> 
+\end{verbatim}
+%
+
+The last line with {\tt >} is a {\bf prompt} that indicates 
+that the REPL is ready for you to enter code. If you type a 
+line of code and hit Enter, the interpreter displays the
+result: 
+\index{prompt}
+
+\begin{verbatim}
+> 1 + 1
+2
+>
+\end{verbatim}
+%
+You can type exit at the REPL prompt to exit the REPL.
+
+Now you're ready to get started.
+From here on, we assume that you know how to start the Perl~6
+REPL and run code.
+
+
+\section{The First Program}
+\label{hello}
+\index{Hello, World}
+
+Traditionally, the first program you write in a new language
+is called ``Hello, World'' because all it does is display the
+words ``Hello, World.''  In Perl~6, it looks like this:
+
+\begin{verbatim}
+> say "Hello, World";
+Hello, World
+>
+\end{verbatim}
+%
+\index{say function or method}
+\index{function!say}
+This is an example of what is usually called a {\bf print statement}, although it
+doesn't actually print anything on paper and doesn't even 
+use the {\tt print} keyword \footnote{Perl also has a {\tt print} 
+function, but the {\tt say} built-in function is used here 
+because it adds a new line character to the output.} (keywords are 
+words which have a special meaning to the language and are 
+used by the interpreter to recognize the structure of the program).  
+The print statement displays a result on the screen.  In this case, 
+the result is the words {\tt Hello, World}.
+%
+The quotation marks in the program indicate the beginning and end
+of the text to be displayed; they don't appear in the result.
+\index{quotation mark}
+\index{print statement}
+\index{statement!print}
+
+The semi-colon ``{\tt ;}'' at the end of the line indicates 
+that this is the end of the current statement. Although a 
+semi-colon is technically not needed when running 
+simple code directly under the REPL, it is usually 
+necessary when writing a program with several lines of code, 
+so you might as well just get into the habit of ending code 
+instructions with a semi-colon.
+\index{semi-colon}
+
+Many other programming languages would require parentheses 
+around the sentence to be displayed, but this is usually 
+not necessary in Perl~6.
+
+\section{Arithmetic Operators}
+\index{operator!arithmetic}
+\index{arithmetic operator}
+
+After ``Hello, World,'' the next step is arithmetic.  Perl~6 provides
+{\bf operators}, which are special symbols that represent computations
+like addition and multiplication.  
+
+The operators {\tt +}, {\tt -}, {\tt *}, and {\tt /} perform addition,
+subtraction, multiplication and division, as in the following examples
+under the REPL:
+
+\begin{verbatim}
+> 40 + 2
+42
+> 43 - 1
+42
+> 6 * 7
+42
+> 84 / 2
+42
+\end{verbatim}
+%
+
+Since we use the REPL, we don't need an explicit print 
+statement in these examples, as the REPL automatically 
+prints out the result of the statements for us. In a real 
+program, you would need a print statement to display 
+the result, as we'll see later. Similarly, if you run 
+Perl statements in the web browser mentioned in 
+Section~\ref{running_perl_6}, you will need a 
+print statement to display the result of these operations. 
+For example:
+
+\begin{verbatim}
+say 40 + 2;   # -> 42
+\end{verbatim}
+
+
+Finally, the operator {\tt **} performs exponentiation; that is,
+it raises a number to a power:
+
+\begin{verbatim}
+> 6**2 + 6
+42
+\end{verbatim}
+%
+In some other languages, the caret (``\verb"^"'') or 
+circumflex accent is used for exponentiation, but in 
+Perl~6 it is used for some other purposes.
+%
+\index{set}
+\index{set!operator}
+\index{operator!set}
+
+
+\section{Values and Types}
+\index{value}
+\index{type}
+\index{string}
+
+A {\bf value} is one of the basic things a program works with, like a
+letter or a number.  Some values we have seen so far are {\tt 2},
+{\tt 42}, and \verb'"Hello, World"'.
+
+These values belong to different {\bf types}:
+{\tt 2} is an {\bf integer}, {\tt 40 + 2} is also an integer, 
+{\tt 84/2} is a {\bf rational number},
+and \verb"'Hello, World'" is a {\bf string}, so called 
+because the characters it contains are strung together.
+\index{integer}
+\index{floating-point}
+
+If you are not sure what type a value has, Perl can
+tell you:
+
+\begin{verbatim}
+> say 42.WHAT;
+(Int)
+> say (40 + 2).WHAT;
+(Int)
+> say (84 / 2).WHAT;
+(Rat)
+> say (42.0).WHAT
+(Rat)
+> say ("Hello, World").WHAT;
+(Str)
+>
+\end{verbatim}
+%
+In these instructions, {\tt .WHAT} is known as an 
+introspection method, that is a kind of method which 
+will tell you \emph{what} (of  which type) the preceding 
+expression is. {\tt 42.WHAT} is an example of the dot 
+syntax used for method invocation: it calls the {\tt .WHAT} 
+built-in on the ``42'' expression (the invocant) and provides 
+to the {\tt say} function the result of this invocation, 
+which in this case is the type of the expression.
+\index{WHAT}
+\index{introspection}
+\index{string!type}
+\index{type!Str}
+\index{Int type}
+\index{type!Int}
+\index{rational!type}
+\index{type!Rat}
+\index{invocant}
+\index{invocation}
+
+Not surprisingly, integers belong to the type {\tt Int},
+strings belong to {\tt Str} and rational 
+numbers belong to {\tt Rat}.  
+
+Although {\tt 40 + 2} and {\tt 84 / 2} seem to yield the 
+same result (42), the first expression returns an integer 
+({\tt Int}) and the second a rational number ({\tt Rat}). 
+The number 42.0 is also a rational.
+
+The rational type is somewhat unusual in most programming 
+languages. Internally, these numbers are stored as two 
+integers representing the numerator and the denominator 
+(in their simplest terms). For example, the number 17.3 
+might be stored as two integers, 173 and 10, meaning that 
+Perl is really storing something meaning the $\frac{173}{10}$ 
+fraction. Although this is usually not needed (except 
+for introspection or debugging), you might access these 
+two integers with the following methods:
+
+\begin{verbatim}
+> my $num = 17.3;
+17.3
+> say $num.WHAT;
+(Rat)
+> say $num.numerator, " ", $num.denominator; # say can print a list
+173 10
+> say $num.nude;
+(173 10) 
+\end{verbatim}
+\index{numerator method}
+\index{method!numerator}
+\index{denominator method}
+\index{method!denominator}
+\index{nude method}
+\index{method!nude}
+%
+This may seem anecdotal, but, for reasons which are 
+beyond the scope of this book, this makes it possible for Perl~6 
+to perform arithmetical operations on rational numbers with 
+a much higher accuracy than most common programming languages. 
+For example, if you try to perform the arithmetical operation
+\verb'0.3 - 0.2 - 0.1', with most general purpose programming languages 
+(and depending on your machine architecture), you 
+might obtain a result such as -2.77555756156289e-17 (in Perl~5), 
+-2.775558e-17 (in C under gcc), or -2.7755575615628914e-17 
+(Java, Python~3, Ruby, TCL). Don't worry about these values if you 
+don't understand them, let us just say that they  are 
+extremely small, but they are not 0, whereas,  
+obviously, the result should really be zero. In Perl~6, 
+the result is 0 (even to the fiftieth decimal digit):
+\begin{verbatim}
+> my $result-should-be-zero = 0.3 - 0.2 - 0.1;
+0
+> printf "%.50f", $result-should-be-zero; # prints 50 decimal digits
+0.00000000000000000000000000000000000000000000000000
+\end{verbatim}
+%
+In Perl~6, you might even compare the result of the operation with 0:
+\begin{verbatim}
+> say $result-should-be-zero == 0;
+True
+\end{verbatim}
+%
+Don't do such a comparison with most common programming 
+languages; you're very likely to get a wrong result.
+
+What about values like \verb'"2"' and \verb'"42.0"'?
+They look like numbers, but they are in quotation marks like
+strings.
+\index{quotation mark}
+
+\begin{verbatim}
+> say '2'.perl; # perl returns a Perlish representation of the invocant
+"2"
+> say "2".WHAT;
+(Str)
+> say '42'.WHAT;
+(Str)
+\end{verbatim}
+%
+\index{invocant}
+
+They're strings because they are defined within quotes. Although 
+Perl will often perform the necessary conversions for you, it 
+is generally a good practice not to use quotation marks if your value 
+is intended to be a number.
+
+When you type a large integer, you might be tempted to use commas
+between groups of digits, as in {\tt 1,234,567}.  This is not a
+legal {\em integer} in Perl~6, but it is a legal expression:
+
+\begin{verbatim}
+> 1,234,567
+(1 234 567)
+>
+\end{verbatim}
+%
+That's actually a list of three different integer numbers, and 
+not what we expected at all! 
+
+\begin{verbatim}
+> say (1,234,567).WHAT
+(List)
+\end{verbatim}
+
+Perl~6 interprets {\tt 1,234,567} as a comma-separated 
+sequence of three integers.  As we will see later, 
+the comma is a separator used for constructing lists.
+\index{comma}
+
+You can, however, separate groups of digits with the underscore character ``\verb"_"'' for better legibility and obtain a 
+proper integer:
+\index{underscore character}
+
+\begin{verbatim}
+> 1_234_567
+1234567
+> say 1_234_567.WHAT
+(Int)
+>
+\end{verbatim}
+%
+
+\index{sequence}
+
+
+
+\section{Formal and Natural Languages}
+\index{formal language}
+\index{natural language}
+\index{language!formal}
+\index{language!natural}
+
+{\bf Natural languages} are the languages people speak,
+such as English, Spanish, and French.  They were not designed
+by people (although people try to impose some order on them);
+they evolved naturally.
+
+{\bf Formal languages} are languages that are designed by people for
+specific applications.  For example, the notation that mathematicians
+use is a formal language that is particularly good at denoting
+relationships among numbers and symbols.  Chemists use a formal
+language to represent the chemical structure of molecules.  And
+most importantly:
+
+\begin{quote}
+{\bf Programming languages are formal languages that have been
+designed to express computations.}
+\end{quote}
+
+Formal languages tend to have strict {\bf syntax} rules that
+govern the structure of statements.
+For example, in mathematics the statement
+$3 + 3 = 6$ has correct syntax, but
+not $3 + = 3 \$ 6$.  In chemistry
+$H_2O$ is a syntactically correct formula, but $_2Zz$ is not.
+\index{syntax}
+
+Syntax rules come in two flavors, pertaining to {\bf tokens} and
+{\bf structure}.  Tokens are the basic elements of the language, such as
+words, numbers, and chemical elements.  One of the problems with
+$3 += 3 \$ 6$ is that \( \$ \) is not a legal token in mathematics
+(at least as far as I know).  Similarly, $_2Zz$ is not legal because
+there is no chemical element with the abbreviation $Zz$.
+\index{token}
+\index{structure}
+
+The second type of syntax rule, structure, pertains to the way tokens are
+combined.  The equation $3 += 3$ is illegal in mathematics 
+because even though $+$ and $=$ are legal tokens, you can't 
+have one right after the other. Similarly, in a chemical formula, 
+the subscript representing the number of atoms in a 
+chemical compound comes after the element name, not before.
+
+This is @ well-structured Engli\$h
+sentence with invalid t*kens in it.  This sentence all valid 
+tokens has, but invalid structure with.
+
+When you read a sentence in English or a statement in a formal
+language, you have to figure out the structure
+(although in a natural language you do this subconsciously).  This
+process is called {\bf parsing}.
+\index{parse}
+
+Although formal and natural languages have many features in
+common---tokens, structure, and syntax---there are some
+differences:
+\index{ambiguity}
+\index{redundancy}
+\index{literalness}
+
+\begin{description}
+
+\item[Ambiguity] Natural languages are full of ambiguity, which
+people deal with by using contextual clues and other information.
+Formal languages are designed to be nearly or completely unambiguous,
+which means that any statement has exactly one meaning. 
+
+\item[Redundancy] In order to make up for ambiguity and reduce
+misunderstandings, natural languages employ lots of
+redundancy.  As a result, they are often verbose.  Formal languages
+are less redundant and more concise.
+
+\item[Literalness] Natural languages are full of idiom and metaphor.
+If we say, ``The penny dropped,'' there is probably no penny and
+nothing dropping (this idiom means that someone understood something
+after a period of confusion).  Formal languages
+mean exactly what they say.
+
+\end{description}
+
+Because we all grow up speaking natural languages, it is sometimes
+hard to adjust to formal languages.  The difference between formal and
+natural language is like the difference between poetry and prose, but
+more so: \index{poetry} \index{prose}
+
+\begin{description}
+
+\item[Poetry] Words are used for their sounds as well as for
+their meaning, and the whole poem together creates an effect or
+emotional response.  Ambiguity is not only common but often
+deliberate.
+
+\item[Prose] The literal meaning of words is more important,
+and the structure contributes more meaning.  Prose is more amenable to
+analysis than poetry but still often ambiguous.
+
+\item[Programs] The meaning of a computer program is unambiguous
+and literal, and can be understood entirely by analysis of the
+tokens and structure.
+
+\end{description}
+
+Formal languages are more dense
+than natural languages, so it takes longer to read them.  Also, the
+structure is important, so it is not always best to read
+from top to bottom, left to right.  Instead, learn to parse the
+program in your head, identifying the tokens and interpreting the
+structure.  Finally, the details matter.  Small errors in
+spelling and punctuation, which you can get away
+with in natural languages, can make a big difference in a formal
+language.
+
+
+\section{Debugging}
+\index{debugging}
+
+Programmers make mistakes.  For whimsical reasons, programming errors
+are called {\bf bugs} and the process of tracking them down is called
+{\bf debugging}.
+\index{debugging}
+\index{bug}
+
+Programming, and especially debugging, sometimes brings out strong
+emotions.  If you are struggling with a difficult bug, you might 
+feel angry, despondent, or embarrassed.
+
+There is evidence that people naturally respond to computers as if
+they were people.  When they work well, we think
+of them as teammates, and when they are obstinate or rude, we
+respond to them the same way we respond to rude,
+obstinate people\footnote{Reeves and Nass, {\it The Media
+    Equation: How People Treat Computers, Television, and New Media
+    Like Real People and Places}, (Center for the Study of Language and Information, 2003).)}.
+\index{debugging!emotional response}
+\index{emotional debugging}
+
+Preparing for these reactions might help you deal with them.
+One approach is to think of the computer as an employee with
+certain strengths, like speed and precision, and
+particular weaknesses, like lack of empathy and inability
+to grasp the big picture.
+
+Your job is to be a good manager: find ways to take advantage
+of the strengths and mitigate the weaknesses.  And find ways
+to use your emotions to engage with the problem,
+without letting your reactions interfere with your ability
+to work effectively.
+
+Learning to debug can be frustrating, but it is a valuable skill
+that is useful for many activities beyond programming.  At the
+end of each chapter there is a section, like this one,
+with our suggestions for debugging.  I hope they help!
+
+
+\section{Glossary}
+
+\begin{description}
+
+\item[Problem solving]  The process of formulating a problem, finding
+a solution, and expressing it.
+\index{problem solving}
+
+\item[Abstraction] A way of providing a high-level view 
+of a task and hiding the underlying technical details so 
+that this task becomes easy.
+
+\item[Interpreter]  A program that reads another program and executes it
+\index{interpret}
+
+\item[Compiler]  A program that reads another program and 
+transforms it into executable computer code; there used to be 
+a strong difference between interpreted and compiled languages, 
+but this distinction has become blurred over the last 
+two decades or so.
+\index{compiler}
+
+\item[Prompt] Characters displayed by the interpreter to indicate
+that it is ready to take input from the user.
+\index{prompt}
+
+\item[Program] A set of instructions that specifies a computation.
+\index{program}
+
+\item[Print statement]  An instruction that causes the Perl~6
+interpreter to display a value on the screen.
+\index{print statement}
+\index{statement!print}
+
+\item[Operator]  A special symbol that represents a simple computation like
+addition, multiplication, or string concatenation.
+\index{operator}
+
+\item[Value]  One of the basic units of data, like a number or string, 
+that a program manipulates.
+\index{value}
+
+\item[Type] A category of values.  The types we have seen so far
+are integers (type {\tt Int}), rational numbers (type {\tt
+Rat}), and strings (type {\tt Str}).
+\index{type}
+
+\item[Integer] A type that represents whole numbers.
+\index{integer}
+
+\item[Rational] A type that represents numbers with fractional
+parts. Internally, Perl stores a rational as two integers 
+representing respectively the numerator and the denominator 
+of the fractional number.
+\index{rational}
+
+\item[String] A type that represents sequences of characters.
+\index{string}
+
+\item[Natural language]  Any one of the languages that people speak that
+evolved naturally.
+\index{natural language}
+
+\item[Formal language]  Any one of the languages that people have designed
+for specific purposes, such as representing mathematical ideas or
+computer programs; all programming languages are formal languages.
+\index{formal language}
+
+\item[Token]  One of the basic elements of the syntactic structure of
+a program, analogous to a word in a natural language.
+\index{token}
+
+\item[Syntax] The rules that govern the structure of a program.
+\index{syntax}
+
+\item[Parse] To examine a program and analyze the syntactic structure.
+\index{parse}
+
+\item[Bug] An error in a program.
+\index{bug}
+
+\item[Debugging] The process of finding and correcting bugs.
+\index{debugging}
+
+\end{description}
+
+
+\section{Exercises}
+
+\begin{exercise}
+
+It is a good idea to read this book in front of a computer so you 
+can try out the examples as you go.
+
+Whenever you are experimenting with a new feature, you should try
+to make mistakes.  For example, in the ``Hello, world!'' program,
+what happens if you leave out one of the quotation marks?  What
+if you leave out both?  What if you spell {\tt say} wrong?
+\index{error message}
+
+This kind of experiment helps you remember what you read; it also
+helps when you are programming, because you get to know what the error
+messages mean.  It is better to make mistakes now and on purpose than
+later and accidentally.
+
+Please note that most exercises in this book are provided with 
+a solution in the appendix. However, the exercises in this chapter   
+and in the next chapter are not intended to let you solve an 
+actual problem but are designed to simply let you experiment 
+with the Perl interpreter; there is no good solution, just try 
+out what is proposed to get a feeling on how it works.
+
+\begin{enumerate}
+
+\item If you are trying to print a string, what happens if you
+leave out one of the quotation marks, or both?
+
+\item You can use a minus sign to make a negative number like
+{\tt -2}.  What happens if you put a plus sign before a number?
+What about {\tt 2++2}?
+
+\item In math notation, leading zeros are OK, as in {\tt 02}.
+What happens if you try this in Perl?
+
+\item What happens if you have two values with no operator
+between them, such as {\tt say 2 2;}?
+
+\end{enumerate}
+
+\end{exercise}
+
+
+
+\begin{exercise}
+
+Start the Perl~6 REPL interpreter and use it as a calculator.
+
+\begin{enumerate}
+
+\item How many seconds are there in 42 minutes, 42 seconds?
+
+\item How many miles are there in 10 kilometers?  Hint: there are 1.61
+  kilometers in a mile.
+
+\item If you run a 10 kilometer race in 42 minutes, 42 seconds, what is
+  your average pace (time per mile in minutes and seconds)?  What is
+  your average speed in miles per hour?
+
+\index{calculator}
+\index{running pace}
+
+\end{enumerate}
+
+\end{exercise}
+
+
