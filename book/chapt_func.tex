@@ -147,16 +147,20 @@ strings to rational numbers (if possible):
 4
 > say 4.Rat.WHAT;
 (Rat)
-> say Rat(4).WHAT
+> say Rat(4).WHAT;
 (Rat)
-> say Rat(4).nude
+> say Rat(4).nude;
 (4 1)
-> say Rat('3.14159')
+> say Rat('3.14159');
 3.14159
 > say Rat('3.14159').nude
 (314159 100000)
 \end{verbatim}
 %
+(As you might remember from Section~\ref{values_and_types}, 
+the \verb'nude' method displays the \emph{nu}merator and 
+\emph{de}nominator of a rational number.)
+
 Finally, {\tt Str} converts its argument to a string:
 \index{Str function}
 \index{function!Str}
@@ -546,7 +550,7 @@ Let freedom ring from the mighty mountains of New York.
 
 However, you cannot use the method-invocation syntax with 
 such subroutines. We will see much later in this book (see 
-Chapter~\ref{objects}) how to create methods. For the time 
+Chapter~\ref{objects}) how to create methods). For the time 
 being, we'll stick to the function-call syntax.
 \index{invocation!method}
 \index{method invocation}
@@ -1036,7 +1040,10 @@ should presumably be useful for rational or even other numbers.
 You can use the {\tt Real} or {\tt Numeric} types to make 
 the function more general (the difference between the two 
 types is that the {\tt Numeric} type will accept not only 
-{\tt Real} but also {\tt Complex} numbers). As it turns out 
+{\tt Real} but also {\tt Complex} numbers\footnote{~Complex 
+numbers are a powerful concept of mathematics. They are numbers 
+of the form $a + bi$, where $a$ and $b$ are usual real number and 
+$i$ an imaginary number such that $i^2$ equals $-1$.}). As it turns out 
 that this {\tt half} function will also work correctly 
 with complex numbers, choosing a {\tt Numeric} 
 type opens more possibilities:
@@ -1316,7 +1323,8 @@ several reasons:
 
 \item Creating a new subroutine gives you an opportunity to 
 name a group of statements, which makes your program easier 
-to read and debug.
+to read and debug. Subroutines also help making the flow of 
+execution clearer to the reader.
 
 \item Subroutines can make a program smaller by eliminating 
 repetitive code.  Later, if you make a change, you only have

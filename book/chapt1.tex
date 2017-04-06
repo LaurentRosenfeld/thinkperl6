@@ -160,7 +160,7 @@ we mean Perl~6.
 
 The Perl~6 {\bf interpreter} is a program that reads and 
 executes Perl~6 code. It is sometimes called REPL (for ``read, 
-evaluate, print loop''). Depending on your environment, you 
+evaluate, print, loop''). Depending on your environment, you 
 might start the interpreter by clicking on an icon, or by 
 typing {\tt perl6} on a command line.
 
@@ -296,6 +296,7 @@ Perl~6 it is used for some other purposes.
 
 
 \section{Values and Types}
+\label{values_and_types}
 \index{value}
 \index{type}
 \index{string}
@@ -357,7 +358,7 @@ same result (42), the first expression returns an integer
 ({\tt Int}) and the second a rational number ({\tt Rat}). 
 The number 42.0 is also a rational.
 
-The rational type is somewhat unusual in most programming 
+The rational type is somewhat uncommon in most programming 
 languages. Internally, these numbers are stored as two 
 integers representing the numerator and the denominator 
 (in their simplest terms). For example, the number 17.3 
@@ -374,7 +375,7 @@ two integers with the following methods:
 (Rat)
 > say $num.numerator, " ", $num.denominator; # say can print a list
 173 10
-> say $num.nude;
+> say $num.nude;      # "nude" stands for numerator-denominator
 (173 10) 
 \end{verbatim}
 \index{numerator method}
@@ -595,8 +596,8 @@ language.
 \section{Debugging}
 \index{debugging}
 
-Programmers make mistakes.  For whimsical reasons, programming errors
-are called {\bf bugs} and the process of tracking them down is called
+Programmers make mistakes.  Programming errors are usually 
+called {\bf bugs} and the process of tracking them down is called
 {\bf debugging}.
 \index{debugging}
 \index{bug}
