@@ -1,0 +1,881 @@
+
+\chapter{Case Study: Word Play}
+\label{wordplay}
+
+This chapter is intended to let you practice and 
+consolidate the knowledge you have acquired so far, 
+rather than introducing new concepts. To help you gain 
+experience with programming, we will cover a 
+case study that involves solving word puzzles by 
+searching for words that have certain properties.  
+For example, we'll find the longest palindromes
+in English and search for words whose letters appear in
+alphabetical order.  And I will present another program 
+development plan: reduction to a previously solved problem.
+
+
+\section{Reading from and Writing to Files}
+
+For the exercises in this chapter, we will need our 
+programs to read text from files. In many programming 
+languages, this often means that we need a statement to 
+open a file, then a statement or group of statements to 
+read the file's content, and finally a statement to 
+close the file (although this last operation may 
+be performed automatically in some circumstances).
+\index{file!reading from}
+\index{file!writing to}
+\index{file!open statement}
+\index{file!close statement}
+
+We are interested here in text files that are usually 
+made of lines separated by logical new line characters; 
+depending on your operating system, such logical new line 
+characters consist of either one (Linux, Mac) or two (Windows) 
+physical characters (bytes). 
+\index{newline character}
+
+The Perl built-in function {\tt open} takes the path and 
+name of the file as a parameter and returns a {\bf file 
+handle} ({\tt IO::Handle object}) which you can use to read 
+the file (or to write to it):
+\index{open function}
+\index{function!open}
+\index{plain text}
+\index{text!plain}
+\index{object!file}
+\index{file handle}
+\index{function!slurp-rest}
+
+\begin{verbatim}
+my $fh = open("path/to/myfile.txt", :r);
+my $data = $fh.slurp-rest;
+$fh.close;
+\end{verbatim}
+%
+The {\tt :r} option is the file mode ({\tt read}). {\tt \$fh} is a 
+common name for a file handle.  The \emph{file object} provides methods 
+for reading, such as {\tt slurp-rest} which returns the 
+full content of the file from the current position to the 
+end (and the entire content of the file if we've just 
+opened it).
+
+This is the traditional way of opening and reading files 
+in most languages.
+\index{read mode}
+\index{file mode!read}
+
+However, Perl's {\tt IO} role (in simple terms, a role is 
+a collection of related methods) offers simpler methods which 
+can open a file and read it all in one single instruction (i.e., 
+without having to first open a file handle and then close it):
+\index{role}
+\index{IO role}
+
+\begin{verbatim}
+my $text = slurp "path/to/myfile.txt";
+# or:
+my $text = "path/to/myfile.txt".IO.slurp;
+\end{verbatim}
+%
+
+\index{slurp function}
+{\tt slurp} takes care of opening and closing the file for you.
+
+We can also read the file line by line, which is very 
+practical if each line contains a logical entity such as 
+a record, and is especially useful for very large files 
+that might not fit into memory:
+
+\begin{verbatim}
+for 'path/to/hugefile.txt'.IO.lines -> $line {
+    # Do something with $line
+}
+\end{verbatim}
+%
+By default, the {\tt .lines} method will remove the trailing 
+newline characters from each line, so that you don't have 
+to worry about them.
+\index{IO.lines method}
+\index{IO.slurp method}
+\index{slurp function}
+%
+
+We haven't studied arrays yet, but you can also read all 
+lines of a file into an array, with each line of the file 
+becoming an array item. For example, you can load the 
+\emph{myfile.txt} file into the \verb'@lines' array:
+\index{array}
+
+\begin{verbatim}
+my @lines = "myfile.txt".IO.lines;
+\end{verbatim}
+%
+
+Accessing any line can then be done with the bracket operator 
+and an index. For example, to print the first and the 
+seventh line:
+
+\begin{verbatim}
+say @lines[0];
+say @lines[6];
+\end{verbatim}
+%
+To write data to a file, it is possible to {\tt open} a file just 
+as when wanting to read from it, except that the {\tt :w} (write) 
+option should be used:
+\index{write mode}
+\index{file mode!write}
+
+\begin{verbatim}
+my $fh = open("path/to/myfile.txt", :w);
+$fh.say("line to be written to the file");
+$fh.close;
+\end{verbatim}
+
+Be careful with this. If the file already existed, any 
+existing content will be clobbered. So watch out when 
+you want to open a file in write mode.
+
+It is also possible to open the file in append mode, using the 
+{\tt :a} option. New data will then be added after the existing 
+content.
+\index{append mode}
+\index{file mode!append}
+
+Writing to a file can be simplified using the {\tt spurt} 
+function, which opens the file, writes the data to it, 
+and closes it:
+\index{spurt function}
+
+\begin{verbatim}
+spurt "path/to/myfile.txt", "line to be written to the file\n";
+\end{verbatim}
+
+Used this way, {\tt spurt} will clobber any existing content in 
+the file. It may also be used in append mode with the {\tt :append} 
+option:
+\index{spurt function!append mode}
+
+\begin{verbatim}
+spurt "path/to/myfile.txt", "line to be added\n", :append;
+\end{verbatim}
+
+
+\section{Reading Word Lists}
+\label{wordlist}
+
+For the exercises in this chapter we need a list of English 
+words. There are lots of word lists available on the web, 
+but one of the most suitable for our purpose is one of the 
+word lists collected and contributed to the public domain 
+by Grady Ward as part of the Moby lexicon project (see 
+\url{http://wikipedia.org/wiki/Moby_Project}).  It is a 
+list of 113,809 official crosswords; that is, words that are
+considered valid in crossword puzzles and other word games.  
+In the Moby collection, the filename is \emph{113809of.fic}; 
+you can download a copy, with the simpler name \emph{words.txt}, 
+from \url{http://thinkpython2.com/code/words.txt}.
+\index{Moby Project}
+\index{crosswords}
+\index{word list}
+
+This file is in plain text (with each word of the list on 
+its own line), so you can open it with a text
+editor, but you can also read it from Perl. Let's do so 
+in the interactive mode (with the REPL):
+\index{interactive mode}
+\index{REPL}
+
+\begin{verbatim}
+> my $fh = open("words.txt", :r);
+IO::Handle<words.txt>(opened, at octet 0)
+> my $line = get $fh;
+aa
+> say "<<$line>>";
+<<aa>>
+\end{verbatim}
+
+The {\tt get} function reads one line from the file handle. 
+\index{get function}
+
+The first word in this particular list is ``aa'' (a kind 
+of lava).
+
+Printing the \verb'$line' variable between angle brackets 
+within a string shows us that the {\tt get} function removed 
+implicitly the trailing newline characters, in this 
+case a \verb'\r\n' (carriage return and newline) character 
+combination, since this file was apparently prepared under 
+Windows.
+
+The file handle keeps track of what has been read from the 
+file and what it should read next, so if you call {\tt get} 
+again, you obtain the next line:
+
+\begin{verbatim}
+> my $line = get $fh;
+aah
+\end{verbatim}
+%
+The next word is ``aah,'' which is a perfectly legitimate
+word, so stop looking at me like that.
+
+This is good and fine if we want to explore the first few 
+lines of the {\tt words.txt} file, but we are not going to 
+read the 113 k-lines of the file this way.
+
+We need a loop to do it for us. We could insert the above 
+{\tt get} instruction into a {\tt while} loop, but we have 
+seen above an easier and more efficient way of doing it 
+using a {\tt for} loop and the {\tt IO.lines} method, 
+without the hassle of having to open or close the file:
+\index{for loop}
+\index{IO.lines method}
+
+\begin{verbatim}
+for 'words.txt'.IO.lines -> $line {
+    say $line;
+}
+\end{verbatim}
+%
+This code reads the file line by line, and prints each line 
+to the screen. We'll soon do more interesting things than 
+just displaying the lines on the screen.
+
+\section{Exercises}
+
+This case study consists mainly of exercises and 
+solutions to them within the body of the chapter because solving the 
+exercises is the main teaching material of this chapter. Therefore, 
+solutions to these exercises are in the following sections of 
+this chapter, not in the appendix. You should at least 
+attempt each one before you read the solutions.
+
+\begin{exercise}
+Write a program that reads {\tt words.txt} and prints only the
+words with more than 20 characters.
+\index{whitespace}
+
+\end{exercise}
+
+\begin{exercise}
+
+In 1939 Ernest Vincent Wright published a 50,000-word novel 
+called {\em Gadsby} that does not contain the letter ``e''. 
+Since ``e'' is the most common letter in English, that's 
+not easy to do. In fact, it is difficult to construct a 
+solitary thought without using that most common letter. 
+Such a  writing in which one letter is avoided is sometimes 
+called a lipogram.
+\index{Wright, Ernest Vincent}
+\index{Gadsby}
+\index{lipogram}
+
+Write a subroutine called \verb"has-no-e" that returns 
+{\tt True} if the given word doesn't have the letter ``e'' 
+in it.
+\label{no_e}
+
+Modify your program from the previous exercise to print only 
+the words that have no ``e'' and compute the percentage of 
+the words in the list that have no ``e''.
+
+(The word dictionary we are using, \emph{words.txt}, is 
+entirely in lower-case letters, so you don't need to 
+worry about any uppercase ``E.'')
+
+
+
+\end{exercise}
+
+
+\begin{exercise} 
+
+Write a subroutine named {\tt avoids}
+that takes a word and a string of forbidden letters, and
+that returns {\tt True} if the word doesn't use any of 
+the forbidden letters.
+
+Next, modify your program to prompt the user to enter a string
+of forbidden letters and then print the number of words that
+don't contain any of them.
+Can you find a combination of five forbidden letters that
+excludes the smallest number of words?
+
+\end{exercise}
+
+
+
+\begin{exercise}
+
+Write a subroutine named \verb"uses-only" that takes a word and a
+string of letters, and that returns {\tt True} if the word contains
+only letters in the list.  Can you make a sentence using only the
+letters {\tt acefhlo}?  Other than ``Hoe alfalfa?''
+
+\end{exercise}
+
+
+\begin{exercise} 
+
+Write a subroutine named \verb"uses-all" that takes a word and a
+string of required letters, and returns {\tt True} if the word
+uses all the required letters at least once.  How many words are there
+that use all the vowels {\tt aeiou}?  How about {\tt aeiouy}?
+
+\end{exercise}
+
+
+\begin{exercise}
+
+Write a function called \verb"is_abecedarian" that returns
+{\tt True} if the letters in a word appear in alphabetical order
+(double letters are ok).  
+How many abecedarian words are there?
+
+\index{abecedarian}
+
+\end{exercise}
+
+
+
+\section{Search}
+\label{search}
+\index{search!pattern}
+\index{pattern!search}
+\index{regex}
+
+Most of the exercises in the previous section have something
+in common; they can be solved with the search pattern (and 
+the {\tt index} function we saw in Section~\ref{find} 
+(p.~\pageref{find}). Most can also be solved using regexes.
+
+\subsection{Words Longer Than 20 Characters (Solution)}
+
+The solution to the simplest exercise ---printing all the 
+words of {\tt words.txt} that are longer than 
+20~characters--- is:
+
+\begin{verbatim}
+for 'words.txt'.IO.lines -> $line {
+    say $line if $line.chars > 20
+}
+\end{verbatim}
+%
+
+Because the code is so simple, this is a typical example 
+of a possible and useful one-liner (as described in 
+Section~\ref{one-liner mode}). Assuming you want to know the words 
+that are longer than 20~characters, you don't even need to 
+write a script, save it, and run it. You can simply type this at 
+your operating system prompt:
+\label{one-liner-example}
+\index{one-liner mode}
+
+\begin{verbatim}
+$ perl6 -n -e '$_.say if $_.chars > 20;' words.txt
+\end{verbatim} 
+%
+The ``-e'' option tells Perl that the script to be run 
+comes next on the command line between quotation marks. The 
+``-n'' asks Perl to read line by line the file after the 
+end of the command line, to store each line in the \verb'$_' 
+topical variable, and to apply the content of the script to 
+each line. And the one-liner script is just printing the 
+content of \verb'$_' if its length is greater than 20.
+\index{topical variable}
+
+To simplify a bit, the two options \verb'-n' and \verb'-e' 
+may be grouped together as \verb"perl6 -ne". In addition, 
+the \verb'$_' topical variable can be omitted in method calls 
+(in other words, if a method has no invocant, the invocant 
+will be defaulted to \verb'$_'). Finally, the trailing 
+semi-colon may also be removed. The one-liner above can 
+thus be made somewhat simpler and shorter:
+\index{invocant}
+
+\begin{verbatim}
+$ perl6 -ne '.say if .chars > 20' words.txt
+\end{verbatim} 
+%
+Remember that, if you're trying this under Windows, you need to 
+replace the single quotes with double quotes (and vice-versa if 
+the scripts itself contains double quotes):
+
+\begin{verbatim}
+C:\Users\Laurent>perl6 -ne ".say if .chars > 20" words.txt
+\end{verbatim} 
+%
+
+\subsection{Words with No ``e'' (Solution)}
+
+A subroutine that returns {\tt True} for words that have 
+no ``e'' (Exercise~\ref{no_e}) is also quite straight forward:
+
+\begin{verbatim}
+sub has-no-e (Str $word) {
+    return True unless defined index $word, "e";
+    return False;
+}
+\end{verbatim}
+%
+
+The subroutine simply returns {\tt True} if the {\tt index} 
+function did not find any ``e'' in the word received as 
+a parameter and {\tt False} otherwise. 
+
+Note that this works correctly because the word list used 
+\emph{words.txt}) is entirely in lowercase letters. The 
+above subroutine would need to be modified if it might 
+be called with words containing uppercase letters. 
+
+Since the {\tt defined} function returns a Boolean value, we 
+could shorten our subroutine to this::
+\begin{verbatim}
+sub has-no-e (Str $word) {
+    not defined index $word, "e";
+}
+\end{verbatim}
+%
+
+We could also have used a regex for testing the presence of a 
+``e'' on the second line of this subroutine:
+
+\begin{verbatim}
+    return True unless $word ~~ /e/;
+\end{verbatim}
+%
+
+This fairly concise syntax is appealing, but when 
+looking for an exact literal match, the {\tt index} function 
+is likely to be slightly more efficient (faster) than a 
+regex.
+
+Looking for the words without ``e'' in our word list and 
+counting them is not very difficult:
+
+\begin{verbatim}
+sub has-no-e (Str $word) {
+    not defined index $word, "e";
+}
+
+my $total-count = 0;
+my $count-no-e = 0;
+for 'words.txt'.IO.lines -> $line { 
+    $total-count++;
+    if has-no-e $line {
+        $count-no-e++;
+        say $line;
+    }
+}
+say "=" x 24;
+say "Total word count: $total-count";
+say "Words without 'e': $count-no-e";
+printf "Percentage of words without 'e': %.2f %%\n", 
+        100 * $count-no-e / $total-count;
+\end{verbatim}
+
+The above program will display the following at the end 
+of its output:
+
+\begin{verbatim}
+========================
+Total word count: 113809
+Words without 'e': 37641
+Percentage of words without 'e': 33.07 %
+\end{verbatim}
+
+So, less than one third of the words of 
+our list have no ``e''.
+
+\subsection{Avoiding Other Letters (Solution)}
+
+\index{generalization}
+The {\tt avoids} subroutine is a more general version of 
+\verb"has_no_e", but it has the same structure:
+
+\begin{verbatim}
+sub avoids (Str $word, Str $forbidden) {
+    for 0..$forbidden.chars - 1 -> $idx {
+        my $letter = substr $forbidden, $idx, 1;
+        return False if defined index $word, $letter;
+    }
+    True;
+}
+\end{verbatim}
+%
+We can return {\tt False} as soon as we find a forbidden letter;
+if we get to the end of the loop, we return {\tt True}. Since 
+a subroutine returns the last evaluated expression, we don't 
+need to explicitly use a {\tt return True} statement in the last 
+code line above. I used this feature here as an example; you might 
+find it clearer to explicitly {\tt return} values, except 
+perhaps for very simple one-line subroutines.
+
+Note that we have here implicitly two nested loops. We could 
+reverse the outer and the inner loops:
+
+\begin{verbatim}
+sub avoids (Str $word, Str $forbidden) {
+    for 0..$words.chars - 1 -> $idx {
+        my $letter = substr $words, $idx, 1;
+        return False if defined index $forbidden, $letter;
+    }
+    True;
+}
+\end{verbatim}
+%
+
+The main code calling the above subroutine is similar to 
+the code calling {\tt has-no-e} and might look like 
+this:
+
+\begin{verbatim}
+my $total-count = 0;
+my $count-no-forbidden = 0;
+
+for 'words.txt'.IO.lines -> $line { 
+    $total-count++;
+    $count-no-forbidden++ if avoids $line, "eiou";
+}
+
+say "=" x 24;
+say "Total word count: $total-count";
+say "Words without forbidden: $count-no-forbidden";
+printf "Percentage of words with no forbidden letter: %.2f %%\n", 
+        100 * $count-no-forbidden / $total-count;
+\end{verbatim}    
+%
+  
+
+\subsection{Using Only Some Letters (Solution)}
+
+\verb"uses-only" is similar to our {\tt avoids} subroutine 
+except that the sense of the condition is reversed:
+
+\begin{verbatim}
+sub uses-only (Str $word, Str $available) {
+    for 0..$word.chars - 1 -> $idx {
+        my $letter = substr $word, $idx, 1;
+        return False unless defined index $available, $letter;
+    }
+    True;
+}
+\end{verbatim}
+%
+Instead of a list of forbidden letters, we have a list 
+of available letters.  If we find a letter in {\tt word} that 
+is not in {\tt available}, we can return {\tt False}. And 
+we return {\tt True} if we reach the loop end.
+
+\subsection{Using All Letters of a List (Solution)}
+
+\verb"uses-all" is similar to the previous two subroutines, 
+except that we reverse the role of the word and the string 
+of letters:
+
+\begin{verbatim}
+sub uses-all(Str $word, Str $required) {
+    for 0..$required.chars - 1 -> $idx {
+        my $letter = substr $word, $idx, 1;
+        return False unless defined index $word, $letter;
+    }
+    return True;
+}
+\end{verbatim}
+%
+Instead of traversing the letters in {\tt \$word}, the loop
+traverses the required letters.  If any of the required letters
+do not appear in the word, we can return {\tt False}.
+\index{traversal}
+
+If you were really thinking like a computer scientist, you would
+have recognized that \verb"uses-all" was an instance of a
+previously solved problem in reverse: if word~A uses all 
+letters of word~B, then word~B uses only letters of word~A. So, 
+we can call the {\tt uses-only} subroutine and write:
+
+\begin{verbatim}
+sub uses-all ($word, $required) {
+    return uses-only required, $word;
+}
+\end{verbatim}
+%
+This is an example of a program development plan called 
+{\bf reduction to a previously solved problem}, which means that you
+recognize the problem you are working on as an instance of a solved
+problem and apply an existing solution. 
+\index{reduction to a previously solved problem} 
+\index{development plan!reduction}
+
+\subsection{Alphabetic Order (Solution)}
+
+For \verb"is_abecedarian" we have to compare adjacent letters. 
+Each time in our {\tt for} loop, we define one letter as our 
+current letter and compare it with the previous one:
+
+\begin{verbatim}
+sub is_abecedarian ($word) {
+    for 1..$word.chars - 1 -> $idx {    
+        my $curr-letter = substr $word, $idx, 1;
+        return False if $curr-letter lt substr $word, $idx - 1, 1;  
+    }     
+    return True
+}
+\end{verbatim}
+
+An alternative is to use recursion:
+\index{recursion}
+
+\begin{verbatim}
+sub is-abecedarian (Str $word) {
+    return True if $word.chars <= 1;
+    return False if substr($word, 0, 1) gt substr($word, 1, 1);
+    return is-abecedarian substr $word, 1;
+}
+\end{verbatim}
+
+Another option is to use a {\tt while} loop:
+
+\begin{verbatim}
+sub is_abecedarian (Str $word):
+    my $i = 0;
+    while $i < $word.chars -1 {
+        if substr($word, $i, 1) gt substr ($word, $i+1, 1) {
+            return False;
+        }
+        $i++;
+    }
+    return True;
+}
+\end{verbatim}
+%
+The loop starts at {\tt \$i=0} and ends when {\tt i=\$word.chars -1}.  Each
+time through the loop, it compares the $i$th character (which you can
+think of as the current character) to the $i+1$th character (which you
+can think of as the next).
+
+If the next character is less than (alphabetically before) the current
+one, then we have discovered a break in the abecedarian trend, and
+we return {\tt False}.
+
+If we get to the end of the loop without finding a fault, then the
+word passes the test.  To convince yourself that the loop ends
+correctly, consider an example like \verb"'flossy'".  The
+length of the word is 6, so
+the last time the loop runs is when \verb'$i' is 4, which is the
+index of the second-to-last character.  On the last iteration,
+it compares the second-to-last character (the second ``s'') to 
+the last (the ``y''), which is what we want.
+
+\subsection{Another Example of Reduction to a Previously Solved Problem}
+
+\index{palindrome}
+\label{palindrome_2}
+Here is a version of \verb"is_palindrome" (see
+Exercise~\ref{palindrome}) that uses two indices; one starts at the
+beginning and goes up, while the other starts at the end and goes down:		
+
+\begin{verbatim}
+sub one-char (Str $string, $idx) {
+    return substr $string, $idx, 1;
+}
+sub is-palindrome (Str $word) {
+    my $i = 0;
+    my $j = $word.chars - 1;
+
+    while $i < $j {
+        return false if substr one-char, $i ne one-char $word, $j;
+        $i++;
+        $j--;
+    }
+    return True;
+}
+\end{verbatim}
+
+Or we could reduce to a previously solved
+problem and write:
+\index{reduction to a previously solved problem}
+\index{development plan!reduction}
+
+\begin{verbatim}
+sub is-palindrome (Str $word) {
+    return is-reverse($word, $word)
+\end{verbatim}
+%
+using \verb"is-reverse" from Section~\ref{isreverse} (but
+you should probably choose the corrected version of the 
+{\tt is-reversed} subroutine given in the appendix: 
+see Subsection~\ref{sol_isreverse}).
+
+
+\section{Debugging}
+\index{debugging}
+\index{testing!is hard}
+\index{program!testing}
+
+Testing programs is hard.  The functions in this chapter are
+relatively easy to test because you can check the results by hand.
+Even so, it is somewhere between difficult and impossible to choose a
+set of words that test for all possible errors.
+
+Taking \verb"has_no_e" as an example, there are two obvious
+cases to check: words that have an ``e'' should return {\tt False}, and
+words that don't should return {\tt True}.  You should have no
+trouble coming up with one of each.
+
+Within each case, there are some less obvious subcases.  Among the
+words that have an ``e'', you should test words with an ``e'' at the
+beginning, the end, and somewhere in the middle.  You should test long
+words, short words, and very short words, like an empty string.  The
+empty string is an example of a {\bf special case}, which is one of
+the nonobvious cases where errors often lurk.
+\index{special case}
+
+In addition to the test cases you generate, you can also test
+your program with a word list like \emph{words.txt}.  By scanning
+the output, you might be able to catch errors, but be careful:
+you might catch one kind of error (words that should not be
+included, but are) and not another (words that should be included,
+but aren't).
+
+In general, testing can help you find bugs, but it is not easy to
+generate a good set of test cases, and even if you do, you can't
+be sure your program is correct.
+
+According to a legendary computer scientist:
+\index{testing!and absence of bugs}
+
+\begin{quote}
+Program testing can be used to show the presence of bugs, 
+but never to show their absence!
+
+--- Edsger W. Dijkstra
+\end{quote}
+\index{Dijkstra, Edsger}
+
+
+\section{Glossary}
+
+\begin{description}
+
+\item[File object] A value that represents an open file.
+\index{file object}
+\index{object!file}
+
+\item[Reduction to a previously solved problem] A way of solving a
+  problem by expressing it as an instance of a previously solved
+  problem.
+  \index{reduction to a previously solved problem}
+  \index{development plan!reduction}
+
+\item[Special case] A test case that is atypical or nonobvious
+(and less likely to be handled correctly). The expressions   
+\emph{edge case} and \emph{corner case} convey more or less 
+the same idea.
+\index{special case}
+\index{edge case}
+\index{corner case}
+
+\end{description}
+
+
+\section{Exercises}
+
+\begin{exercise}
+\index{Car Talk}
+\index{Puzzler}
+\index{double letters}
+\label{cartalk}
+
+This question is based on a Puzzler that was broadcast on the radio
+program {\em Car Talk} 
+(\url{http://www.cartalk.com/content/puzzlers}):
+
+\begin{quote}
+Give me a word with three consecutive double letters. I'll give you a
+couple of words that almost qualify, but don't. For example, the word
+committee, c-o-m-m-i-t-t-e-e. It would be great except for the ``i'' that
+sneaks in there. Or Mississippi: M-i-s-s-i-s-s-i-p-p-i. If you could
+take out those i's it would work. But there is a word that has three
+consecutive pairs of letters and to the best of my knowledge this may
+be the only word. Of course there are probably 500 more but I can only
+think of one. What is the word?
+\end{quote}
+
+Write a program to find it.
+
+Solution: \ref{sol_cartalk}.
+
+\end{exercise}
+
+
+\begin{exercise}
+Here's another {\em Car Talk}
+Puzzler (\url{http://www.cartalk.com/content/puzzlers}):
+\label{cartalk2}
+\index{Car Talk}
+\index{Puzzler}
+\index{odometer}
+\index{palindrome}
+
+\begin{quote}
+``I was driving on the highway the other day and I happened to
+notice my odometer. Like most odometers, it shows six digits,
+in whole miles only. So, if my car had 300,000
+miles, for example, I'd see 3-0-0-0-0-0.
+
+``Now, what I saw that day was very interesting. I noticed that the
+last 4 digits were palindromic; that is, they read the same forward as
+backward. For example, 5-4-4-5 is a palindrome, so my odometer
+could have read 3-1-5-4-4-5.
+
+``One mile later, the last 5 numbers were palindromic. For example, it
+could have read 3-6-5-4-5-6.  One mile after that, the middle 4 out of
+6 numbers were palindromic.  And you ready for this? One mile later,
+all 6 were palindromic!
+
+``The question is, what was on the odometer when I first looked?''
+\end{quote}
+
+Write a program that tests all the six-digit numbers and prints
+any numbers that satisfy these requirements.
+  
+Solution: \ref{sol_cartalk2}.
+
+\end{exercise}
+
+
+\begin{exercise}
+Here's another {\em Car Talk} Puzzler you can solve with a
+search (\url{http://www.cartalk.com/content/puzzlers}):
+\index{Car Talk}
+\index{Puzzler}
+\index{palindrome}
+\label{cartalk3}
+
+\begin{quote}
+Recently I had a visit with my mom and we realized that
+the two digits that make up my age when reversed resulted in her
+age. For example, if she's 73, I'm 37. We wondered how often this has
+happened over the years but we got sidetracked with other topics and
+we never came up with an answer.
+
+When I got home I figured out that the digits of our ages have been
+reversible six times so far. I also figured out that if we're lucky it
+would happen again in a few years, and if we're really lucky it would
+happen one more time after that. In other words, it would have
+happened 8 times over all. So the question is, how old am I now?
+
+\end{quote}
+
+Write a Perl program that searches for solutions to this Puzzler.
+Hint: you might find the string formatting method 
+{\tt sprintf} useful.
+\index{sprintf function}
+
+Solution: \ref{sol_cartalk3}.
+
+\end{exercise}
+

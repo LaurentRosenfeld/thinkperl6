@@ -187,11 +187,11 @@ circle circumference to diameter ratio:
 > my $φ = (5 ** .5 + 1)/2;       # golden ratio
 1.61803398874989
 > say 'Variable $φ = ', $φ;
-variable $φ = 1.61803398874989
+Variable $φ = 1.61803398874989
 > my $π = 4 * atan 1; 
 3.14159265358979
 > # you could also use the pi or π built-in constant:
-> pi
+> say pi
 3.14159265358979
 \end{verbatim}
 
@@ -209,9 +209,9 @@ might make them slightly easier to read: a dash \verb'-' is
 valid in variable names provided it is immediately followed by an 
 alphabetical character and preceded by an alphanumerical character. 
 For example, \verb"$double-click" or \verb"$la-niña" are legitimate 
-variable names. Similarly, you can use an apostrophe \verb"'" (or single 
-quote) between letters, so \verb"$isn't" or \verb"$o'brien's-age" 
-are valid identifiers.
+variable names. Similarly, you can use an apostrophe \verb"'" 
+(a.k.a. single quote) between letters, so \verb"$isn't" or 
+\verb"$o'brien's-age" are valid identifiers.
 \index{dash}
 \index{apostrophe}
 \index{single quote}
@@ -245,7 +245,7 @@ at <unknown file>:1
 If you've ever used another programming language and stumbled 
 across a terse message such as {\tt"SyntaxError: invalid syntax"}, 
 you will notice that the Perl designers have made quite a bit 
-of effort to provide detailed, useful,  and meaningful error 
+of effort to provide detailed, useful, and meaningful error 
 messages. 
 \index{error message}
 
