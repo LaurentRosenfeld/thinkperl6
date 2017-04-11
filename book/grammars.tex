@@ -1,0 +1,1565 @@
+
+
+
+\chapter{Regexes and Grammars}
+\label{regex_grammars}
+\index{regex}
+\index{regular expression}
+\index{grammar}
+
+Regular expressions or regexes were introduced in
+Sections~\ref{regex} to \ref{substitutions}. You might want to review
+those sections before reading this chapter if you don't
+remember much about regexes. You don't need to remember the details of
+everything we covered earlier and we will explain again briefly
+specific parts of the functionality that we will be using, but you are
+expected to understand generally how regexes work.
+
+\section{A Brief Refresher}
+
+\index{pattern}
+Regexes, as we have studied 
+them so far, are about string exploration using patterns. 
+A pattern is a sequence of (often special) characters that 
+is supposed to describe a string or part of a string. A 
+pattern matches a string if a correspondence can be found 
+between the pattern and the string. 
+
+For example, the 
+following code snippet searches the string for the letter 
+``a'', followed by any number (but at least one) of letters 
+``b'' or ``c'', followed by zero or more digits followed by
+a ``B'' or a ``C'':
+
+\begin{verbatim}
+my $str = "foo13abbccbcbcbb42Cbar";
+say ~$/ if $str ~~ /a <[bc]>+ (\d*) [B|C]/;  # -> abbccbcbcbb42C
+say ~$0;                                     # -> 42
+\end{verbatim}
+
+\index{smart match operator}
+\index{operator!smart match}
+This code uses the \verb'~~' smart match operator to 
+check whether the \verb'$str' string matches the 
+\verb'/a <[bc]>+ (\d*) [B|C]/' pattern. Remember that 
+spaces are usually not significant in a regex pattern 
+(unless specified otherwise).
+\index{pattern}
+
+The pattern is made of the following components:
+\begin{itemize}
+
+\item \verb'a': a literal match of letter ``a''
+
+\index{character class}
+\item \verb'<[bc]>+': the \verb'<[bc]>' is a character class 
+meaning letter ``b'' or ``c''; the \verb'+' quantifier 
+says characters matching the character class ``b'' or ``c'' 
+can be repeated one or more times
+
+\index{quantifier}
+\index{capture!regex}
+\item \verb'(\d*)': the \verb'\d' atom is a digit character 
+class, the \verb'*' quantifier means 0 or more occurrences 
+of the previous atom, and the enclosing parentheses request 
+a capture of these digits (if any) into the \verb'$0' 
+variable (a special variable that is really a shortcut 
+for \verb'$/[0]')
+
+\index{alternation}
+\item \verb'[B|C]': \verb'B|C' is an alternation (either 
+a ``B'' or a ``C''), and the square brackets regroup this 
+alternation into one subpattern (and also enable proper 
+precedence).
+\index{subpattern}
+
+\end{itemize}
+
+\index{match object}
+If the match is successful (as is the case in this example), 
+the result is stored into the \emph{match object}, \verb'$/'.
+Printing \verb'~$/' displays a stringified version of the 
+match object. And printing \verb'$0' (or \verb'$/[0]') 
+displays the capture (part of the match that is between 
+parentheses, in this case the number ``42'').
+\index{capture}
+\index{regex!capture}
+\index{match object}
+
+\index{lexing}
+\index{parsing}
+\index{lexical analysis}
+\index{grammatical analysis}
+This is what might be called low-level matching: pattern 
+recognition is done mostly at the individual character level.
+Perl~6 offers ways to group and name regex patterns so that 
+these individual patterns can then be used as building 
+blocks for higher level matching: recognizing words and 
+sequences of words (rather than just characters), for the 
+purpose of performing what is called lexical analysis 
+(or {\bf lexing}) and grammatical analysis (or {\bf parsing}) 
+on a piece of text. 
+
+\index{Perl 6 grammar}
+This chapter is mostly devoted to this higher type 
+of matching, leading to the creation of full-fledged grammars 
+that can analyze structured text such as XML or HTML texts, 
+JSON or YAML documents, or even computer programs: Perl~6 
+programs are actually parsed using a Perl~6 grammar written 
+in Perl~6.
+
+\index{grammar}
+Grammars are a very important topic in computer science, 
+but, obviously, most programmers don't commonly write 
+full-fledged grammars for parsing programming languages. 
+However, writing a simple grammar and a simple parser 
+might be, or perhaps should be, a much more common task. 
+
+Quite often, people spend a lot of effort at deciphering a 
+simple configuration file with low-level techniques, whereas 
+writing a simple parser might be a lot easier and much more 
+efficient. Perl~6 offers all the tools to do that 
+very easily.
+\index{configuration file}
+
+\index{domain-specific language (DSL)}
+\index{DSL (domain-specific language)}
+\index{sub-language}
+\index{slang}
+
+Sometimes, you also need to develop a domain-specific 
+language (DSL), i.e., a usually relatively small sublanguage 
+(a.k.a. \emph{slang}) adapted to a specific field of 
+knowledge (scientific, engineering, business, art, or other) 
+with its own conventions, symbols, operators, and so on. 
+With a grammar and Perl's ability to create its own operators, 
+you can often express specialized knowledge within the 
+terminology framework of subject-matter experts.
+
+\section{Declarative Programming}
+
+\index{declarative programming}
+\index{programming!declarative}
+Both regexes and grammars are examples of yet another programming 
+paradigm that we haven't really explored so far: {\bf declarative 
+programming}. This is a programming model in which, contrary 
+to ordinary imperative or procedural programming, you don't 
+state how to do something and don't choose your control flow. 
+Rather, you specify a set of definitions, rules, properties, 
+and possibly some constraints and actions, and let the program 
+apply those to derive some new information about the input 
+data. 
+
+\index{programming!declarative}
+\index{programming!logic}
+\index{programming!functional}
+\index{artificial intelligence}
+\index{database query language}
+\index{compilation}
+\index{Yacc}
+\index{Bison}
+\index{makefile}
+
+This form of programming is widely used in logic programming 
+(e.g., Prolog), artificial intelligence, expert systems, 
+data analysis, database query languages (e.g., SQL), text and 
+source code recognition (e.g., Lex and Flex), program 
+compilation (e.g., Yacc or Bison), configuration management, 
+makefiles, and also in some ways functional programming.
+
+
+
+\section{Captures}
+
+\index{capturing}
+As we noted in the regex examples at the beginning of this 
+chapter, round parentheses not only group things together, 
+but also {\bf capture} data: they make the string matched 
+by the subpattern within the parentheses available as a 
+special variable:
+\index{subpattern}
+
+\begin{verbatim}
+my $str =  'number 42';
+say "Number is $0" if $str ~~ /number \s+ (\d+) /;  # -> Number is 42
+\end{verbatim}
+%
+
+\index{numbered capture}
+\index{capture!numbered}
+Here, the pattern matched the \verb'$str' string, and the 
+part of the pattern within parentheses was captured in 
+the \verb'$0' special variable. Where there are several 
+parenthesized groups, they are captured in variables 
+named \verb'$0', \verb'$1',  \verb'$2', etc. (from 
+left to right):
+
+\begin{verbatim}
+say "$0 $1 $2" if "abcde" ~~ /(a) b (c) d (e)/;       # -> a c e
+\end{verbatim}
+%
+
+This is fine for simple captures, but the numbering of 
+captures can become tedious if there are many captures and 
+somewhat complicated when there are nested parentheses in 
+the pattern:
+
+\begin{verbatim}
+if 'abc' ~~ / ( a (.) (.) ) / {
+    say "Outside: $0";                   # Outside: abc
+    say "Inside: $0[0] and $0[1]";       # Inside: b and c
+}
+\end{verbatim}
+
+When it gets complicated, it is often better to use another 
+feature called \emph{named captures}. The standard way to 
+name a capture is as follows:
+\index{named!capture}
+\index{capture!named}
+
+\begin{verbatim}
+if 'abc;%' ~~ / $<capture_name> = \w+ / {
+    say ~$<capture_name>;                # abc
+}
+\end{verbatim} 
+
+The use of the named capture, \verb'$<capture_name>', 
+is a shorthand for accessing the \verb'$/' match object as 
+a hash, in other words: \verb"$/{ 'capture_name' }" or 
+\verb'$/<capture_name>'.
+\index{match object}
+
+Named captures can be nested using regular capture group syntax:
+
+\begin{verbatim}
+if 'abc' ~~ / $<overall>=( a $<part1>=(.) $<part2>=(.) ) / {
+    say "Overall: $<overall>";           # Overall: abc
+    say "Part 1: $<overall><part1>";     # Part 1: b
+    say "Part 2: $<overall><part2>";     # Part 2: c
+}
+\end{verbatim} 
+
+\index{match object}
+Assigning the match object to a hash gives you easy programmatic 
+access to all named captures:
+
+\begin{verbatim}
+if 'abc' ~~ / $<overall>=( a $<part1>=(.) $<part2>=(.) ) / {
+    my %capture = $/.hash;    
+    say ~%capture<overall>;              # -> abc
+    for kv %capture<overall> -> $key, $val {
+        say $key, " ", ~$val;            # -> part2 c \n part1 b
+    }
+}
+\end{verbatim} 
+
+But you might as well do the same thing directly on the 
+match object without having to perform an extra hash 
+assignment:
+
+\begin{verbatim}
+if 'abc' ~~ / $<overall>=( a $<part1>=(.) $<part2>=(.) ) / {
+     say "Overall: $<overall>";          # -> Overall: abc
+    for kv %<overall> -> $key, $val {
+        say $key, " ", ~$val;            # -> part2 c \n part1 b
+    }
+}
+\end{verbatim}
+
+Remember that, in the above code, \verb'$<overall>' is 
+really a shortcut for  \verb'$/<overall>', i.e., for a 
+hash type of access to the \verb'$/' match object.
+
+There is, however, a more convenient way to get named 
+captures which is discussed in the next section.
+
+\section{Named Rules (a.k.a. Subrules)}
+\label{subrules}
+\index{subrule}
+\index{named!rule}
+\index{named!regex}
+\index{named!token}
+
+It is possible to store pieces of regexes into \emph{named rules}. The following example uses a named regex, which 
+is one of the kinds of named rules, to match a text line:
+
+\begin{verbatim}
+my regex line { \N* \n }  # any number of characters other 
+                          # than new line, followed by 1 new line
+if "abc\ndef" ~~ /<line> def/ {
+    say "First line: ", $<line>.chomp;      # First line: abc
+}
+\end{verbatim} 
+
+Notice that the syntax with a block of code is akin 
+to a subroutine or method definition. This is not a 
+coincidence; we will see that named rules are very 
+similar to methods. Notably, rules can call 
+each other (or even sometimes call themselves 
+recursively) just like methods and subroutines, and we will see 
+that this is a very powerful and expressive feature.
+\index{recursive rules}
+
+\index{named!regex}
+A named regex can be declared with 
+\verb'my regex name { regex body }', and called with 
+{\tt <name>}. 
+
+As you can see in the example above, a successful named 
+regex creates a named capture with the same name. If you 
+need a different name for the capture, you can do this 
+with the syntax {\tt <capturename=regexname>}. In this 
+example, we call the same named regex twice and, 
+for convenience, use a different name to distinguish 
+the two captures:
+\index{named!capture}
+
+\begin{verbatim}
+my regex line { \N* \n }
+if "abc\ndef\n" ~~ / <first=line> <second=line> / {
+    say "First line: ", $<first>.chomp;   # -> First line: abc
+    say "Second line: ", $<second>.chomp; # -> Second line: def
+    print $_.chomp for $<line>.list;      # -> abc  def
+}
+\end{verbatim}
+
+Here, we have used {\tt chomp} method calls to remove 
+the new line characters from the captures. There is in 
+fact a way to match on the new line character but exclude 
+it from the capture:
+\begin{verbatim}
+my regex line { \N* )> \n }
+if "abc\ndef\n" ~~ / <first=line> <second=line> / {
+    say "First line: ", ~$<first>;       # -> First line: abc
+    say "Second line: ", ~$<second>;     # -> Second line: def
+    print $<line>.list;                  # -> abc  def
+}
+\end{verbatim}
+
+This relatively little-known token, "\verb')>'," marks 
+the endpoint of the match's overall capture. Anything 
+after it will participate to the match but will not 
+be captured by the named regex. Similarly, the "\verb'<)'" 
+token indicates the start of the capture.
+
+Named regexes are only one form (and probably not the 
+most common) of the named rules, which 
+come in three main flavors:
+\begin{itemize}
+\item Named regex, in which the regex behaves like ordinary 
+regexes
+\index{ratchet}
+\index{adverb!:ratchet}
+\index{backtracking}
+\index{token}
+\index{named!regex}
+\item Named tokens, in which the regex has an implicit 
+{\tt :ratchet} adverb, which means that there is no 
+backtracking
+\index{named!token}
+\index{ratchet}
+\index{adverb!:ratchet}
+\index{backtracking}
+\index{sigspace}
+\index{adverb!:sigspace}
+\index{named!rule}
+\item Named rules, in which the regex has an implicit 
+{\tt :ratchet} adverb, just as named tokens, and also 
+an implicit {\tt :sigspace} adverb, which means that 
+whitespace within the pattern (or, more specifically, 
+between word characters) is not ignored
+\end{itemize}
+
+In the two examples above, we did not need the regexes 
+to backtrack. We could (and probably should) have used 
+a named token instead of a named regex:
+
+\begin{verbatim}
+my token line { \N* \n }
+if "abc\ndef" ~~ /<line> def/ {
+    say "First line: ", $<line>.chomp;    # First line: abc
+}
+\end{verbatim} 
+
+But, for a token to match, we would have to remove the 
+space from \emph{within the pattern}:
+
+\begin{verbatim}
+my rule line { \N*\n }
+if "abc\ndef" ~~ /<line> def/ {
+    say "First line: ", $<line>.chomp;    # First line: abc
+}
+\end{verbatim} 
+
+Collectively, these three types of named rules are usually 
+referred to as \emph{rules}, independently of the specific 
+keyword used for their definition.
+\index{rule}
+
+Remember the various regexes we experimented for 
+extracting dates from a string in 
+Subsection~\ref{extracting_dates} 
+(p.~\pageref{extracting_dates})? The last example 
+used subpatterns as building blocks for constructing 
+the full pattern. We could now rewrite it, with the 
+added feature of recognizing multiple date formats, as 
+follows:
+\index{date format}
+\index{subpattern}
+
+\index{matching a date}
+\begin{verbatim}
+my $string = "Christmas : 2016-12-25.";                                         
+my token year { \d ** 4 }                                        
+my token month {   
+    1 <[0..2]>                            # 10 to 12                     
+    || 0 <[1..9]>                         # 01 to 09                     
+};
+my token day { (\d ** 2) <?{1 <= $0 <= 31 }> }  
+my token sep { '/' || '-' } 
+my rule date {  <year> (<sep>) <month> $0 <day> 
+                || <day> (<sep>) <month> $0 <year> 
+                || <month>\s<day>',' <year>
+}                         
+
+if $string ~~ /<date>/ {
+    say ~$/;                              # -> 2016-12-25
+    say "Day\t= "   , ~$/<date><day>;     # -> 25
+    say "Month\t= " , ~$/<date><month>;   # -> 12
+    say "Year\t= "  , ~$/<date><year>;    # -> 2016
+}          
+\end{verbatim} 
+
+The first four named tokens define the basic building 
+blocks for matching the year, the month, the day, and 
+possible separators. Then, the {\tt date}  
+named rule uses these building blocks to define an 
+alternation between three possible date formats.
+\index{token}
+\index{rule}
+
+\index{date!validation}
+This code checks that the day in the month is between 0 and 31 
+and that the month is between 01 and 12, and this is 
+probably sufficient to recognize dates in a 
+text in most cases, but this would recognize ``2016-11-31'' as a date, 
+although November only has 30~days. We may want to be a 
+little bit stricter about valid dates and prevent that
+by adding a code assertion to the {\tt date} named rule:
+\index{code assertion}
+\index{assertion!code}
+
+\begin{verbatim}
+my rule date { [    <year> (<sep>) <month> $0 <day> 
+                 || <day> (<sep>) <month> $0 <year> 
+                 || <month>\s<day>',' <year>
+               ] <!{ $<day> > 30 and $<month> ==  2|4|6|9|11}>
+}                         
+\end{verbatim}
+
+
+This is better, but we can still match an invalid date 
+such as ``2016-02-30''. 
+
+\begin{exercise}
+\label{february_rule}
+%
+As an exercise, change the code 
+assertion to reject a ``Feb. 30'' date. If you feel 
+courageous, you might even want to check the number of 
+days in February depending on whether the date occurs in 
+a leap year. You may also want to try to define and test 
+other date formats. Solution: \ref{sol_february_rule}
+\end{exercise}
+\index{leap year}
+\index{February!number of days}
+\index{date format}
+
+Rules can (and usually should) be grouped in 
+grammars; that's in fact what they have been designed 
+for.
+
+\section{Grammars}
+\index{grammar}
+
+Grammars are a powerful tool used to analyze textual data 
+and often to return data structures that have been 
+created by interpreting that text.
+
+For example, any Perl~6 program is parsed and executed 
+using a Perl~6 grammar written in Perl~6, and you could write a grammar 
+for parsing (almost) any other programming language. 
+To tell the truth, programmers rarely 
+write grammars for parsing programming languages. But 
+grammars are very useful for performing many tasks 
+that are much more common than parsing programs.
+
+\index{parsing!HTML}
+\index{parsing!XML}
+\index{HTML parsing}
+\index{XML parsing}
+
+If you ever tried to use regexes for analyzing a piece 
+of HTML (or XML) text\footnote{Don't try to do it. Now, 
+I warned you: just don't do it.}, you 
+probably found out that this is quickly becoming next 
+to impossible, except perhaps for the most simple 
+HTML data. For analyzing any piece of such data, you 
+need an actual parser which, in turn, will usually be 
+based on an underlying grammar.
+
+If you didn't like grammar in school, don't let that 
+scare you off grammars. Perl~6 grammars are nothing complicated; 
+they just allow you to group named rules, just as classes 
+allow you to group methods of regular code.
+
+\index{namespace}
+\index{parse method}
+\index{fileparse method}
+\index{grammar!methods}
+\index{actions!class}
+A grammar creates a namespace and is introduced with the 
+keyword {\tt grammar}. It usually groups a number of 
+named rules, in the same way a class groups 
+a number of methods. A grammar is actually a class that 
+inherits from the {\tt Grammar} superclass, which provides 
+methods such as {\tt parse} to analyze a string and 
+{\tt .parsefile} to analyze a file. Moreover, you can 
+actually write some methods in a grammar, and even import 
+some roles. And, as we shall see, grammars are often 
+associated with some {\bf actions classes} or 
+{\bf actions objects}.
+
+\index{TOP rule}
+\index{parsing}
+Unless told otherwise, the parsing methods will look for 
+a default rule named ``TOP'' (which may be a named regex, 
+token, or rule) to start the parsing. The date parsing rules 
+used above might be assembled into a grammar as follows:
+
+\index{grammar!date}
+\label{dategrammar}
+\begin{verbatim}
+grammar My-date {
+    rule TOP { \s*? 
+               [    <year> (<sep>) <month> $0 <day>
+                 || <day> (<sep>) <month> $0 <year> 
+                 || <month>\s<day>',' <year>                     
+               ] \s* 
+               <!{ ($<day> > 30 and $<month> ==  2|4|6|9|11)}>  
+             }
+    token year  { \d ** 4 }                                        
+    token month {  1 <[0..2]> || 0 <[1..9]> }                
+    token day   { (\d ** 2) <?{1 <= $0 <= 31 }> }  
+    token sep   { '/' || '-' } 
+}                         
+
+for " 2016/12/25 ", " 2016-02-25 ", " 31/04/2016 " -> $string {
+	my $matched = My-date.parse($string);
+	say ~$matched if defined $matched;
+}
+\end{verbatim}
+
+This will print out:
+\begin{verbatim}
+ 2016/12/25
+ 2016-02-25
+\end{verbatim}
+
+\index{code assertion}
+The code assertion within the ``TOP'' rule prevents invalid 
+dates such as ``31/04/2016'' from being matched; you would 
+need to add some code for handling the end of February dates,
+as we did in the solution to the previous exercise (see 
+Subsection~\ref{sol_february_rule}) if this is important. You may 
+want to do it as an exercise.
+
+Besides that, this code is not very different from our 
+earlier code, but there are a few changes that are 
+significant.
+
+\index{namespace}
+\index{lexical scope}
+\index{my!declarator}
+
+I renamed the {\tt date} rule as {\tt TOP} because this 
+is the default name searched by {\tt parse} for the top-level 
+rule. A grammar creates its own namespace and 
+lexical scope, and I no longer need to declare the rules 
+with the {\tt my} declarator (which is required for
+rules declared outside of a grammar). 
+\index{grammar}
+
+Within a grammar, the order in which the rules are 
+defined is generally not relevant, so that I could define 
+the {\tt TOP} rule first, even though it uses tokens 
+that are defined afterwards (which again would have not 
+been possible with rules used outside a grammar). This is 
+important because, within a grammar, you can have many rules 
+that call each other (or rules that call themselves 
+recursively), which would be unpractical if the order of 
+the rule definitions mattered.
+\index{recursive rules}
+
+
+\index{parse method}
+\index{subparse method}
+If you're parsing the input string with the {\tt .parse} method,
+the {\tt TOP} rule is automatically anchored to the start and end 
+of the string, which means that the grammar has to match 
+the whole string to be successful. This is why we had to 
+add patterns for spaces at the beginning and at the end of 
+our {\tt TOP} rule to match our strings which have some 
+spaces before and after the date itself. There is another 
+method, \emph'.subparse', which does not have to reach the 
+end of the string to be successful, but we would still need to 
+have the space pattern at the beginning of the rule.
+
+\section{Grammar Inheritance}
+\index{inheritance!grammar}
+\index{grammar!inheritance}
+\index{grammar!Message}
+
+A grammar can inherit from another grammar, just as a 
+class can inherit from another class.
+
+Consider this very simple (almost simplistic) grammar 
+for parsing a mail message:
+
+\begin{verbatim}
+grammar Message {
+    rule  TOP    { <greet> $<body>=<line>+? <end> }
+    rule greet    { [Hi||Hello||Hey] $<to>=\S+? ',' }
+    rule end      { Later dude ',' $<from>=.+ }
+    token line    { \N* \n}
+}
+\end{verbatim}
+
+We can test it with the following code:
+
+\begin{verbatim}
+my $msg = "Hello Tom,
+I hope you're well and that your car is now repaired.
+Later dude, Liz";
+
+my $matched = Message.parse($msg);
+if defined $matched { 
+    say "Greeting \t= ", ~$matched<greet>.chomp;
+    say "Addressee\t= $matched<greet><to>";
+    say "Author   \t= $matched<end><from>";
+    say "Content  \t= $matched<body>";
+}
+\end{verbatim}
+
+This will print out the following:
+
+\begin{verbatim}
+Greeting        = Hello Tom,
+Addressee       = Tom
+Author          = Liz
+Content         = I hope you're well and that your car is now repaired.
+\end{verbatim}
+
+Suppose now that we want a similar grammar for parsing 
+a more formal message and we figure out that we could 
+reuse part of the {\tt Message} grammar. We can have our 
+new child grammar inherit from the existing parent:
+
+\index{grammar!Message}
+\index{grammar!FormalMessage}
+\begin{verbatim}
+grammar FormalMessage is Message {
+    rule greet { [Dear] $<to>=\S+? ',' }
+    rule end { [Yours sincerely|Best regards] ',' $<from>=.+ }
+}
+\end{verbatim}
+
+The {\tt is Message} trait in the header tells Perl that 
+{\tt FormalMessage} should inherit from the {\tt Message} grammar. 
+Only two rules, {\tt greet} and {\tt end}, need to be 
+redefined; the others (the {\tt TOP} rule 
+and the {\tt line} token) will be inherited from the 
+{\tt Message} grammar.
+\index{grammar inheritance}
+
+Let's try some code to run it:
+
+\begin{verbatim}
+my $formal_msg = "Dear Thomas,
+enclosed is our invoice for June 2016.
+Best regards, Elizabeth.";
+my $matched2 = FormalMessage.parse($formal_msg);
+if defined $matched2 { 
+    say "Greeting \t= ", ~$matched2<greet>.chomp;
+    say "Addressee\t= $matched2<greet><to>";
+    say "Author   \t= $matched2<end><from>";
+    say "Content  \t= $matched2<body>";
+}
+\end{verbatim}
+
+This will print:
+
+\begin{verbatim}
+Greeting        = Dear Thomas,
+Addressee       = Thomas
+Author          = Elizabeth.
+Content         = enclosed is our invoice for June 2016.
+\end{verbatim}
+
+\section{Actions Objects}
+
+\index{actions!object}
+\index{actions!class}
+\index{action!method}
+\index{reduction method}
+\index{parse tree}
+\index{match object}
+\label{actions_object}
+
+A successful grammar match gives you a parse tree of 
+match objects (objects of \verb'Match' type). This tree 
+recapitulates all the individual 
+``submatches'' that contributed to the overall match, so 
+it can quickly become very large and complicated. 
+The deeper that match tree gets, and the more branches in 
+the grammar there are, the harder it becomes to navigate the 
+match tree to get the information you are actually 
+interested in.
+
+\index{named!rule}
+\index{abstract syntax tree (AST)}
+\index{AST, abstract syntax tree}
+To avoid the need for diving deep into a match tree, you 
+can supply an actions object. After each successful match 
+of a named rule in your grammar, it tries to call a method 
+with the same name as the grammar rule, giving it the 
+newly created match object as a positional argument. 
+If no such method exists, it is skipped. (Action methods 
+are sometimes also called reduction methods.) If it exists, 
+the action method is often used to construct an \emph{abstract 
+syntax tree (AST)}, i.e., a data structure presumably 
+simpler to explore and to use than the match object tree, 
+or it can do any other thing deemed to be useful.
+
+In this somewhat simplistic example of a basic arithmetic  
+calculator, the actions don't try to build an AST, but simply 
+do the bulk of the calculation work between the various tokens
+matched by the grammar:
+\index{arithmetic calculator}
+\index{grammar!arithmetic calculator}
+
+\begin{verbatim}
+grammar ArithmGrammar {
+    token TOP { \s* <num> \s* <operation> \s* <num> \s*}
+    token operation { <[^*+/-]> }
+    token num { \d+ | \d+\.\d+ | \.\d+ }
+}
+class ArithmActions {
+    method TOP($/) {
+        given $<operation> {
+            when '*' { $/.make([*] $/<num>)}
+            when '+' { $/.make([+] $<num>)}
+            when '/' { $/.make($<num>[0] / $<num>[1]) }
+            when '-' { $/.make([-] $<num>) }
+            when '^' { $/.make($<num>[0] ** $<num>[1]) }
+        }
+    }
+}
+for '   6*7  ', '46.2 -4.2', '28+ 14.0 ',
+    '70 * .6 ', '126   /3', '6.4807407 ^ 2' -> $op {
+        my $match = ArithmGrammar.parse($op, :actions(ArithmActions));
+        say "$match\t= ", $match.made;
+}
+\end{verbatim}
+
+This prints the following output:
+
+\begin{verbatim}
+   6*7          = 42
+46.2 -4.2       = 42
+28+ 14.0        = 42
+70 * .6         = 42
+126   /3        = 42
+6.4807407 ^ 2   = 42.00000002063649
+\end{verbatim}
+
+The aim of this example is not to describe how to implement 
+a basic calculator (there are better ways to do that, we'll 
+come back to that), but only to show how actions may be 
+used in conjunction with a grammar.
+\index{arithmetic calculator}
+
+The grammar is quite simple and is looking for two decimal numbers 
+separated by an infix arithmetic operator. If there is a 
+match, \verb'$/<num>' (or \verb'$<num>' for short) will refer to an 
+array containing the two numbers (and \verb'$/<operation>' 
+will contain the arithmetic operator).
+
+\index{parse method}
+\index{actions!object}
+\index{actions!class}
+The {\tt parse} 
+method is called with an {\tt actions:} named argument, 
+the {\tt ArithmActions} class, which tells Perl which 
+actions object to use with the grammar. In this example, we 
+don't really pass an action object, but simply the name 
+of the actions class (actually a type object), 
+because there is no need to instantiate an object. In 
+other cases, for example if there was a need to initialize 
+or somehow use some object attributes, we would need to pass 
+an actual object that would have to be constructed beforehand.
+
+\index{TOP rule}
+\index{make method}
+\index{AST, abstract syntax tree}
+\index{made method}
+Whenever the {\tt TOP} rule succeeds, the {\tt TOP} method 
+of class {\tt ArithmActions} is invoked with the match 
+object for the current rule as the argument.  This method 
+calls the {\tt make} method on the match object and 
+returns the result of the actual arithmetic operation 
+between the two numbers. Then, the {\tt made} method 
+in the caller code (within the {\tt for} loop) returns 
+that result.
+
+\section{A grammar for Parsing JSON}
+\index{JSON grammar}
+\index{grammar!JSON}
+\index{parsing!JSON}
+
+JSON (\emph{JavaScript Object Notation}) is an 
+open-standard format for text data derived from 
+the object notation in the JavaScript programming language. 
+It has become one of the commonly used standards for 
+serializing data structures, which makes it possible, for 
+example, to exchange them between different platforms and 
+different programming languages, to send them over a network, 
+and to store them permanently in files on disks.
+
+\subsection{The JSON Format}
+\index{JSON!format}
+\index{JSON!object}
+\index{JSON!array}
+
+The JSON format is quite simple and is composed of two types 
+of structural entities:
+\begin{itemize}
+\item Objects or unordered lists of name-value pairs 
+(basically corresponding to hashes in Perl);
+\item Arrays, or ordered lists of values.
+\end{itemize}
+
+\index{JSON!base types}
+\index{JSON!string}
+\index{JSON!Boolean}
+\index{JSON!number}
+\index{JSON!value}
+Values can be either (recursively) objects or arrays 
+as defined just above, or basic data types, which are: 
+strings, numbers, Boolean (true or false), and \emph{null} 
+(empty value or undefined value). A string is a sequence 
+of Unicode characters between quotation marks, and numbers 
+are signed decimal numbers that may contain a fractional 
+part and may use exponential ``E'' notation.
+
+\subsection{Our JSON Sample}
+\index{JSON!sample}
+
+To illustrate the format description above and for the 
+purpose of our tests, we will use an example borrowed from 
+the Wikipedia article on JSON 
+(\url{https://en.wikipedia.org/wiki/JSON}), which is a 
+possible JSON description of a person:
+
+\begin{verbatim}
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "isAlive": true,
+  "age": 25,
+  "address": {
+    "streetAddress": "21 2nd Street",
+    "city": "New York",
+    "state": "NY",
+    "postalCode": "10021-3100"
+  },
+  "phoneNumbers": [
+    {
+      "type": "home",
+      "number": "212 555-1234"
+    },
+    {
+      "type": "office",
+      "number": "646 555-4567"
+    },
+    {
+      "type": "mobile",
+      "number": "123 456-7890"
+    }
+  ],
+  "children": [],
+  "spouse": null,  
+  "Bank-account": {
+    "credit": 2342.25
+}
+\end{verbatim}
+
+\index{JSON!number}
+Compared to the Wikipedia example, we've added a 
+\verb'Bank-account' object to provide the possibility 
+of testing JSON noninteger numbers.
+ 
+\subsection{Writing the JSON Grammar Step by Step}
+
+Let's take each of the JSON entities in turn and handle 
+them with rules.
+
+\subsubsection{Numbers}
+\index{JSON!number}
+
+The example JSON document above only has integers and decimal 
+numbers, but we need to be able to recognize numbers such 
+as ``17,'' ``-138.27,'' ``1.2e-3,'' ``.35,'' etc. We can 
+use the following token to do so:
+
+\begin{verbatim}
+token number {
+    [\+|\-]?              # optional sign
+    [ \d+ [ \. \d+ ]? ]   # integer part and optional fractional part
+      | [ \. \d+ ]        # or only a fractional part
+    [ <[eE]> [\+|\-]? \d+ ]?    # optional exponent
+}
+\end{verbatim}
+
+\subsubsection{JSON Strings}
+\index{JSON!string}
+\index{double quote}
+
+There are many possible patterns to define a string. For 
+our sample JSON document, the following rule will be 
+sufficient:
+
+\begin{verbatim}
+token string {
+    \" <[ \w \s \- ' ]>+ \" 
+}
+\end{verbatim}
+
+This will match a double-quoted sequence of alphanumeric 
+characters, spaces, dashes, and apostrophes.
+
+For a real JSON parser, a rule using a negative character 
+class excluding anything that cannot belong to a string 
+might be better, for example:
+
+\begin{verbatim}
+token string {
+    \" <-[\n " \t]>* \"
+}
+\end{verbatim}
+
+i.e., a double-quoted sequence of any characters other than 
+double quotes, newlines, and tabulations.
+
+You might want to study the JSON standards\footnote{Since 
+JSON is actually not completely standardized, I will not provide 
+a specific link; look it up and make up your mind.} to figure out 
+exactly what is accepted or forbidden in a JSON string. 
+For our purposes, the first rule above will be sufficient.
+
+\subsubsection{JSON Objects}
+\index{JSON!object}
+\index{key-value pair}
+\index{JSON!value}
+\index{curly bracket}
+
+JSON objects are lists of key-value pairs. Lists are 
+delimited by curly brackets and pairs separated by 
+commas. A key-value pair is a string followed by a colon, 
+followed by a value (to be defined later). This can be 
+defined as follows:
+
+\begin{verbatim}
+rule object     { '{'  <pairlist> '}' }
+rule pairlist   { [<pair> [',' <pair>]*] }
+rule pair       { <string> ':' <value>  }
+\end{verbatim}
+
+\index{modified quantifier}
+We can use a regex feature that we haven't seen yet, the 
+quantifier modifier, to simplify the {\tt pairlist} 
+rule. To more easily match things like comma-separated 
+values, you can tack on a \verb'%' modifier to any of 
+the regular quantifiers to specify a separator that must 
+occur between each of the matches. So, for example 
+\verb"/a+ % ','/" will match ``a'' or ``a,a'', or 
+``a,a,a'', etc.
+
+Thus, the {\tt pairlist} rule can be rewritten as follows:
+
+\begin{verbatim}
+rule pairlist   {<pair> + % \,}
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+rule pairlist   {<pair> * % \,}
+\end{verbatim}
+
+if we accept that a {\tt pairlist} may also be empty.
+
+\subsubsection{JSON Arrays}
+\index{JSON!array}
+
+Arrays are comma-separated lists of values between square 
+brackets:
+
+\begin{verbatim}
+rule array       { '[' <valueList> ']'}
+rule valueList {  <value> * % \, }
+\end{verbatim}
+
+Here, we again used the modified quantifier shown 
+just above.
+
+\subsubsection{JSON Values}
+\index{JSON!value}
+
+Values are objects, arrays, string, numbers, Booleans 
+(true or false), or \emph{null}:
+
+\begin{verbatim}
+token value { | <object> | <array> | <string> | <number> 
+              | true     | false   | null 
+    }
+\end{verbatim}
+
+\subsection{The JSON Grammar}
+\index{JSON!grammar}
+
+We have defined all the elements of the JSON grammar; we 
+only need to declare a grammar and to add a {\tt TOP} rule 
+to complete it:
+
+\begin{verbatim}
+grammar JSON-Grammar {
+    token TOP      { \s* [ <object> | <array> ] \s* }
+    rule object    { '{' \s* <pairlist> '}' \s* }
+    rule pairlist  {  <pair> * % \, }
+    rule pair      {  <string>':' <value> }
+    rule array     { '[' <valueList> ']'}
+    rule valueList {  <value> * % \, }
+    token string   {  \" <[ \w \s \- ' ]>+ \"  }
+    token number   { 
+      [\+|\-]?  
+      [ \d+ [ \. \d+ ]? ] | [ \. \d+ ]  
+      [ <[eE]> [\+|\-]? \d+ ]?
+    }
+    token value    { <object> | <array> | <string> | <number> 
+                     | true   | false   | null 
+    }
+}
+\end{verbatim}
+
+We can now test the grammar with our sample JSON string 
+and try to print the match object:
+
+\begin{verbatim}
+my $match = JSON-Grammar.parse($JSON-string);
+say ~$match if $match;
+\end{verbatim}
+\index{parse}
+
+This produces the following output:
+
+\begin{verbatim}
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "isAlive": true,
+  "age": 25,
+  "address": {
+    "streetAddress": "21 2nd Street
+    "city": "New York",
+    "state": "NY",
+    "postalCode": "10021-3100"
+  },
+  "phoneNumbers": [
+    {
+      "type": "home",
+      "number": "212 555-1234"
+    },
+    {
+      "type": "office",
+      "number": "646 555-4567"
+    },
+    {
+      "type": "mobile",
+      "number": "123 456-7890"
+    }
+  ],
+  "children": [],
+  "spouse": null,
+  "Bank-account": {
+        "credit": 2342.25
+  }
+}
+\end{verbatim}
+
+The sample JSON document has been fully matched. This 
+JSON grammar works perfectly on it, and takes less than 
+20~lines of code. If you think about it, this is 
+really powerful. Test it for yourself. Try to change 
+the grammar in various places to see if it still works. 
+You could also try to introduce errors into the JSON 
+document (for example to remove a comma between two values 
+of a list) and the match should no longer occur (or, at least, 
+should not be the same).
+
+You may object that this grammar covers only a subset 
+of JSON. This is sort of true, but not really: it is almost complete. 
+True, I would not recommend using this grammar 
+in a production environment for parsing JSON documents, 
+because it has been built only for pedagogical purposes 
+and may not comply with every single fine detail of the JSON 
+standards.
+
+Take a look at the grammar of the Perl~6 {\tt JSON::Tiny} 
+module (\url{https://github.com/moritz/json}), which can 
+parse any valid JSON document. It is not much more 
+complicated than what we have shown here (except for the use 
+of proto regexes, a topic that we haven't covered here), and 
+it is not much longer, as it contains about 35~code lines.
+
+\subsection{Adding Actions}
+\index{actions!object}
+\index{actions!class}
+\index{parse tree}
+
+The JSON grammar works fine, but printing out the tree of 
+parse objects just for our relatively small JSON document 
+will display about 300 lines of text, as 
+it provides all the details of everything that has been 
+matched, rule by rule and subpattern by subpattern. This 
+can be very useful in helping you to understand what the grammar does 
+(especially when it does not work as expected), but 
+exploring that tree to extract the data can be quite 
+tedious. You can use \emph{actions} to populate a simpler 
+tree structure (often called an abtract syntax tree) containing 
+only the information you really need. 
+\index{subpattern}
+
+\index{abstract syntax tree (AST)}
+\index{AST, abstract syntax tree}
+Let us add an actions class to build an abstract syntax tree 
+(AST):
+
+\begin{verbatim}
+class JSON-actions {
+    method TOP($/) {
+        make $/.values.[0].made;
+    };
+    method object($/) {
+        make $<pairlist>.made.hash.item;
+    }
+    method pairlist($/) {
+        make $<pair>>>.made.flat;
+    }
+    method pair($/) {
+        make $<string>.made => $<value>.made;
+    }
+    method array($/) {
+        make $<valueList>.made.item;
+    }
+    method valueList($/) {
+        make [$<value>.map(*.made)];
+    }
+    method string($/) { make ~$0 }
+    method number($/) { make +$/.Str; }
+    method value($/) { 
+        given ~$/ {
+            when "true"  {make Bool::True;}
+            when "false" {make Bool::False;}
+            when "null"  {make Any;}
+            default { make $<val>.made;}
+        }  
+   }
+}
+\end{verbatim}
+
+\index{named!capture}
+For this actions class to work, we need to make a small change 
+to the grammar. The {\tt value} method uses a {\tt val} named 
+capture to access its content; we need to add the relevant 
+named captures to the {\tt value} token:
+
+\begin{verbatim}
+token value { <val=object> | <val=array> | <val=string> 
+              | <val=number> | true | false | null
+}
+\end{verbatim}
+
+We can now call our grammar with the following syntax:
+
+\begin{verbatim}
+my $j-actions = JSON-actions.new();
+my $match = JSON-Grammar.parse($JSON-string, :actions($j-actions));
+say $match.made;
+\end{verbatim}
+
+Notice that, here, we've used an actions object rather than 
+simply the actions class, but this is just for the purpose of 
+showing how to do it; we could have used the class directly 
+as before.
+\index{actions!object}
+\index{actions!class}
+
+\index{abstract syntax tree (AST)}
+\index{AST, abstract syntax tree}
+The last statement in the above code prints out the AST. 
+We have reformatted the output to better show the 
+structure of the AST:
+
+\begin{verbatim}
+{
+    Bank-account => {
+        credit => 2342.25
+    }, 
+    address => {
+        city => New York, 
+        postalCode => 10021-3100, 
+        state => NY, 
+        streetAddress => 21 2nd Street
+    }, 
+    age => 25, 
+    children => [], 
+    firstName => John, 
+    isAlive => True, 
+    lastName => Smith, 
+    phoneNumbers => [
+        {number => 212 555-1234, type => home} 
+        {number => 646 555-4567, type => office} 
+        {number => 123 456-7890, type => mobile}
+    ], 
+    spouse => (Any)
+}
+\end{verbatim}
+
+In this case, the top structure is a hash (it could also have been 
+an array with a different JSON input string). We can now explore 
+this hash to find the data of interest to us. For example:
+\index{AST, abstract syntax tree}
+
+\begin{verbatim}
+say "Keys are: \n", $match.made.keys;
+say "\nSome values:";
+say $match.made{$_} for <firstName lastName isAlive>;
+say $match.made<address><city>;
+say "\nPhone numbers:";
+say $match.made<phoneNumbers>[$_]<type number> 
+    for 0..$match.made<phoneNumbers>.end;
+\end{verbatim}
+
+This will display the following output:
+
+\begin{verbatim}
+Keys are:
+(lastName Bank-account phoneNumbers children address age firstName spouse isAlive)
+
+Some values:
+John
+Smith
+True
+New York
+
+Phone numbers:
+(home 212 555-1234)
+(office 646 555-4567)
+(mobile 123 456-7890)
+\end{verbatim}
+
+\section{Inheritance and Mutable Grammars}
+
+\index{grammar!subclassing}
+\index{grammar!mutable}
+\index{grammar!inheritance}
+The capacity for a grammar to inherit from another one opens 
+the door to very rich possibilities in terms of 
+extending the Perl~6 language itself. It is possible, for 
+example in the context of a module or a framework, to ``subclass'' 
+the standard Perl grammar, i.e., to write a new child grammar that 
+inherits from the standard Perl grammar, but adds a new 
+feature, overloads an operator, or modifies some other syntax 
+element, and to run this program with the same Perl~6 compiler,
+but with this locally modified grammar.
+
+This means that it is actually possible to dynamically extend 
+the language for new needs, often without even changing the compiler 
+or the virtual machine. These are however advanced topics that 
+are more geared towards language gurus than to beginners. So 
+we only mention these exciting possibilities with the hope of 
+whetting your appetite and pushing you to study these further, 
+but will not dwell further on them in this book.
+\index{extending the language}
+
+\section{Debugging}
+
+Writing grammars is a lot of fun, but it can also be difficult 
+or even tedious when you start.
+\index{fun}
+
+When you started to practice programming with this book, you probably 
+made a lot of small mistakes that initially prevented your 
+programs from compiling and running, or from doing what 
+you expected. With practice, however, you hopefully gradually 
+made fewer errors and spent less time chasing bugs.
+
+When you begin to learn grammars (and to a lesser extent regexes), 
+you may feel like you are starting again at square one. Even 
+very good programmers often make silly mistakes when they start 
+writing grammars. It is a different programming paradigm, and 
+it requires a new learning phase.
+\index{grammar!debugging}
+
+\index{testing}
+In this case, small is beautiful. Start with small regexes and 
+small rules, and with small test input. Test individual regexes 
+or rules under the REPL, and add them to your code only when 
+you're confident that they do what you want.
+
+Write test cases at the same time as your code (or actually even 
+before you write the code), and make sure that you pass all the 
+relevant tests before moving on. And add new tests when you add 
+new rules.
+
+One standard debugging technique is to add print statements 
+to the code in order to figure out various information about 
+the state of the program (such as the value of variables, the 
+flow of execution of the program, etc.). You can also do that 
+with regexes and grammars.
+
+Let's take the example of the very simple grammar for 
+matching dates of Section~\ref{dategrammar} and let's suppose 
+that you have written this grammar:
+
+\begin{verbatim}
+grammar My-Date {
+    token TOP { \s* <year> '-' <month> '-' <day> }
+    token year  { \d ** 4 }                                        
+    token month {  1 <[0..2]> || 0 <[1..9]> }                
+    token day   { (\d ** 2) <?{1 <= $0 <= 31 }> }  
+}                         
+my $string = " 2016-07-31 ";
+say so My-Date.parse($string);                 # -> False
+\end{verbatim}
+
+This test fails.
+
+At this point, it has already become a bit difficult to figure 
+out why the grammar fails (unless we have thoroughly tested 
+each of the three tokens before building the grammar, but 
+let's assume for the sake of this discussion that we haven't).
+Let's try not to randomly change things here or there and see 
+if it works better; we would be likely to spend hours doing 
+that and probably not get anywhere. Let's be more methodical.
+
+Let's first test the building-block tokens, {\tt year}, 
+{\tt month}, and {\tt day}. We've seen before that 
+the {\tt parse} method looks \emph{by default} for the {\tt TOP} 
+rule in the grammar, but you can specify another rule, and 
+that's what we need here. We can test these tokens individually:
+
+\begin{verbatim}
+say so My-Date.parse("2016", :rule<year>);    # -> True
+say so My-Date.parse("07",   :rule<month>);   # -> True
+say so My-Date.parse("31",   :rule<day>);     # -> True
+\end{verbatim}
+
+These three tokens seem to work fine. At this point, you 
+might be guessing where the problem is, but let's assume 
+you don't.
+
+We need to debug the ``TOP'' token. We can just use the common 
+debugging method of printing where we are at various stages 
+of the program. You can insert a print statement block 
+in a named rule. Let's try to change the TOP token to this:
+
+\begin{verbatim}
+    token TOP { \s* <year>  { say "matched year"; }
+                '-' <month> { say "matched month";}
+                '-' <day>   { say "matched day";  }
+              }
+\end{verbatim}
+ 
+This displays the following output:
+
+\begin{verbatim}
+matched year
+matched month
+matched day
+\end{verbatim}
+
+So, even the ``TOP'' token seems to work almost to the end. At 
+this point, we should be able to figure out that we lack 
+final spacing in the ``TOP'' token. 
+
+So either we should add an optional spacing at the end of 
+the token:
+
+\begin{verbatim}
+token TOP { \s* <year> '-' <month> '-' <day> \s*}
+\end{verbatim}
+
+or change it to a rule:
+
+\begin{verbatim}
+rule TOP { \s* <year> '-' <month> '-' <day> }
+\end{verbatim}
+
+or it was possibly the test string that was wrong (because 
+it wasn't supposed to have spaces) and needed to be fixed.
+
+If you have an actions class, you can also add print statements 
+to the actions methods.
+\index{actions!class}
+
+\index{debugger}
+\index{debugger!stepping through a regex}
+Remember also that the Perl debugger (see 
+Section~\ref{perl-debugger}) can be very helpful. We 
+briefly showed in Subsection~\ref{regex-debugging} 
+(p.~\pageref{regex-debugging}) how to go step by step 
+through a regex match. Most of what has been described 
+there also applies to debugging grammars.
+
+\index{debugger!debugging grammars}
+Finally, there is a very good module, \verb'Grammar::Tracer', for 
+debugging regexes and grammars (\url{https://github.com/jnthn/grammar-debugger/}), that works with Rakudo. If you add:
+
+\begin{verbatim}
+use Grammar::Tracer;
+\end{verbatim}
+\index{Grammar::Tracer}
+
+to your program, then any grammar within the lexical scope will 
+print out debugging information about the rules which tried to 
+match, those which succeeded and those which failed.
+
+You can also use the following:
+
+\begin{verbatim}
+use Grammar::Debugger;
+\end{verbatim}
+\index{Grammar::Debugger}
+
+to do the same thing step by step. Just type ``h'' at the 
+prompt for a list of available commands.
+
+
+\section{Glossary}
+
+\begin{description}
+
+\index{grammar}
+\item[Grammar] A high level tool for performing lexical and 
+grammatical analysis of structured text. In Perl~6, 
+a grammar is more specifically a namespace containing a 
+collection of named rules aimed at this type of analysis.
+
+\index{lexing}
+\item[Lexing] Performing a lexical analysis of a source text, and especially dividing it into ``words'' or tokens.
+
+\index{parsing}
+\item[Parsing] Performing a grammatical analysis of a source text, 
+and especially assembling words or tokens into sentences or 
+expressions and statements that make some semantic sense. 
+
+\index{declarative programming}
+\index{programming!declarative}
+\item[Declarative programming] a programming model where you 
+specify definitions, rules, properties, and constraints, rather 
+than statements and instructions, and let the program derive 
+new knowledge from these definitions and rules. Regexes and 
+grammars are examples of declarative programming.
+
+\index{match object}
+\item[Match object] in Perl~6, an object (of type {\tt Match}), 
+usually noted \verb'$/', which contains (sometimes very) 
+detailed information about what was successfully matched 
+by a regex or a grammar. The \verb'$/' match object will be 
+set to {\tt Nil} if the match failed.
+
+\index{capture}
+\item[Capture] the fact that parts of the target string that 
+are matched by a regex (or a grammar) can be retrieved through 
+the use of a number of dedicated special variables.
+
+\index{rule}
+\item[Rule] in broad terms, named rules are regexes that use a 
+method syntax and are usually stored in a grammar. More specifically, 
+one category of these named rules (along with named regexes and 
+tokens).
+
+\index{AST, abstract syntax tree}
+\index{abstract syntax tree (AST)}
+\index{AST, abstract syntax tree}
+\item[Abstract syntax tree (AST):] a data structure often 
+summarizing the match object and used for further exploitation 
+of the useful data. The match object is populated automatically 
+by Perl, whereas the AST contains information deemed useful by 
+the programmer.
+
+\index{actions!class}
+\item[Actions class] a class used in conjunction with a grammar 
+to perform certain actions when a grammar rule matches 
+something in the input data. If a method with the same name 
+as a rule in the grammar exists in the actions class, it will 
+be called whenever the rule matches.
+
+\end{description}
+
+\section{Exercise: A Grammar for an Arithmetic Calculator}
+\label{calculator}
+\index{calculator}
+\index{calculator!grammar}
+\index{grammar!arithmetic calculator}
+\index{arithmetic calculator}
+
+The arithmetic calculator presented in Section~\ref{actions_object} 
+above is very simplistic. In particular, it can parse simple 
+arithmetic expressions composed of two operands separated by 
+one infix operator, but not much more than that.
+
+We would like to be able to parse more complicated arithmetic 
+expressions. The calculator should also be able to handle:
+\begin{itemize}
+\item Expressions with several different operators (among the four 
+basic arithmetic operators) and multiple operands
+\item Standard precedence rules between operators (for example,
+multiplications should be performed prior to additions)
+\index{precedence}
+\item Parentheses to override usual precedence rules
+\index{parentheses}
+\index{parentheses!overriding precedence rule}
+\end{itemize}
+
+These are a few examples of expressions the calculator should 
+parse and compute correctly:
+\index{parse}
+\begin{verbatim}
+3 + 4 + 5;
+3 + 4 * 5;   # result should be 23
+(3 + 4) * 5; # result should be 35 
+\end{verbatim}
+
+\begin{exercise}
+Your mission, \verb'[Dan|Jim]', should you choose to accept it, 
+is to write such a grammar. As usual, should you fail, the 
+Government shall deny any knowledge of your actions class.
+\index{actions!class}
+
+There are many possible ways to accomplish this; the solution 
+presented in Section~\ref{sol_calculator} is only one of them.
+\end{exercise}
+
