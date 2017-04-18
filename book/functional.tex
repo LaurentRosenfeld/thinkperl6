@@ -1,0 +1,2833 @@
+\chapter{Functional Programming in Perl}
+\label{functional programming}
+\index{functional programming}
+
+Functional programming is a programming paradigm that treats 
+computation as the evaluation of mathematical functions 
+and avoids changing-state and mutable data. It is a 
+declarative programming paradigm, which means programming 
+is done with expressions or declarations instead of 
+statements. In functional code, the output value of a function 
+depends only on the arguments that are input to the function, 
+so calling a function twice with the same argument will produce the 
+same result each time. Eliminating side effects, i.e., changes 
+in state that do not depend on the function inputs, can make 
+it much easier to understand and predict the behavior of a 
+program, which is one of the key motivations for the 
+development of functional programming.
+
+Perl is not a functional language in the sense that it  
+also uses several other programming paradigms that we have seen 
+abundantly throughout this book. It does however 
+offer extensive functional programming features and 
+capabilities, some of which have been introduced in 
+various sections of this book and will be briefly 
+reviewed here before we get further.
+\index{programming paradigm}
+
+\section{Higher-Order Functions}
+\index{higher-order function}
+
+As early as Chapter~\ref{funcchap} on functions and 
+subroutines, in Section~\ref{first_class} 
+(p.~\pageref{first_class}), we have seen that functions,  
+subroutines, and other code objects are \emph{first-class 
+objects} or \emph{first-class citizens} in Perl, which 
+means that they can be passed around as values. A Perl~6 
+function is a value you can assign to a variable or pass 
+around as an argument to another function or a return value from 
+another function.
+\index{first-class object}
+\index{object, first-class}
+\index{first-class citizen}
+\index{citizen, first-class}
+
+\subsection{A Refresher on Functions as First-Class Objects}
+\label{fco-refresher}
+
+Our initial very simple example of a higher-order function 
+was something like this:
+
+\begin{verbatim}
+sub do-twice(&code) {
+    &code(); 
+    &code();
+}
+sub greet {
+    say "Hello World!";
+}
+do-twice &greet;
+\end{verbatim}
+
+in which the {\tt greet} subroutine was passed as an 
+argument to the {\tt do-twice} subroutine, with the 
+effect of printing the greeting message twice. A 
+function that is passed as an argument to another function 
+is often called a \emph{callback function}.
+\index{callback function}
+
+\index{sigil}
+The \verb"&" sigil placed before the {\tt greet} 
+subroutine name in the argument list (as well as before 
+the {\tt code} parameter in the signature and in the 
+body of the {\tt do-twice} subroutine) tells Perl 
+that you are passing around a subroutine or some 
+other callable code object.
+% TODO: get these entries working in plastex
+\ifplastex \else
+\index{\& sigil@\texttt{\&} sigil}
+\fi
+
+In computer science, a subroutine that can take 
+another subroutine as an argument is sometimes 
+called a \emph{higher-order function}.
+\index{higher-order function}
+\index{function!higher-order}
+
+More interesting examples of higher-order function 
+are found with the {\tt reduce}, {\tt map}, and
+{\tt grep} functions studied in Section~\ref{map_filter} 
+(p.~\pageref{map_filter}), as well as the {\tt sort} 
+function (Section~\ref{sorting} and Section~\ref{advanced_sort}).
+\index{map}
+\index{reduce}
+\index{grep}
+
+Let's consider for example the task of sorting by date 
+records consisting of an identifier followed by a date 
+in the DD-MM-YYYY format, such as ``id1;13-05-2015'' 
+or ``id2;17-04-2015.'' The records need quite a bit of 
+transformation before we can compare them for the sake 
+of finding the chronological order in which they should 
+be sorted, so we might write a separate comparison 
+function:
+\index{sort}
+
+\begin{verbatim}
+sub compare ($rec1, $rec2) {
+    my $cmp1 = join ",", reverse split /<[;-]>/, $rec1;
+    my $cmp2 = join ",", reverse split /<[;-]>/, $rec2;
+    return $cmp1 cmp $cmp2;
+}   
+\end{verbatim}
+
+Each modified record is constructed by chaining three 
+functions. These lines should be read from right to left: 
+first, the input value is split into four items; these 
+items are then reversed and then joined, so that the result 
+for ``id1;13-05-2015'' is ``2015,05,13,id1,'' which is 
+adapted for a comparison with the {\tt cmp} operator. We 
+will come back soon to this form of pipeline programming 
+and others ways of performing these operations. 
+\index{cmp operator}
+\index{operator!cmp}
+\index{pipeline programming}
+
+We can now pass the {\tt compare} subroutine to the 
+{\tt sort} function:
+\begin{verbatim}
+.say for sort &compare, <id1;13-05-2015 id2;17-04-2015 
+                         id3;21-02-2016 id4;12-01-2015>;
+\end{verbatim}
+
+This displays:
+\begin{verbatim}
+id4;12-01-2015
+id2;17-04-2015
+id1;13-05-2015
+id3;21-02-2016
+\end{verbatim}
+
+Please note that this is provided as an example of callback 
+functions used with the {\tt sort} built-in function. We will 
+see at the end of the next subsection a simpler way to accomplish 
+the same type of sort using an anonymous subroutine. 
+
+\subsection{Anonymous Subroutines and Lambdas}
+\index{lambda}
+\index{anonymous subroutine}
+
+We have also seen that a subroutine does not need to 
+have a name and can be \emph{anonymous}. For example, 
+it may be stored directly in a scalar variable:
+\index{anonymous function}
+\index{function!anonymous}
+
+\begin{verbatim}
+my $greet = sub {
+    say "Hello World!";
+};
+do-twice $greet;                 # prints "Hello World" twice
+\end{verbatim}
+
+We don't even need to store the code of the anonymous function 
+in the \verb'$greet' variable; we can pass it directly as an 
+argument to the {\tt do-twice} subroutine:
+
+\begin{verbatim}
+
+do-twice(sub {say "Hello World!"} );
+\end{verbatim}
+
+Since our anonymous subroutine does not take any argument 
+and does not return a useful value, we can simplify the 
+syntax further and pass a simple anonymous code block 
+to {\tt do-twice}:
+
+\begin{verbatim}
+
+do-twice {say "Hello World!"};   # prints "Hello World" twice
+\end{verbatim}
+
+You've already seen several useful examples of anonymous 
+subroutines in this book (see Section~\ref{map_filter} 
+for explanations or details):
+\begin{itemize}
+\item With the {\tt reduce} function to compute the sum of 
+the first 20 integers:
+\index{reduce function}
+\begin{verbatim}
+
+my $sum = reduce { $^a + $^b }, 1..20; # -> 210
+\end{verbatim}
+\item With the {\tt map} function to capitalize the first 
+letter of a list of cities (using the {\tt tc} built-in):
+\index{tc function}
+\index{map function}
+\begin{verbatim}
+> .say for map {.tc}, <london paris rome washington madrid>;
+London
+Paris
+Rome
+Washington
+Madrid
+\end{verbatim}
+\item With the {\tt grep} function to generate a list of even 
+numbers by filtering out odd numbers:
+\index{grep function}
+\begin{verbatim}
+
+my @evens = grep { $_ %% 2 }, 1..17; # -> [2 4 6 8 10 12 14 16]
+\end{verbatim}
+\end{itemize} 
+
+The example with {\tt reduce} is of special interest. In 
+principle, contrary to a subroutine, you cannot easily pass 
+arguments to a code block (because it has no signature). 
+But the use of the self-declared positional parameters 
+(or placeholders) with the \verb'$^' twigil makes it 
+possible to use parameters within the block. 
+\index{placeholder}
+\index{placeholder!parameter}
+\index{twigil}
+\index{self-declared parameter}
+
+Because of this possibility, the anonymous code block becomes 
+what is commonly called a \emph{lambda} in computer science (and 
+in mathematics), i.e., a kind of nameless function. Lambda 
+calculus, a mathematical theory invented in the 1930s by 
+Alonzo Church, is the root of most of today's functional 
+programming languages.
+\index{lambda}
+\index{lambda calculus}
+\index{Church, Alonzo}
+
+Actually, the two other examples above using the \verb'$_' 
+topical variable are also lambdas. Although we haven't 
+mentioned it at the time, some other constructs we saw 
+earlier are also lambdas. In particular, consider the 
+``pointy block'' syntax used twice in the following 
+{\tt for} loops displaying the multiplication tables:
+\index{pointy block}
+\index{for loop}
+\index{multiplication tables}
+
+\begin{verbatim}
+for 1..9 -> $mult {
+    say "Multiplication table for $mult";
+    for 1..9 -> $val {
+        say "$mult * $val = ", $mult * $val;
+    }
+}
+\end{verbatim}
+
+This is another form of lambda where the ``function'' 
+parameter is defined by the pointy block loop variable.
+
+The sorting example presented in Subsection~(\ref{fco-refresher}) 
+just above may also be rewritten with an 
+anonymous code block (taking advantage of the {\tt sort} 
+syntax using a code block with a single argument described 
+in Section~\ref{advanced_sort}):
+\index{sort}
+\begin{verbatim}
+my @in = <id1;13-05-2015 id2;17-04-2015 id3;21-02-2016>;
+.say for sort { join ",", reverse split /<[;-]>/, $_ }, @in;
+\end{verbatim}
+
+Here again, the somewhat long code block passed as an 
+argument to the {\tt sort} function is a lambda.
+\index{lambda}
+
+\subsection{Closures}
+\index{closure}
+
+In computer programming, a \emph{closure} (or \emph{lexical 
+closure}) is a function that can access to variables that 
+are lexically available where the function is defined, even 
+if those variables are no longer in scope in the code section 
+where the function is called.
+\index{counter}
+
+Consider the following example:
+
+\begin{verbatim}
+sub create-counter(Int $count) {
+    my $counter = $count;
+    sub increment-count {
+        return $counter++
+    }
+    return &increment-count;
+}
+my &count-from-five = create-counter(5);
+say &count-from-five() for 1..6; # prints numbers 5 to 10
+\end{verbatim}
+
+The {\tt create-counter} subroutine initializes the 
+\verb'$counter' variable to the value of the received 
+parameter, defines the {\tt increment-count} subroutine, 
+and returns this subroutine. The main code calls 
+{\tt create-counter} to dynamically create the 
+\verb'&count-from-five' code reference (and could 
+call it many times to create other counters counting 
+from 6, 7, and so on).  Then, \verb'&count-from-five' 
+is called six times and prints out numbers between 5 
+and 10, each on its own line.
+\index{lexical scope}
+\index{scope!lexical}
+
+The magical thing here is that the \verb'$counter' variable 
+is out of scope when \verb'&count-from-five' is called, 
+but \verb'&count-from-five' can access it, return its value, 
+and increment it because \verb'$counter' was within the 
+lexical scope at the time the {\tt increment-count} was 
+defined. It is commonly said that {\tt increment-count} 
+``closes over'' the \verb'$counter' variable. 
+The {\tt increment-count} subroutine is a closure.
+
+The above example is a bit contrived and its syntax 
+somewhat awkward because we wanted to show an example 
+of a named closure ({\tt increment-count} is a named 
+subroutine). It is usually simpler and more idiomatic 
+to use anonymous closures and to rewrite the example 
+as follows:
+\index{idiomatic}
+
+\begin{verbatim}
+sub create-counter(Int $count) {
+    my $counter = $count;
+    return sub {
+        return $counter++
+    }
+}
+my &count-from-five = create-counter(5);
+say &count-from-five() for 1..6; # prints numbers 5 to 10
+\end{verbatim}
+
+You could even simplify {\tt create-counter} further 
+with implicit {\tt return} statements:
+
+\begin{verbatim}
+sub create-counter(Int $count) {
+    my $counter = $count;
+    sub { $counter++ }
+}
+\end{verbatim}
+
+but this is arguably less clear because the code's intent 
+is less explicit.
+
+The last {\tt create-fifo} example in the solution to 
+the FIFO queue exercise (Subsection~\ref{functional_queue}) 
+is another example of the same mechanism:
+
+\begin{verbatim}
+sub create-fifo {
+    my @queue;
+    return (
+        sub {return shift @queue;}, 
+        sub ($item) {push @queue, $item;}
+        ) ;
+}
+my ($fifo-get, $fifo-put) = create-fifo();
+$fifo-put($_) for 1..10;
+print " ", $fifo-get() for 1..5; # ->  1 2 3 4 5
+\end{verbatim}
+%
+\index{closure}
+\index{FIFO}
+\index{anonymous subroutine}
+
+In Perl~6, all subroutines are closures, which means that 
+all subroutines can access to lexical variable that 
+existed in the environment at the time of their definition, 
+but they don't necessarily act as closures.
+
+In fact, all code objects, even simple anonymous code 
+blocks, can act as closures, which means that they can 
+reference lexical variables from the outer scope, and this 
+is in effect what is going on with the loop variable of 
+a pointy block or in the following {\tt map} block:
+
+\begin{verbatim}
+my $multiplier = 7;
+say  map {$multiplier * $_}, 3..6; # -> (21 28 35 42)
+\end{verbatim}
+\index{map}
+
+Here the block passed to \verb'map' references the variable 
+\verb'$multiplier' from the outer scope, making the 
+block a closure.
+
+Languages without closures cannot easily provide 
+higher-order functions that are as easy to use and 
+powerful as {\tt map}.
+\index{map}
+\index{function!map}
+
+Here is yet another example of a block acting as a 
+closure for a counter implementation:
+
+\begin{verbatim}
+my &count;
+{
+    my $counter = 10;
+    &count = { say $counter++ };
+}
+&count() for 1..5;  
+\end{verbatim}
+
+This closure saves a reference to the \verb'$counter' 
+variable when the closure is created. The call to the 
+\verb'&count' code block successfully displays and 
+updates \verb'$counter', even though that variable is no
+longer in lexical scope when the block is executed.
+\index{scope!lexical}
+\index{lexical scope}
+\index{closure}
+
+\section{List Processing and Pipeline Programming}
+\index{pipe-line programming}
+
+Quite often, a computation can be expressed as a 
+series of successive transformations on a list of 
+values. Perl provides functions able to work on 
+the items of a list and apply simple actions, 
+callback functions, or code blocks to these items. 
+We have already seen and used abundantly several 
+such functions:
+\begin{itemize}
+\item {\tt map} applies a transformation to each item 
+of a list.
+\index{map} \index{function!map}
+\item {\tt grep} is a filter that keeps only the items 
+for which the function or code block associated with 
+{\tt grep} evaluates to true. 	
+\index{grep} \index{function!grep}
+\item {\tt reduce} uses each item of a list to compute 
+a single scalar value.
+\index{reduce} \index{function!reduce}
+\item {\tt sort} sorts the elements of a list in accordance 
+to the rules defined in the passed code block or 
+subroutine. 
+\index{sort} \index{function!sort}
+\end{itemize}
+
+We have discussed several examples where these functions can 
+be used together in a sort of data pipeline in which 
+the data produced by each step of the pipeline is fed 
+to the next step. For example, earlier in this chapter 
+(Subsection~\ref{fco-refresher}), we used this:
+
+\begin{verbatim}
+    my $cmp1 = join ",", reverse split /<[;-]>/, $rec1;
+\end{verbatim}
+\index{reverse} \index{function!reverse}
+\index{split} \index{function!split}
+\index{join} \index{function!join}
+
+As we said, this type of code should be read from right 
+to left (and from bottom to top if written over several 
+code lines): \verb'$rec1' is fed to {\tt split}, which 
+splits the data item into four pieces; the pieces are then 
+reversed and fed to {\tt join} to reconstruct a single 
+data item where the pieces are now in reversed order.
+
+Similarly, we could produce a list of pet animals belonging 
+to single women living in Kansas with the following code 
+chaining several methods:
+
+\begin{verbatim}
+my @single-kansas-women-pets =
+    map  {  .pets },
+    grep { !.is-married },
+    grep {  .gender eq "Female" },
+    grep {  .state eq "Kansas" },
+         @citizens;
+\end{verbatim}
+\index{map} \index{function!map}
+\index{grep} \index{function!grep}
+
+This one should be read bottom to top. It takes a list 
+of all citizens, filters those from Kansas who are female, 
+filters those who are not married, and finally generates 
+the list of pets of such persons. Note that \verb'.pets' 
+may return one animal, a list of several animals, or an 
+empty list. \verb'map' ``flattens'' the lists thus produced, 
+so the final result going into the array is a flat list of 
+animals (and not a nested list of lists).
+
+These pipelines are very powerful and expressive, and 
+can get a lot done in a few code lines.
+
+\subsection{Feed and Backward Feed Operators}
+
+In the previous examples, the pipeline steps were laid out in reverse 
+order; you may consider this inconvenient, although it is 
+easy to get used to.
+
+Perl~6 provides the \verb'==>' \emph{feed} operator 
+(sometimes called \emph{pipe} in other languages) 
+that makes it possible to write the various pipeline 
+steps in a ``more natural,'' left to right and top to bottom, order.
+\index{feed operator}
+\index{operator!feed}
+% TODO: get these entries working in plastex
+\ifplastex \else
+\index{==> feed operator@\texttt{==>} feed operator}
+\fi
+
+For example, reusing the example of sorting records 
+by dates from earlier in this chapter, you could rewrite 
+it like so:
+\index{sort}
+
+\begin{verbatim}
+"id1;13-05-2015" 
+    ==> split(/<[;-]>/) 
+    ==> reverse() 
+    ==> join(",") 
+    ==> my @out;  # @out is now: [2015,05,13,id1]
+\end{verbatim}
+
+By the way, if you're using such pipeline operations on 
+a large input, and depending on your platform 
+architecture, Perl~6 may be able to run these 
+various operations in parallel on different CPUs or cores, 
+thereby improving significantly the performance 
+of the overall process.
+
+There is also a backward feed operator, \verb'<==', 
+enabling to write the pipeline in reverse order:
+\index{backward feed operator}
+\index{operator!backward feed}
+% TODO: get these entries working in plastex
+\ifplastex \else
+\index{<== backward feed operator@\texttt{<==} backward feed operator}
+\fi
+
+\begin{verbatim}
+my $out <== join(",") 
+        <== reverse() 
+        <== split(/<[;-]>/) 
+        <== "id1;13-05-2015";
+\end{verbatim}
+
+
+\subsection{The Reduction Metaoperator}
+
+We already met this metaoperator in Section~\ref{map_filter}. 
+A metaoperator acts on other operators. Given 
+a list and an operator, the [...] {\bf reduction metaoperator} 
+applies the operator iteratively to all the values of the
+list to produce a single value.
+\index{metaoperator}
+\index{reduction}
+\index{reduction!metaoperator}
+
+For example, the following prints the sum of all the 
+elements of a list or a range:
+
+\begin{verbatim}
+say [+] 1..10;      # -> 55
+\end{verbatim}
+
+Similarly, we can write a factorial function as:
+\index{factorial!using the reduction meta-operator}
+
+\begin{verbatim}
+sub fact (Int $n where $n >= 0) {
+    return [*] 1..$n;
+}
+say fact 20;        # -> 2432902008176640000
+say fact 0;         # -> 1
+\end{verbatim}
+
+(Note that this yields the correct result even for the 
+edge case of factorial 0, which is defined mathematically 
+to be 1.)
+
+\subsection{The Hyperoperator}
+
+\index{hyperoperator}
+A hyperoperator applies the specified operator to each 
+item of a list (or two lists in parallel) and returns a 
+modified list (somewhat similarly to the {\tt map} 
+function). It uses the so-called French or German 
+quote marks, \verb'« »' (Unicode codepoints U+00AB 
+and U+00BB), but you can use their ASCII-equivalent 
+double angle brackets, \verb'<< >>', if you prefer 
+(or don't know how to enter those Unicode characters 
+with your editor).
+\index{map}
+\index{French quote marks}
+\index{German quote marks}
+
+Our first example will multiply each element of a list 
+by a given number (5):
+
+\begin{verbatim}
+my @b = 6..10;
+my @c = 5 «*» @b;
+say @c;             # prints 30 35 ... 50 (5*6, 5*7, ...)
+\end{verbatim}
+
+We can also combine two lists and, for example, add 
+respective values:
+
+\begin{verbatim}
+my @a = 1..5;
+my @b = 6..10;
+my @d = @a >>+<< @b;
+say @d;             # -> [7 9 11 13 15]
+\end{verbatim}
+
+You can also use hyperoperators with a unary operator:
+
+\begin{verbatim}
+my @a = 2, 4, 6;
+say -« @a;          # prints:  -2 -4 -6
+\end{verbatim}
+
+Hyperoperators with unary operators always return a 
+list the same size as the input list. Infixed 
+hyperoperators have a different behavior depending on 
+the size of their operands:
+
+\begin{verbatim}
+@a >>+<< @b;   # @a and @b must have the same size
+@a <<+<< @b;   # @a can be smaller
+@a >>+>> @b;   # @b can be smaller
+@a <<+>> @b;   # Either can be smaller, Perl will do 
+               # probably what you mean (DWIM principle)
+\end{verbatim}
+
+Hyperoperators also work with modified assignment 
+operators:
+
+\begin{verbatim}
+@x >>+=<< @y   # Same as: @x = @x >>+<< @y
+\end{verbatim}
+\index{hyperoperator}
+
+\subsection{The Cross (X) and Zip (Z) Operators}
+\index{cross operator X}
+\index{operator!cross}
+\index{operator!X (cross)}
+\index{zip operator}
+\index{operator!zip}
+\index{operator!Z (zip)}
+
+The cross operator uses the capital letter \verb"X".
+It takes two or more lists as arguments and returns a list 
+of all lists that can be constructed combining the elements 
+of each list (a form of ``Cartesian product''):
+\index{cross operator}
+\index{operator!cross}
+\index{X cross operator}
+
+\begin{verbatim}
+my @a = 1, 2;
+my @b = 3, 4;
+my @c = @a X @b;       # -> [(1,3), (1,4), (2,3), (2,4)]
+\end{verbatim}
+
+The cross operator may also be used as a metaoperator and 
+apply the operator that it modifies to each item combination 
+derived from its operands:
+\index{metaoperator}
+
+\begin{verbatim}
+my @a = 3, 4;
+my @b = 6, 8;
+say @a X* @b;    # -> 18 24 24 32
+\end{verbatim}
+
+If no additional operator is supplied (as in the first 
+example above), \verb"X" acts as if a comma is 
+provided as default additional operator. 
+
+The \verb"Z" zip operator interleaves the lists 
+like a zipper:
+\index{zip operator}
+\index{operator!zip}
+\index{Z zip operator}
+
+\begin{verbatim}
+say 1, 2 Z <a b c > Z 9, 8;   # -> ((1 a 9) (2 b 8))
+\end{verbatim}
+
+The \verb'Z' operator also exists as a metaoperator, in 
+which case, instead of producing nested inner lists as 
+in the example above, the zip operator will apply the 
+supplied additional operator and replace these nested 
+list with the values thus generated. In the following 
+example, the ~ concatenate operator is used to merge 
+the inner lists produced by the zip operator into 
+strings:
+
+\index{metaoperator}
+
+\begin{verbatim}
+say 1, 2, 3 Z~ <a b c > Z~ 9, 8, 7; # -> (1a9 2b8 3c7)
+\end{verbatim}
+
+\subsection{List Operators, a Summary}
+
+The list operators above are powerful 
+and can be combined together to produce incredibly 
+expressive constructs.
+
+As an exercise, try to solve the following small 
+quizzes (please don't read on until you have tried 
+them, and try to do them with the operators we've 
+just seen):
+
+\begin{itemize}
+\item Given that the {\tt lcm} built-in function 
+returns the least common multiple of two numbers, 
+write a program which displays the smallest positive 
+number divisible by all numbers between 1 and 20.
+\index{lcm function}
+
+\item Write a program that computes the sum of all 
+digits of factorial 100.
+
+\item Find the difference between the square of the sum 
+of the 100 first integers and the sum of the squares of 
+the 100 first integers.
+\end{itemize}
+
+Please, again, don't read further until you have tried 
+to solve these quizzes (and hopefully succeeded).
+
+The reduction operator makes it possible to apply an 
+operator to all elements of a list. Thus, using it 
+with the {\tt lcm} function gives the LCM of numbers 
+between 1 and 20:
+\index{reduction!metaoperator}
+
+\begin{verbatim}
+say [lcm] 1..20;                 # -> 232792560
+\end{verbatim}
+
+For the sum of the digits of factorial 100, we use 
+the \verb'[]' reduction metaoperator twice, once with 
+the multiplication operator to compute factorial 100, 
+and another time with the addition operator to sum 
+the digits of the result:
+\index{reduction!metaoperator}
+
+\begin{verbatim}
+say [+] split '', [*] 2..100;    # -> 648
+\end{verbatim}
+
+For the square of the sum minus the sum of the squares, 
+it is easy to compute the sum of the 100 first integers 
+with the reduction operator. The \verb'<<...>>' 
+hyperoperator easily supplies a list of the squares of 
+these integers, and another application of the reduction 
+operator reduces this list to a sum:
+\index{hyperoperator}
+
+\begin{verbatim}
+say ([+] 1..100)**2 - [+] (1..100) «**» 2; # -> 25164150
+\end{verbatim}
+
+\subsection{Creating New Operators}
+
+We have briefly seen (Section~\ref{operator_construction}) 
+that you can build new operators or redefine existing ones 
+for new types.
+\index{creating new operators}
+\index{new operators!creating}
+
+The example we gave was to define the minus sign 
+as an infix operator between two hashes in order to 
+perform a kind of mathematical set subtraction, i.e., 
+to find all keys of the first hash that are not in the 
+second hash.
+\index{operator type!infix}
+
+\index{operator type!prefix}
+In the previous paragraph, the word \emph{infix} means 
+that this is a binary operator (two operands) that will 
+be placed between the two operands. 
+
+There are other flavors of operators:
+\begin{itemize}
+\item Prefix: a unary operator placed before the operand, 
+for example the minus sign in the expression $-1$
+\index{operator type!prefix}
+
+\item Postfix: a unary operator placed after the operand, 
+for example the exclamation mark used as a mathematical  
+symbol for the factorial: $5!$
+\index{operator type!postfix}
+
+\item Circumfix: an operator made of two symbols placed 
+around the operand(s), for example the parentheses $(...)$ 
+or the angle brackets $<...>$
+\index{operator type!circumfix}
+
+\item Postcircumfix: an operator made of two symbols placed 
+after an operand and around another one, for example the 
+square brackets in \verb'@a[1]'
+\index{operator type!postcircumfix}
+\end{itemize}
+
+To declare a new operator, you usually need to specify 
+its type (prefix, postfix, etc.), followed by a colon, 
+followed by the operator symbol or name between angle brackets, 
+followed by the function signature and body defining 
+the operator. For example, we could define a prefix \% 
+operator as follows:
+
+\begin{verbatim}
+multi sub prefix:<%> (Int $x) {   # double operator
+    2 *  $x;
+}
+say % 21;   # -> 42
+\end{verbatim}
+
+This is just an example to show how operator construction works; \% would 
+probably not be a good name for a double operator. The 
+interesting point, though, is that we have reused an existing 
+operator (the modulo operator), but the compiler does not 
+get confused because modulo is an infix operator and our 
+new operator is defined as a prefix operator.
+\index{modulo operator}
+\index{new operators!creating}
+\index{creating new operators}
+
+A better naming example might be to use an exclamation 
+mark (!) as a postfix factorial operator, just as in 
+mathematical notation:
+\index{factorial!operator}
+
+\begin{verbatim}
+multi sub postfix:<!> (Int $n where $n >= 0) {
+    [*] 2..$n;
+}
+say 5!;                     # -> 120
+\end{verbatim}
+
+Note that the exclamation mark used as a prefix 
+operator (i.e., placed before its operand) is 
+a negation operator, but there is usually no possible 
+confusion between the two operators because one is a 
+prefix operator and our new operator is a postfix operator 
+(although you might have to be a bit careful on where 
+to put whitespace if your expression is somewhat 
+complicated). The {\tt multi} keyword isn't strictly 
+required here, but it is probably good practice to 
+put it anyway, just to cover the cases where it is 
+needed. 
+
+As another example, you could define the $\Sigma$ (sum) 
+operator as follows:
+
+\begin{verbatim}
+multi sub prefix:<Σ> (@*num-list) {
+    [+] @num-list;
+}
+say Σ (10, 20, 12);         # -> 42
+\end{verbatim}
+
+The benefit of using the $\Sigma$ operator over using 
+\verb'[+]' directly may not be very obvious, but it is 
+sometimes very useful to create a ``domain-specific 
+language''(DSL), i.e., a sublanguage specifically 
+adapted for a specific context or subject matter (e.g., math 
+or chemistry), which allows a particular type of problem 
+or solution to be expressed more clearly than the 
+existing core language would allow. In Perl~6, the 
+grammars and the ease of creating new operators make 
+this creation of DSL quite an easy task.
+\index{domain-specific language (DSL)}
+\index{DSL (domain-specific language)}
+\index{new operators!creating}
+\index{creating new operators}
+
+
+The new operator does not have to be declared between 
+angle brackets. The following declarations could 
+all be used to define an addition operator:
+
+\begin{verbatim}
+infix:<+>
+infix:<<+>>
+infix:«+»
+infix:('+')
+infix:("+")
+\end{verbatim}
+
+You can also specify the precedence of your new 
+operators (relative to existing ones). For example:
+\index{precedence}
+\index{operator!precedence}
+
+\begin{verbatim}
+multi sub infix:<mult> is equiv(&infix:<*>) { ... }
+multi sub infix:<plus> is equiv(&infix:<+>) { ... }
+mutli sub infix:<zz> is tighter(&infix:<+>) { ... }
+mutli sub infix:<yy> is  looser(&infix:<+>) { ... }
+\end{verbatim}
+
+In one of his articles (``Structured Programming with 
+go to statements'', December 1974), Donald Knuth, a very famous 
+computer scientist, uses the \verb':=:' symbol as a 
+pseudocode operator to express the variable interchange 
+(or swap) of two values, i.e., the following operation:
+\index{Knuth, Donald}
+\index{swap}
+\index{variable interchange}
+
+\begin{verbatim}
+# Caution: this is pseudocode, not working code, at this point
+my $a = 1; my $b = 2;
+$a :=: $b; 
+say "$a $b";  # -> 2 1 
+\end{verbatim}
+\index{pseudo-code}
+
+In Knuth's paper, this is just a pseudocode shortcut 
+to discuss more easily Tony Hoare's quicksort algorithm, but 
+we can easily implement that symbol:
+\index{swap operator}
+\index{sort!quick sort}
+\index{Hoare, Charles Antony Richard}
+
+\begin{verbatim}
+multi sub infix:<:=:> ($a is rw, $b is rw) {
+    ($a, $b) = $b, $a;
+}
+\end{verbatim}
+
+Note that this can also be written this way:
+
+\begin{verbatim}
+multi sub infix:<:=:> ($a is rw, $b is rw) {
+    ($a, $b) .= reverse; # equivalent to: ($a, $b) = ($a, $b).reverse 
+\end{verbatim}
+
+We can now test it for real on the following examples:
+
+\begin{verbatim}
+my ($c, $d) = 2, 5;
+say $c :=: $d;             # -> (5 2)
+# using it to swap two array elements:
+my @e = 1, 2, 4, 3, 5;
+@e[2] :=: @e[3];
+say @e;                    # -> [1 2 3 4 5]
+\end{verbatim}
+
+Now, the pseudocode above now just works fine as real code. 
+A sort algorithm such as the one presented below 
+(Section~\ref{combsort}) may typically have code lines 
+like these to swap two elements of an array:
+\index{swap}
+
+\begin{verbatim}
+if $some-condition {
+    my ($x, $y) = @array[$i], @array[$i + gap];
+    @array[$i], @array[$i + gap] = $y, $x;
+}
+\end{verbatim}
+
+If the above  \verb':=:' operator is defined, we 
+could just rewrite these lines as follows:
+
+\begin{verbatim}
+@array[$i] :=: @array[$i + gap] if $some-condition;
+\end{verbatim}
+
+A final interesting point. Suppose we want to use 
+the $\oplus$ operator for the mathematical set 
+union between two hashes. This could easily be 
+written as follows:
+\index{$\oplus$ operator}
+\index{operator!$\oplus$}
+\index{hash merge operator}
+
+\begin{verbatim}
+multi sub infix:<⊕> (%a, %b) {
+    my %c = %a;
+    %c{$_} = %b{$_} for keys %b;
+    return %c
+}
+\end{verbatim}
+
+This works fine:
+
+\begin{verbatim}
+my %q1 = jan => 1, feb => 2, mar => 3;
+my %q2 = apr => 4, may => 5, jun => 6;
+my %first_half = %q1 ⊕ %q2;
+say %first_half;
+# {apr => 4, feb => 2, jan => 1, jun => 6, mar => 3, may => 5}
+\end{verbatim}
+
+So far, so good, nothing really new. But the new 
+infix $\oplus$ operator has now become almost the same 
+as a Perl built-in operator, so that we can use it 
+together with the reduction metaoperator:
+\index{reduction!metaoperator}
+
+\begin{verbatim}
+my %q1 = jan => 1, feb => 2, mar => 3;
+my %q2 = apr => 4, may => 5, jun => 6;
+my %q3 = jul => 7, aug => 8, sep => 9;
+my %q4 = oct => 10, nov => 11, dec => 12;
+my %year = [⊕] %q1, %q2, %q3, %q4;
+say %year;
+# {apr => 4, aug => 8, dec => 12, feb => 2, jan => 1, 
+# jul => 7, jun => 6, mar => 3, may => 5, nov => 11, 
+# oct => 10, sep => 9}
+\end{verbatim}
+
+Everything works as if this new operator was part 
+of the Perl~6 grammar. And that's in effect what 
+has happened here: we have extended the 
+language with a new operator. This possibility of 
+extending the language is key to the ability of  
+Perl~6 to cope with future needs that we can't even 
+think of at present time.
+\index{extending the language}
+\index{new operators!creating}
+\index{creating new operators}
+
+\section{Creating Your Own Map-Like Functions}
+\index{map}
+ 
+We have seen in this chapter and in 
+Section~\ref{map_filter} (p.~\pageref{map_filter}) 
+how higher-order functions such as the {\tt reduce}, 
+{\tt map}, {\tt grep}, and {\tt sort} functions 
+can be powerful and expressive. There are some 
+other such built-in functions in Perl, but we would 
+like to be able to create our own.
+
+\subsection{Custom Versions of map, grep, etc.}
+
+Let's see how we could write out own custom versions 
+of such functions.
+
+\subsubsection{my-map, a pure Perl version of map}
+\index{my-map}
+
+Let's start by trying to rewrite in pure Perl the 
+{\tt map} function. It needs to take a subroutine 
+or a code block as its first argument, to apply it 
+to an array or a list, and to return the modified 
+list.
+
+\begin{verbatim}
+sub my-map (&code, @values) { 
+    my @temp;
+    push @temp, &code($_) for @values;
+    return @temp;
+}
+my @result = my-map { $_ * 2 }, 1..5; 
+say @result;                   # -> [2 4 6 8 10]
+\end{verbatim}
+
+This works exactly as expected on the first trial. 
+(I have attempted the same experiment with some other 
+languages in the past , including Perl~5; it took quite 
+a few tries before getting it right, especially 
+regarding the calling syntax. Here, everything 
+falls into place naturally.) To tell the truth, 
+the test in this code example is very limited and 
+there may very well be some edge cases when 
+{\tt my-map} does not work the same way as {\tt map}, 
+but our aim was not to clone {\tt map} exactly; 
+the point is that it is quite simple to build a 
+higher-order subroutine that behaves essentially the 
+same way as {\tt map}. 
+\index{higher-order function}
+\index{map}
+
+\subsubsection{my-grep}
+\index{my-grep}
+\index{grep}
+
+Writing our pure-Perl version of {\tt grep} is just about as 
+easy:
+\begin{verbatim}
+sub my-grep (&code, @values) { 
+    my @temp;
+    for @values -> $val {
+        push @temp, $val if &code($val);
+    }
+    return @temp;
+}
+my @even = my-grep { $_ %% 2 }, 1..10; 
+say @even;                   # -> [2 4 6 8 10]
+\end{verbatim}
+
+\subsection{Our Own Version of a Sort Function}
+\label{combsort}
+\index{sort!comb sort}
+\index{comb sort}
+
+We can similarly write our own version of the sort 
+function. 
+
+\index{sort!merge sort}
+\index{sort!quick sort}
+\index{merge sort}
+\index{quick sort}
+
+The Perl {\tt sort} function implements a sort 
+algorithm known as \emph{merge sort}\footnote{Merge 
+sort is presented in some details in 
+section~\ref{mergesort}.}.  Some 
+previous versions of the Perl language (prior to 
+version~5.8) implemented another algorithm known 
+as \emph{quick sort}\footnote{Quick sort is presented 
+in \ref{quicksort}}. The main reason for this 
+change was that, although quick sort is on average  
+a bit faster than merge sort, there are specific 
+cases where quick sort is much less efficient than 
+merge sort (notably when the data is almost sorted). 
+These cases are very rare with random data, but not 
+in real situations: it is quite common that you have 
+to sort a previously sorted list in which only a 
+few elements have been added or modified.
+\index{quick sort}
+
+In computing theory, it is frequently said that, for 
+sorting \emph{n} items, both merge sort and quick 
+sort have an \emph{average complexity} of $O(n \log n)$, 
+which essentially means that the number of operations 
+to be performed is proportional to $n \log n$ if 
+the number of items to be sorted is $n$, 
+with quick sort being usually slightly faster; but 
+quick sort has a \emph{worst-case complexity} of 
+$O(n^{2})$, whereas merge sort has a \emph{worst-case 
+complexity} of $O(n \log n)$. When the number $n$ of 
+items to be sorted grows large, $n^{2}$ becomes 
+very significantly larger than $n \log n$. In other 
+words, merge sort is deemed to be better because it 
+remains efficient in all cases.
+\index{algorithmic complexity}
+\index{sort!merge sort}
+\index{sort!quick sort}
+
+\index{sort!comb sort}
+Suppose now that we want to implement another sorting 
+algorithm whose performance is alleged to be better. 
+For this example, we will use a somewhat exotic sorting 
+algorithm known as \emph{comb sort} (a.k.a. Dobosiewicz's 
+sort), which is described on this page of Wikipedia:
+\url{https://en.wikipedia.org/wiki/Comb_sort}. This 
+algorithm is said to be \emph{in place}, which means that 
+it does not need to copy the items into auxiliary data 
+structures, and has generally good performance (often better 
+than merge sort), but is not very commonly used in 
+practice because its theoretical analysis is very difficult 
+(in particular, it seems that it has a good worst-case 
+performance, but no one has been able to prove this 
+formally so far). In fact, we don't really care about 
+the real performance of this sort algorithm; it is 
+very unlikely that a pure Perl implementation 
+of the comb sort will outperform the built in 
+{\tt sort} function implemented in C and probably very 
+carefully optimized by its authors. We only want to 
+show how a sort subroutine could be implemented.
+
+To work the same way as the internal {\tt sort}, a sort 
+function must receive as parameters a comparison function 
+or code block and the array to be sorted, and the 
+comparison routine should use placeholder parameters (\verb'$^a' 
+and  \verb'$^b' in the code below). This is a possible 
+basic implementation:
+\index{placeholder!parameter}
+
+\begin{verbatim}
+sub comb_sort (&code, @array) {
+    my $max = @array.elems;
+    my $gap = $max;
+    loop {
+        my $swapped = False;
+        $gap = Int($gap / 1.3);    # 1.3: optimal shrink factor
+        $gap = 1 if $gap < 1;
+        my $lmax = $max - $gap - 1;
+        for (0..$lmax) -> $i {
+            my ($x, $y) = (@array[$i], @array[$i+$gap]);
+            (@array[$i], @array[$i+$gap], $swapped) = ($y, $x, True)
+                if &code($x, $y) ~~ More;  # or: if &code($x, $y) > 0
+        }
+        last if $gap == 1 and ! $swapped;
+    }
+}
+\end{verbatim}
+\index{sort!comb sort}
+
+This can be tested with the following code:
+
+\begin{verbatim}
+my @v;
+my $max = 500;
+@v[$_] = Int(20000.rand) for (0..$max);
+
+comb_sort {$^a <=> $^b}, @v;
+.say for @v[0..10], @v[493..499]; # prints array start and end
+# prints (for example):
+# (14 22 77 114 119 206 264 293 298 375 391)
+# (19672 19733 19736 19873 19916 19947 19967)
+\end{verbatim}
+
+The inner loop compares items that are distant from each 
+other by \verb'$gap' values, and swaps them if they are 
+not in the proper order. At the beginning, \verb'$gap' 
+is large, and it is divided by a shrink factor at each 
+iteration of the outer loop. Performance heavily depends
+on the value of the shrink factor. At the end, the gap 
+is 1 and the comb sort becomes equivalent to a bubble 
+sort. The optimal shrink factor lies somewhere between 1.25 
+and 1.33; we have used a shrink factor of 1.3, the value 
+suggested by the authors of the original publications 
+presenting the algorithm.
+\index{sort!bubble sort}
+
+\subsection{An Iterator Version of map}
+\index{iter!map}
+\index{map}
+
+These {\tt my-map}, {\tt my-grep}, and {\tt comb\_sort} 
+functions are pedagogically interesting, but they aren't 
+very useful if they do the same thing as their built-in 
+counterparts (and are probably slower). However, now 
+that we have seen how to build them, we can create our 
+own versions that do things differently.
+
+Say we want to create a function that acts like 
+{\tt map} in the sense that it applies a 
+transformation on the items of the input list, but does 
+that on the items one by one, on demand from a consumer 
+process, and pauses when and as long as the consumer process 
+does not need anything. This could be described as an 
+{\bf iterator} returning modified elements on demand from the 
+source list. You might think that this does not have much to 
+do with {\tt map}, but it might also be considered as 
+a form of {\tt map} with delayed evaluation, which 
+processes only the elements of the input lists that are 
+necessary for the program, not more than that. 
+\index{iterator}
+\index{delayed evaluation}
+
+\index{laziness}
+\index{lazy!list processing}
+The idea 
+of processing only what is strictly required is often called 
+\emph{laziness}, and this is a very useful idea. Lazy 
+list processing can be very useful not only because it 
+avoids processing data that is not needed, and therefore 
+can contribute to better resource usage and better 
+performance, but also because it makes it possible to consider 
+\emph{infinite} lists: so long as you can guarantee that 
+you are only going to use a limited number of elements, 
+you don't have any problem considering lists that are 
+potentially unlimited. Perl~6 provides the concepts and 
+tools to do this.
+\index{infinite list}
+
+To reflect these considerations, we will call our subroutine 
+{\tt iter-map}. Since we might want to also write a 
+{\tt iter-grep} subroutine and possibly others, we will 
+write separately an iterator and a data transformer.
+\index{iterator}
+
+We can use a closure to manufacture an iterator:
+\index{closure}
+
+\begin{verbatim}
+sub create-iter(@array) {
+    my $index = 0;
+    return sub { @array[$index++];}
+}
+my $iterator = create-iter(1..200);
+say $iterator() for 1..5; # -> 1, 2, 3, 4, 5
+\end{verbatim} 
+
+Now that the iterator returns one value at a time, we 
+can write the {\tt iter-map} subroutine:
+\index{iter!map}
+
+\begin{verbatim}
+sub iter-map (&code-ref, $iter) {
+    return &code-ref($iter);
+}
+my $iterator = create-iter(1..200);
+say iter-map { $_ * 2 }, $iterator() for 1..5; # -> 2, 4, 6, 8, 10
+\end{verbatim}
+
+Since we have called the {\tt iter-map} function only 5~times, 
+it has done the work of multiplying values by 2 only 5~times, 
+instead of doing it 200 times, 195 of which are for nothing. 
+Of course, multiplying a number by 2 isn't an expensive 
+operation and the array isn't very large, but this shows 
+how laziness can prevent useless computations. We will come 
+back to this idea, since Perl~6 offers native support to lazy 
+lists and lazy processing.
+\index{laziness}
+
+As already noted, an additional advantage of using a function 
+such as {\tt iter-map} is that it is possible to use 
+virtually infinite lists. This works just as before:
+
+\begin{verbatim}
+my $iterator = create-iter(1..*);
+say iter-map { $_ * 2 }, $iterator() for 1..5;
+     # prints 2, 4, 6, 8, 10
+\end{verbatim}
+
+\subsection{An Iterator Version of grep}
+\index{iter!grep}
+
+If we try to write a {\tt iter-grep} subroutine on the same 
+model:
+
+\begin{verbatim}
+my $iterator = create-iter(reverse 1..10);
+sub iter-grep (&code_ref, $iter) {
+    my $val = $iter();
+    return $val if &code_ref($val);
+}
+# simulating ten calls
+say iter-grep { $_ % 2 }, $iterator for 1..10;
+\end{verbatim}
+
+it doesn't quite work as desired, because this will print 
+alternatively odd values (9, 7, 5, etc.) and undefined 
+values (for the even values of the array). Although we 
+haven't specified it yet, we would prefer {\tt iter-grep} 
+to supply the next value for which the \verb'$code-ref' 
+returns true. This implies that {\tt iter-grep} has to 
+loop over the values returned by the iterator until it 
+receives a proper value.
+
+That might look like this:
+\index{iter!grep}
+
+\begin{verbatim}
+my $iterator = create-iter(reverse 1..10);
+sub iter-grep (&code_ref, $iter) {
+    loop {
+        my $val = $iter();
+        return unless defined $val;  # avoid infinite loop
+        return $val if &code_ref($val);
+	}
+}
+# simulating ten calls
+for 1..10 {
+    my $val = iter-grep { $_ % 2 }, $iterator;
+    say "Input array exhausted!" and last unless defined $val;
+    say $val;
+}
+\end{verbatim}
+
+This now works as expected:
+
+\begin{verbatim}
+9
+7
+5
+3
+1
+Input array exhausted!
+\end{verbatim}
+
+However, we still have a problem if the array 
+contains some undefined values (or ``empty slots''). This 
+would be interpreted as the end of the input array, whereas 
+there might be some additional useful values in the array. 
+This is sometimes known in computer science as the 
+``semi-predicate'' problem. Here, {\tt iter-grep} has no 
+way to tell the difference between an empty slot in the array 
+and the end of the array. A more robust implementation 
+therefore needs a better version of {\tt create-iter}  
+returning something different for an undefined array item 
+and array exhaustion. For example, the iterator might return 
+a false value when done with the array, and a pair with the 
+array item as a value otherwise. A pair will be considered 
+to be true, even if its value isn't defined:
+\index{semi-predicate problem}
+\index{pair}
+
+\begin{verbatim}
+sub create-iter(@array) {
+    my $index = 0;
+    my $max-index = @array.end;
+    return sub { 
+        return False if $index >= $max-index; 
+        return ("a_pair" => @array[$index++]) 
+    }
+}
+my @array = 1..5;
+@array[7] = 15;
+@array[9] = 17;
+push @array, $_ for 20..22;
+.say for '@array is now: ', @array;
+my $iterator = create-iter(@array);
+sub iter-grep (&code_ref, $iter) {
+    loop {
+        my $returned-pair = $iter();
+        return unless $returned-pair;  # avoid infinite loop
+        my $val = $returned-pair.value;
+        return $val if defined $val and &code_ref($val);
+	}
+}
+for 1..10 {
+    my $val = iter-grep { $_ % 2 }, $iterator;
+    say "Input array exhausted!" and last unless defined $val;
+    say $val;
+}
+\end{verbatim}
+\index{iter!grep}
+
+Running this script displays the following:
+\begin{verbatim}
+@array is now:
+[1 2 3 4 5 (Any) (Any) 15 (Any) 17 20 21 22]
+1
+3
+5
+15
+17
+21
+Input array exhausted!
+\end{verbatim}
+
+This now works fully as desired.
+
+Although {\tt iter-map} did not suffer from the same problem, 
+you might want as an exercise to modify {\tt iter-map}
+to use our new version of {\tt create-iter}.
+\index{iter-map}
+
+The advantage of the iterator functions seen above is that they 
+process only the items that are requested by the user code, so 
+that they perform only the computations strictly required and 
+don't waste CPU cycles and time doing unnecessary work. We have 
+gone through these iterating versions of the {\tt map} 
+and {\tt grep} functions as a form of case study for 
+pedagogical purposes, in order to explain in practical terms 
+the idea of laziness. 
+\index{map}
+\index{laziness}
+\index{iterator}
+
+This is what would have been necessary to implement lazy 
+iterators in earlier versions of Perl (e.g., Perl~5), but 
+much of this is not required with Perl~6 which has built-in 
+support for lazy lists and lazy operators, as we will see soon.
+
+\section{The gather and take Construct}
+\index{gather function}
+\index{gather and take construct}
+\index{take function}
+
+A useful construct for creating (possibly lazy) lists 
+is  \verb'gather { take }'. A \verb'gather' block 
+acts more or less like a loop and runs until 
+\verb'take' supplies a value. This construct is also 
+a form of iterator.
+
+For example, the following code returns a list of 
+numbers equal to three times each of the even numbers 
+between 1 and 10:
+
+\begin{verbatim}
+my @list = gather { 
+    for 1..10 {
+        take 3 * $_ if $_ %% 2
+    } 
+};
+say @list;                 # -> [6 12 18 24 30]
+\end{verbatim}
+
+Here, \verb'gather' loops on the values of the range 
+and {\tt take} ``returns'' the wanted values.
+
+If you think about it, the code above seems to 
+be doing a form of combination of a {\tt map} and a 
+{\tt grep}.
+\index{map}
+\index{grep}
+
+We can indeed simulate a \verb'map'. For example:
+
+\begin{verbatim}
+my @evens = map { $_ * 2 }, 1..5;
+\end{verbatim}
+
+could be rewritten with a \verb'gather { take }' 
+block :
+
+\begin{verbatim}
+my @evens = gather {take $_ * 2 for 1.. 5}; # [2 4 6 8 10]
+\end{verbatim}
+
+And we could simulate a {\tt grep} similarly:
+
+\begin{verbatim}
+my @evens = gather {take $_ if $_ %% 2 for 1..10}
+\end{verbatim}
+
+Since {\tt take} also admits a method syntax, this could 
+be rewritten as:
+
+\begin{verbatim}
+my @evens = gather {.take if $_ %% 2 for 1..10}
+\end{verbatim}
+
+\index{map}
+These code examples don't bring any obvious advantage 
+over their \verb'map' or {\tt grep} counterparts and 
+are not very useful in themselves, but they illustrate 
+how a \verb'gather { take }' block can be thought 
+of as a generalization of the \verb'map' and 
+{\tt grep} functions. And, as already mentioned, 
+the first example in this section actually does combine 
+the actions of a {\tt map} and a {\tt grep}.
+
+In fact, we can write a new version of {\tt my-map}:
+\index{my-map}
+
+\begin{verbatim}
+sub my-map (&coderef, @values) {
+   return gather {
+      take &coderef($_) for @values;
+   };
+}
+say join " ", my-map {$_ * 2}, 1..10;
+# prints: 2 4 6 8 10 12 14 16 18 20
+\end{verbatim}
+
+Writing a new version of {\tt my-grep} is just 
+about as easy and left as an exercise to the reader.
+\index{my-grep}
+
+\index{take function}
+Calling the {\tt take} function only makes sense 
+within the context of a \verb'gather' block, but 
+it does not have to be within the block itself 
+(or within the lexical scope of the \verb'gather' 
+block); it can be within the \emph{dynamic scope} of the 
+\verb'gather' block
+
+\index{dynamic variable}
+\index{variable!dynamic}
+\index{dynamic scope}
+\index{lexical scope}
+Although we haven't covered this concept before, 
+Perl has the notion of \emph{dynamic scope}: contrary 
+to lexical scope, dynamic scope encloses not only 
+the current block, but also the subroutines called 
+from within the current block. Dynamic scope variables 
+use the ``*'' twigil. Here is an example:
+%
+\begin{verbatim}
+sub write-result () { say $*value; }
+sub caller (Int $val) { 
+    my $*value = $val * 2; 
+    write-result();
+}
+caller 5;               # -> 10
+\end{verbatim}
+%
+In the code above, the \verb'$*value' dynamic variable 
+is declared and defined in the \verb'caller' subroutine 
+and used in the \verb'write-result' subroutine. This would not 
+work with a lexical variable, but it works with a dynamic 
+variable such as \verb'$*value', because the scope of 
+\verb'$*value' extends to the \verb'write-result' subroutine 
+called by \verb'caller'. 
+
+\index{take function}
+Similarly, the {\tt take} function 
+can work within the dynamic scope of the \verb'gather' 
+block, which essentially means that the {\tt take} 
+function can be called within a subroutine called from 
+the \verb'gather' block. For example:
+\index{lexical scope}
+\index{dynamic scope}
+\index{scope!dynamic}
+
+\begin{verbatim}
+my @list = gather {
+    compute-val($_) for 1..10; 
+}
+sub compute-val(Numeric $x) {
+    take $x * $x + 2 * $x - 6;
+}
+say @list[0..5];        # -> (-3 2 9 18 29 42)
+\end{verbatim}
+
+As you can see, the {\tt take} function is not called 
+within the {\tt gather} block, but it works fine because 
+it is within the dynamic scope of the gather block, i.e., 
+within the {\tt compute-val} subroutine, which is itself 
+called in the {\tt gather} block.
+
+One last example will show how powerful the 
+\verb'gather { take }' construct can be.
+
+Let's consider this problem posted on the Rosetta Code 
+site (\url{http://rosettacode.org/wiki/Same_Fringe}): 
+write a routine that will compare the leaves (``fringe'') 
+of two binary trees to determine whether they are the 
+same list of leaves when visited left-to-right. The 
+structure or balance of the trees does not matter; 
+only the number, order, and value of the leaves is 
+important. 
+\index{rosettacode}
+\index{binary tree}
+\index{tree!binary}
+
+The solution in Perl~6 uses a \verb'gather { take }' 
+block and consists of just six~code lines:
+
+\begin{verbatim}
+sub fringe ($tree) {
+    multi sub fringey (Pair $node) {fringey $_ for $node.kv;}
+    multi sub fringey ( Any $leaf) {take $leaf;}
+    gather fringey $tree;
+}
+sub samefringe ($a, $b) { fringe($a) eqv fringe($b) }
+\end{verbatim}
+
+Perl~6 is the clear winner in terms of the shortest code to 
+solve the problem.
+
+As a comparison, the Ada example is almost 300 lines long, 
+the C and Java programs slightly over 100 lines. By the way, 
+the shortest solutions besides Perl~6 (Clojure, Picolisp, 
+Racket) run in about 20~lines and are all functional 
+programming languages, or (for Perl~5 for example) are 
+written using functional programming concepts. 
+Although the number of code lines is only one of many 
+criteria to compare programs and languages, this is 
+in my humble opinion a testimony in favor of the functional 
+programming paradigm and its inherent expressiveness.
+\index{functional programming}
+
+
+\section{Lazy Lists and the Sequence Operator}
+\index{lazy!list}
+
+Let's come back now to the idea of lazy lists and study 
+how Perl~6 can handle and use them.
+
+\subsection{The Sequence Operator}
+\index{sequence operator}
+\index{operator!sequence}
+
+Perl provides the \verb'...' sequence operator to build 
+lazy lists. For example, this:
+
+\begin{verbatim}
+my $lazylist := (0, 1 ... 200);
+say $lazylist[42];                 # -> 42
+\end{verbatim}
+
+produces a lazy list of successive integers between 0 and 200. 
+The Perl~6 compiler may or may not allocate some of the numbers
+(depending on the implementation), but it is not required to 
+produce the full list immediately. The numbers that have not 
+been generated yet may be created and supplied later, if and when 
+the program tries to use these values. 
+
+As explained below, if you want to generate consecutive 
+integers, you can actually simplify the lazy list definition:
+
+\begin{verbatim}
+my $lazylist := (0 ... 200);
+\end{verbatim}
+
+
+\index{laziness}
+If you assign a sequence to an array, it will generate 
+all the values of the sequence immediately, since 
+assignment to an array is eager (nonlazy).  However, 
+you can force laziness with the  {\tt lazy} built-in 
+when assigning to an array:
+
+\begin{verbatim}
+my @lazyarray = lazy 1 ... 200;     # -> [...]
+say @lazyarray.elems;               # -> Cannot .elems a lazy list
+say @lazyarray[199];                # -> 200
+say @lazyarray[200];                # -> (Any)
+say @lazyarray.elems;               # -> 200
+\end{verbatim}
+
+Here, the \verb'@lazylist' array is originally lazy. 
+Evaluating one item past the last element of the array 
+forces Perl to actually generate the full array (and the 
+array is no longer lazy). After that, no further elements 
+can be generated, and {\tt .elems} stays at 200 (unless 
+you actually assign values to elements past the 200th 
+element).
+
+When given two integers, one for the first and the last items of 
+a list, the sequence operator will generate a list of consecutive 
+integers between the two supplied integers. If you supply two 
+initial items defining implicitly a step, this will generate 
+an arithmetic sequence:
+\index{arithmetic sequence}
+
+\begin{verbatim}
+my $odds = (1, 3 ... 15);          # (1 3 5 7 9 11 13 15)
+my $evens = (0, 2 ... 42);         # (0 2 4 6 8 ... 40 42)
+\end{verbatim}
+
+You may remember that, in Section~\ref{sequence} of the chapter 
+on arrays and lists, we said that parentheses are usually not 
+necessary for constructing a list, unless needed for 
+precedence reasons. The above code is one such example: try 
+to run that code without parentheses and observe the content 
+of the \verb'$odds' and \verb'$evens' variables.
+
+When three numbers in geometric progression are supplied, the 
+sequence operator will produce a geometric sequence, as in 
+this example producing the powers of two:
+\index{geometric sequence}
+
+\begin{verbatim}
+say (1, 2, 4 ... 32);              # -> (1 2 4 8 16 32)
+\end{verbatim}
+
+The sequence operator may also be used to produce noninteger 
+numbers, as shown in this example under the REPL:
+
+\begin{verbatim}
+> say (1, 1.1 ... 2);
+(1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2)
+\end{verbatim}
+
+Contrary to the \verb'..' range operator, the sequence 
+operator can also count down:
+\index{range operator}
+
+\begin{verbatim}
+say (10 ... 1);                    #  (10 9 8 7 6 5 4 3 2 1)
+\end{verbatim}
+
+\subsection{Infinite Lists}
+\index{infinite list}
+
+One of the great things about lazy lists is that, since 
+item evaluation is postponed, they can be infinite without 
+consuming infinite resources from the computer:
+\index{infinite list}
+
+\begin{verbatim}
+my $evens = (0, 2 ... Inf);        # (...)
+say $evens[18..21];                # -> (36 38 40 42)
+\end{verbatim}
+
+The {\tt Inf} operand is just the so-called ``Texas'' 
+or ASCII equivalent of the $\infty$ infinity symbol. 
+The above could have been written:
+\index{infinity symbol}
+
+\begin{verbatim}
+my $evens = (0, 2 ... ∞); 
+say $evens[21];                    # -> 42
+\end{verbatim} 
+
+The most common way to indicate an infinite lazy list, though, 
+is to use the \verb'*' whatever argument:
+\index{whatever!operator}
+\index{operator!whatever}
+
+\begin{verbatim}
+my $evens = (0, 2 ... *); 
+say $evens[21];                    # -> 42
+\end{verbatim} 
+
+\subsection{Using an Explicit Generator}
+\index{sequence operator!generator}
+
+The sequence operator \verb'...' is a very powerful tool 
+for generating lazy lists. Given one number, it just 
+starts counting up from that number (unless the 
+terminal end of the sequence is a lower number, 
+in which case it counts down). Given two numbers 
+to start a sequence, it will treat it as an arithmetic 
+sequence, adding the difference between those first 
+two numbers to the last number generated to generate 
+the next one. Given three numbers, it checks to see 
+if they represent the start of an arithmetic or a 
+geometric sequence, and will continue it.
+\index{arithmetic sequence}
+\index{geometric sequence}
+
+However, many interesting sequences are neither arithmetic 
+nor geometric.  They can still be generated with the 
+sequence operator provided one term can be deduced from 
+the previous one (or ones). For this, you need to explicitly 
+provide the code block to generate the next number in 
+the sequence. For example, the list of odd integers 
+could also be generated with a generator as follows:
+
+\begin{verbatim}
+say (1, { $_ + 2 } ... 11);        # -> (1 3 5 7 9 11)
+\end{verbatim}
+
+We now have yet another way of defining the factorial 
+function:
+\index{factorial!with a lazy infinite list}
+
+\begin{verbatim}
+my $a;
+my @fact = $a = 1, {$_ * $a++} ... *;
+say @fact[0..8];          # -> (1 1 2 6 24 120 720 5040 40320)
+\end{verbatim}
+
+or, possibly more readable:
+
+\begin{verbatim}
+my @fact = 1, { state $a = 1; $_ * $a++} ... *;
+say @fact[0..8];          # -> (1 1 2 6 24 120 720 5040 40320)
+\end{verbatim}
+
+
+This approach is much more efficient than those we have 
+seen before for repeated use, since it automatically 
+caches the previously computed values in the lazy array. 
+As you might remember from Section~\ref{memoize} 
+(p.~\pageref{memoize}), \emph{caching} is the idea of 
+storing a value in memory in order to avoid having to 
+recompute it, with the aim of saving time and CPU cycles.
+\index{cache}
+
+And we can similarly construct a lazy infinite list of 
+Fibonacci numbers:
+\index{Fibonacci!numbers}
+
+\begin{verbatim}
+my @fibo = 0, 1, -> $a, $b { $a + $b } ... *;
+say @fibo[0..10];   # -> (0 1 1 2 3 5 8 13 21 34 55)
+\end{verbatim}
+
+This can be rewritten in a more concise (albeit possibly 
+less explicit and less clear) way using the \verb'*' 
+whatever placeholder parameter:
+\index{whatever!operator}
+\index{whatever!placeholder parameter}
+
+\begin{verbatim}
+my @fibo = 0, 1, * + * ... *;
+say @fibo[^10];      # -> (0 1 1 2 3 5 8 13 21 34)
+\end{verbatim}
+
+Just as for factorial, this is more efficient than the 
+implementations we've seen previously, because the 
+computed values are cached in the lazy array.
+\index{cache}
+
+Similarly the sequence of odd integers seen at the 
+beginning of this section could be generated in a 
+slightly more concise form with the whatever "\verb'*'" 
+parameter:
+\index{sequence operator}
+
+\begin{verbatim}
+say (1, * + 2  ... 11);        # -> (1 3 5 7 9 11)
+\end{verbatim}
+
+This syntax with an asterisk is called a 
+\emph{whatever closure}; we will come back to 
+it below.
+\index{whatever!closure}
+
+There is, however, a small caveat in using the sequence operator with 
+an explicit generator: the end value (the upper bound) has 
+to be one of the generated numbers for the list to stop at 
+it. Otherwise, it will build an infinite list:
+
+\begin{verbatim}
+my $nums = (0, { $_ + 4 } ... 10);
+say $nums[0..5];     # -> (0 4 8 12 16 20)
+\end{verbatim}
+
+As you can see in this example, the generator ``jumps over the end 
+point'' (it goes beyond 10), and the list is 
+in fact infinite. This is usually not a problem 
+in terms of the computer resources, since it is 
+a lazy infinite list, but it is probably a bug if 
+you expected the list not to run above 10. In this 
+specific case, it is very easy to compute an end 
+point that will be matched (e.g., 8 or 12), but it may be 
+more complicated to find a valid end point. For example, 
+it is not obvious to figure out what the largest 
+Fibonacci number less than 10,000 might be without 
+computing first the series of such numbers until the 
+first one beyond 10,000.
+
+In such cases where it is difficult to predict what the end 
+point should be, we can define another code block to test 
+whether the sequence should stop or continue. The sequence 
+will stop if the block returns a true value. For example, 
+to compute Fibonacci numbers until 100, we could use this 
+under the REPL:
+
+\begin{verbatim}
+> my @fibo = 0, 1, -> $a, $b { $a + $b } ... -> $c { $c > 100}
+[0 1 1 2 3 5 8 13 21 34 55 89 144]
+\end{verbatim}
+
+This is better, as it does stop the series of numbers, but it is 
+not quite where we wanted: we really wanted it to stop at the last 
+Fibonacci under 100, and we're getting one more. It would be 
+quite easy to remove or filter out the last generated Fibonacci 
+number, but it's even better not to generate it at all. A slight 
+change in the syntax will do that for us:
+
+\begin{verbatim}
+> my @fibo = 0, 1, -> $a, $b { $a + $b } ...^ -> $c { $c > 100}
+[0 1 1 2 3 5 8 13 21 34 55 89]
+\end{verbatim}
+
+Switching from \verb'...' to \verb'...^' means the 
+resulting list does not include the first element 
+for which the termination test returned true.
+
+Similarly, we can limit the \emph{whatever closure} 
+syntax seen above as follows:
+\index{whatever!closure}
+
+\begin{verbatim}
+> say 0, 1, * + * ...^ * > 100;
+(0 1 1 2 3 5 8 13 21 34 55 89)
+\end{verbatim}
+
+\section{Currying and the Whatever Operator}
+\index{curry}
+
+{\bf Currying} (or partial application) is a basic technique 
+of functional programming, especially in pure functional 
+programming languages such as Haskell. The ``curry'' name comes 
+from the American mathematician Haskell Curry, one of the 
+founders (with Alonzo Church) of logical mathematical 
+theories, including lambda-calculus and others. (And, as 
+you might have guessed, the Haskell programming language 
+derived its name from Curry's first name.)
+\index{Curry, Haskell}
+\index{Church, Alonzo}
+
+To curry a function having several arguments means replacing 
+it with a function having only one argument and returning 
+another function (often a closure) whose role is to 
+process the other arguments.
+
+In some pure functional programming languages, a function 
+can only take one argument and return one result. Currying 
+is a technique aimed at coping with this apparent limitation. 
+Perl does not have such a limitation, but currying can still 
+be very useful to reduce and simplify the arguments lists 
+in subroutine calls, notably in cases of repeated recursive 
+calls.
+
+
+\subsection{Creating a Curried Subroutine}
+\index{curry}
+
+The standard example is an \emph{add} function. Suppose 
+we have an add mathematical function, \verb'add(x, y)', 
+taking two arguments and returning their sum. 
+
+In Perl, defining the {\tt add} subroutine is very simple:
+\index{add}
+
+\begin{verbatim}
+sub add (Numeric $x, Numeric $y) {return $x + $y}
+\end{verbatim}
+
+A curried version of it would be another function 
+\verb'add_y(x)' returning a function adding $y$ to 
+its argument.
+
+This could be done with a closure looking like this:
+\index{curry}
+
+\begin{verbatim}
+sub make-add (Numeric $added-val) {
+    return sub ($param) {$param + $added-val;}    
+    # or: return sub {$^a + $added-val;}
+}
+my &add_2 = make-add 2;
+say add_2(3);           # -> 5
+say add_2(4.5);         # -> 6.5
+\end{verbatim}
+
+The \verb'&add_2' code reference is a curried version 
+of our mathematical {\tt add} function. It takes only 
+one argument and returns a value equal to the argument 
+plus two.
+
+We can of course create other curried subroutines using 
+{\tt make-add} with other arguments:
+
+\begin{verbatim}
+my &add_3 = make-add 3;
+say &add_3(6);           # -> 9
+\end{verbatim}
+
+There is not much new here: the \verb'&add_2' and 
+\verb'&add_3' are just closures that memorize the 
+increment value passed to the {\tt make-add} 
+subroutine. This can be useful when some functions 
+are called many times (or recursively) with many  
+arguments, some of which are always the same: 
+currying them makes it possible to simplify the 
+subroutine calls.
+
+\subsection{Currying an Existing Subroutine with the {\tt assuming} Method}
+\index{curry}
+\index{method!assuming}
+
+If a subroutine already exists, there is often no need 
+to create a new closure with the help of a ``function 
+factory'' (such as {\tt make-add}) as we've done just above. 
+It is possible to curry the existing function, using 
+the {\tt assuming} method on it:
+\index{assuming method}
+\index{function factory}
+
+\begin{verbatim}
+sub add (Numeric $x, Numeric $y) {return $x + $y}   
+my &add_2 = &add.assuming(2);                       
+add_2(5);              # -> 7                                     
+\end{verbatim}
+
+The {\tt assuming} method returns a callable object 
+that implements the same behavior as the original 
+subroutine, but has the values passed to {\tt assuming}
+already bound to the corresponding parameters.
+
+It is also possible to curry built-in functions. For example, 
+the {\tt substr} built-in takes normally three arguments:
+the string on which to operate, the start position, and the 
+length of the substring to be extracted. You might need 
+to make a number of extractions on the same very long 
+string. You can create a curried version of {\tt substr} 
+always working on the same string:
+\index{substr function}
+
+\begin{verbatim}
+my $str = "Cogito, ergo sum";                     
+my &string-start-chars = &substr.assuming($str, 0);
+say &string-start-chars($_) for 6, 13, 16; 
+\end{verbatim}
+
+This will print:
+
+\begin{verbatim}
+Cogito
+Cogito, ergo
+Cogito, ergo sum
+\end{verbatim}
+
+Note that we have ``assumed'' two parameters here, so 
+that the curried subroutine ``remembers'' the first 
+two arguments and only the third argument needs be 
+passed to \verb'&string-start-chars'.
+
+You can even curry Perl~6 operators (or your own) if 
+you wish:
+\index{assuming method}
+
+\begin{verbatim}
+my &add_2 = &infix:<+>.assuming(2);
+\end{verbatim}
+
+\subsection{Currying with the Whatever Star Parameter}
+\index{curry}
+\index{whatever!term}
+\index{whatever!star parameter}
+\label{whatever star parameter}
+
+A more flexible way to curry a subroutine or an expression 
+is to use the \emph{whatever star} (*) argument:
+
+\begin{verbatim}
+my &third = * / 3; 
+say third(126);          # -> 42
+\end{verbatim}
+
+The \emph{whatever star} (*) is a placeholder for 
+an argument, so that the expression returns 
+a closure.
+
+It can be used in a way somewhat similar to the \verb'$_' 
+topical variable (except that it does not have to exist 
+when the declaration is made):
+
+\begin{verbatim}
+> say map 'foo' x * , (1, 3, 2);
+(foo foofoofoo foofoo)
+\end{verbatim}
+\index{map}
+
+It is also possible to use multiple whatever terms 
+in the same expression. For example, the {\tt add} 
+subroutine could be rewritten as a whatever 
+expression with two parameters:
+
+\begin{verbatim}
+my $add = * + *;
+say $add(4, 5);          # -> 9
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+my &add = * + *;
+say add(4, 5);           # -> 9
+\end{verbatim}
+
+You might even do the same with the multiplication operator:
+
+\begin{verbatim}
+my $mult = * * *;
+say $mult(6, 7);         # -> 42
+\end{verbatim}
+
+The compiler won't get confused and will figure out 
+correctly that the first and third asterisks are 
+whatever terms and that the second asterisk is 
+the multiplication operator; in other words that this is 
+more or less equivalent to:
+\index{whatever!term}
+
+\begin{verbatim}
+my $mult = { $^a * $^b };
+say $mult(6, 7);         # -> 42
+\end{verbatim}
+
+or to:
+
+\begin{verbatim}
+my $mult = -> $a, $b { $a * $b }
+say $mult(6, 7);         # -> 42  
+\end{verbatim}
+
+To tell the truth, the compiler doesn't get confused, 
+but the user might, unless she or he has been previously 
+exposed to some functional programming languages that 
+commonly use this type of syntactic construct. 
+
+These ideas are powerful, but you are advised to pay 
+attention so you don't to fall into the trap of code 
+obfuscation.
+
+That being said, the functional programming paradigm 
+is extremely expressive and can make your code much 
+shorter. And, overall, shorter code, provided it remains 
+clear and easy to understand, is very likely to have 
+fewer bugs than longer code.
+
+\section{Using a Functional Programming Style}
+\index{functional programming!style}
+\label{funcstyle}
+
+In this chapter, we have seen how to use techniques derived 
+from functional programming to make our code simpler and 
+more expressive. In a certain way, though, we haven't fully 
+applied functional programming. All of the techniques we have 
+seen stem from functional programming and are a crucial 
+part of it, but the true essence of functional programming 
+isn't really about using higher-order functions, list 
+processing and pipeline programming, anonymous subroutines 
+and closures, lazy lists and currying, and so on. 
+The true essence of functional programming is a specific 
+mindset that treats computation as the evaluation of mathematical 
+functions and avoids changing-state and mutable data.
+\index{functional programming!style}
+\index{pipe-line programming}
+
+Instead of simply using techniques derived from functional 
+programming, we can go one step further and actually 
+write code in functional programming style. If we are going 
+to avoid changing-state and mutable data, this means that 
+we will no longer use variables (or at least not change them, 
+and treat them as immutable data) and do things differently.
+
+\subsection{The Merge Sort Algorithm}
+\label{mergesort}
+\index{merge sort}
+\index{sort!merge sort}
+
+Consider the example of a classical and efficient sorting 
+technique called the merge sort, invented by John von Neumann 
+in 1945. It is based on the fact that if you have two sorted 
+arrays, it is significantly faster to merge the two arrays 
+into a single sorted array, by reading each array in parallel and 
+picking up the appropriate item from either of the arrays, than 
+it would be to blindly sort the data of the two arrays.
+\index{von Neumann, John}
+\index{merging arrays or lists}
+
+Merge sort is a ``divide and conquer'' algorithm which 
+consists of recursively splitting the input unsorted array into 
+smaller and smaller sublists, until each sublist contains only 
+one item (at which point the sublist is sorted, by definition), 
+and then merging the sublists back into a sorted array.
+\index{divide and conquer algorithm}
+
+To avoid adding unnecessary complexity, we will discuss here 
+implementations that simply sort numbers in ascending numeric 
+order.
+
+
+\subsection{A Non-Functional Implementation of Merge Sort}
+\index{merge sort! non functional implementation}
+
+Here's how we could try to implement a merge sort algorithm using 
+purely imperative/procedural programming:
+
+\begin{verbatim}
+# ATTENTION: buggy code
+sub merge-sort (@out, @to-be-sorted, $start = 0, $end = @to-be-sorted.end) {
+    return if $end - $start  < 2;
+    my $middle = ($end + $start) div 2;
+    my @first = merge-sort(@to-be-sorted, @out, $start, $middle);
+    my $second = merge-sort(@to-be-sorted, @out, $middle, $end);
+    merge-lists(@out, @to-be-sorted, $start, $middle, $end);
+}
+sub merge-lists (@in, @out, $start, $middle, $end) {
+    my $i = $start;
+    my $j = $middle;
+    for $start..$end  -> $k {
+        if $i < $middle and ($j >= $end or @in[$i] <= @in[$j]) {
+            @out[$k] = @in[$i];
+            $i++;
+        } else {
+            @out[$k] = @in[$j];
+            $j++;
+        } 
+    }
+}
+my @array = reverse 1..10;
+my @output = @array;
+merge-sort2  @output, @array;
+say @output;
+\end{verbatim}
+
+This program always works on the full array (and its copy) and 
+the sublists are not extracted; the extraction is simulated by 
+the use of subscript ranges.
+
+This code is not very long, but nonetheless fairly complicated.
+If you try to run it, you'll find that there is a bug: 
+the last item of the original array is improperly sorted. For 
+example, if you try to run it on the list of 10 consecutive 
+integers in reverse order (i.e., ordered from 10 to 1) used in 
+the test at the end of the above code, you'll get the following 
+output array:
+
+\begin{verbatim}
+[2 3 4 5 6 7 8 9 10 1]
+\end{verbatim}
+
+
+As an exercise, try fixing the bug before reading any further. 
+(The fix is explained next.)
+
+It is likely that you'll find that identifying and correcting 
+the bug is quite difficult, although this bug is actually 
+relatively simple (when I initially wrote this code, I 
+encountered some more complicated bugs before arriving at this one). 
+It is quite hard to properly use the array subscripts and 
+insert the data items in the right place, avoiding off-by-one 
+and other errors.
+\index{off-by-one error}
+
+Here's a corrected version:
+
+\begin{verbatim}
+sub merge-sort (@out, @to-be-sorted, $start = 0, $end = @to-be-sorted.elems) {
+    return if $end - $start < 2;
+    my $middle = ($end + $start) div 2;
+    merge-sort(@to-be-sorted, @out, $start, $middle);
+    merge-sort(@to-be-sorted, @out, $middle, $end);
+    merge-lists(@out, @to-be-sorted, $start, $middle, $end);
+}
+sub merge-lists (@in, @out, $start, $middle, $end) {
+    my $i = $start;
+    my $j = $middle;
+    for $start..$end - 1  -> $k {
+        if $i < $middle and ($j >= $end or @in[$i] <= @in[$j]) {
+            @out[$k] = @in[$i];
+            $i++;
+        } else {
+            @out[$k] = @in[$j];
+            $j++;
+        } 
+    }
+}
+my @array = pick 20, 1..100;
+my @output = @array;
+merge-sort2  @output, @array;
+say @output;
+\end{verbatim}
+
+The main change is in the signature of the \verb'merge-sort' 
+subroutine: the default value for the \verb'$end' parameter 
+is the size (number of items) of the array, and no 
+longer the subscript of the last elements of the array (so, 
+the bug was an off-by-one error). Making this correction 
+also makes it necessary to change the pointy block 
+(\verb'for $start..$end - 1 -> ...') in the 
+\verb'merge-lists' subroutine.
+\index{off-by-one error}
+
+For 20~randoms integers between 1 and 100, this prints 
+out something like the following:
+
+\begin{verbatim}
+[11 13 14 15 19 24 25 29 39 46 52 57 62 68 81 83 89 92 94 99]
+\end{verbatim}
+
+The point is that it is difficult to understand the detailed 
+implementation of the algorithm, and fairly hard to debug, even 
+using the Perl debugger presented in section~\ref{perl-debugger}.
+\index{debugger}
+\index{merge sort! non functional implementation}
+
+\subsection{A Functional Implementation of Merge Sort}
+\index{merge sort!functional implementation}
+Rather than modifying the entire array at each step through 
+the process (and being confused in the management of subscripts), 
+we can split recursively the data into actual sublists and work 
+on these sublists.
+
+This can lead to the following implementation:
+
+\begin{verbatim}
+sub merge-sort (@to-be-sorted) {
+    return @to-be-sorted if @to-be-sorted < 2;
+    my $middle = @to-be-sorted.elems div 2;
+    my @first = merge-sort(@to-be-sorted[0 .. $middle - 1]);
+    my @second = merge-sort(@to-be-sorted[$middle .. @to-be-sorted.end]);
+    return merge-lists(@first, @second);
+}
+sub merge-lists (@one, @two) {
+    my @result;
+    loop {
+        return @result.append(@two) unless @one;
+        return @result.append(@one) unless @two;
+        push @result, @one[0] < @two[0] ?? shift @one !! shift @two;
+    }
+} 
+\end{verbatim}
+
+The code is shorter than the previous implementation, but 
+that's not the main point.
+
+The {\tt merge-sort} subroutine is somewhat similar to 
+the previous implementation, except that it recursively 
+creates the sublists and then merge the sublists.
+
+It is the {\tt merge-lists} subroutine (which does the bulk 
+of the work in both implementations) that is now much 
+simpler: it receives two sublists and merges them. Most of this 
+work is done in the last code line; the two lines before it 
+are only taking care of returning the merged list when one 
+of the input sublists ends up being empty.
+\index{merge sort!functional implementation}
+
+This functional version of the program captures  
+the essence of the merge sort algorithm:
+\begin{itemize}
+\item If the  array has less than two items, it is already 
+sorted, so return it immediately (this is the base case 
+stopping the recursion).
+\index{base case}
+\index{recursion!base case}
+\item Else, pick the middle position of the array to divide 
+it into two sublists, and call \verb'merge-sort' recursively 
+on them;
+\item Merge the sorted sublist thus generated.
+\item Return the merged list to the caller.
+\end{itemize}
+
+\index{functional programming!style}
+I hope that you can see how much clearer and simpler the 
+functional style implementation is. To give you an idea, 
+writing and debugging this latter program took me about 
+15~minutes, i.e., about 10~times less than the 
+nonfunctional version. If you don't believe me, try to 
+implement these two versions for yourself. (It's a good 
+exercise even if you \emph{do} believe me.)
+
+The exercise section of this chapter (section~\ref{quicksort} 
+will provide another (and probably even more telling) example 
+of the simplicity of functional programming compared to more 
+imperative or procedural approaches.
+
+
+\section{Debugging}
+\label{test_module}
+\index{testing!automated tests}
+
+This time, we will not really talk about debugging proper, 
+but about a quite closely related activity, testing.
+
+Testing code is an integral part of software development. In 
+Perl~6, the standard {\tt Test} module (shipped and installed 
+together with Rakudo) provides a testing framework which enables 
+automated, repeatable verification of code behavior.
+\index{test module}
+\index{testing!module}
+
+The testing functions emit output conforming to the \emph{Test 
+Anything Protocol} or TAP (\url{http://testanything.org/}), a 
+standardized testing format which has implementations in Perl, 
+C, C++, C\#, Ada, Lisp, Erlang, Python, Ruby, Lua, PHP, Java, 
+Go, JavaScript, and other languages.
+
+A typical test file looks something like this:
+
+\begin{verbatim}
+use v6;
+use Test;      # a Standard module included with Rakudo
+use lib 'lib';
+
+# ...
+
+plan $num-tests;
+
+# .... tests
+
+done-testing;  # optional with 'plan'
+\end{verbatim}
+
+We ensure that we're using Perl~6, via the use of the \verb'v6' 
+pragma, then we load the \verb'Test' module and specify where 
+our libraries are. We then specify how many tests we plan 
+to run (such that the testing framework can tell us 
+if more or fewer tests were run than we expected) 
+and when finished with the tests, we use {\tt done-testing} 
+to tell the framework we are done.
+
+We have already seen a short example of the use of the 
+\verb'Test' module in Section~\ref{sol_fact_operator} 
+(solution to the exercise of 
+Section~\ref{operator_construction}).
+
+The \verb'Test' module exports various functions that 
+check the return value of a given expression, and produce 
+standardized test output accordingly.
+
+In practice, the expression will often be a call to a function 
+or method that you want to unit-test. You may want to check:
+
+\begin{itemize}
+\item Truthfulness: 
+\begin{verbatim}
+ok($value, $description?); 
+nok($condition, $description?)
+\end{verbatim}
+\index{ok function (testing)}
+\index{nok function (testing)}
+\index{test module!ok function}
+\index{test module!nok function}
+
+The {\tt ok} function marks a test as passed if the given 
+\verb'$value' evaluates to true in a Boolean context. 
+Conversely, the {\tt nok} function marks a test as passed 
+if the given value evaluates to false. Both functions 
+accept an optional \verb'$description' of the test. 
+For example:
+
+\begin{verbatim}
+ok  $response.success, 'HTTP response was successful';
+nok $query.error,      'Query completed without error';
+\end{verbatim}
+
+\item String comparison:
+\begin{verbatim}
+is($value, $expected, $description?)
+\end{verbatim}
+\index{is function (testing)}
+\index{test module!is function}
+
+The {\tt is} function marks a test as passed if \verb'$value' 
+and \verb'$expected' compare positively with the \verb'eq' 
+operator. The function accepts an optional description 
+of the test.
+\index{string equality}
+
+\item Approximate numeric comparison:
+
+\begin{verbatim}
+is-approx($value, $expected, $description?)
+\end{verbatim}
+\index{is-approx function (testing)}
+\index{test module!is-approx function}
+
+{\tt is-approx} marks a test as passed if the \verb'$value' and 
+\verb'$expected' numerical values are approximately equal 
+to each other. The subroutine can be called in numerous ways 
+that let you test using relative or absolute tolerance 
+of different values. (If no tolerance is set, it will default 
+to an absolute tolerance of $10^{-5}$.)
+\index{approximate numeric equality}
+
+\item Regex:
+
+\begin{verbatim}
+like($value, $expected-regex, $description?)
+unlike($value, $expected-regex, $description?)
+\end{verbatim}
+\index{like function (testing)}
+\index{unlike function (testing)}
+\index{test module!like function}
+\index{test module!unlike function}
+
+The {\tt like} function marks a test as passed if the 
+\verb'$value' matches the \verb'$expected-regex'. Since 
+we are speaking about regexes, ``matches'', in the 
+previous sentence, really means ``smart matches''. The 
+{\tt unlike} function marks a test as passed if the 
+\verb'$value' does not match the \verb'$expected-regex'.
+
+For example:
+\begin{verbatim}
+like 'foo', /fo/, 'foo looks like fo';
+unlike 'foo', /bar/, 'foo does not look like bar';
+\end{verbatim}
+
+\item And many other functions which you can study in the 
+following documentation: \url{https://docs.perl6.org/language/testing.html}.
+
+\end{itemize}
+
+In principle you could use {\tt ok} for every kind of 
+comparison test, by including the comparison in the 
+expression passed as a value:
+\index{factorial}
+
+\begin{verbatim}
+ok factorial(4) == 24, 'Factorial - small integer';
+\end{verbatim}
+
+However, it is better (where possible) to use one of the 
+specialized comparison test functions, because they can 
+print more helpful diagnostics output in case the comparison 
+fails.
+
+If a test fails although it appears to be successful, and 
+you don't understand why it fails, you may want to use the 
+\verb'diag' function to get additional feed back. For example,
+assume that the test:
+
+\begin{verbatim}
+ok $foo, 'simple test';
+\end{verbatim} 
+
+is failing and that you don't have enough feedback to 
+understand why; you may try:
+\index{diag function (test diagnostic}
+
+\begin{verbatim}
+diag "extensive feedback" unless
+    ok $foo, 'simple test';
+\end{verbatim}
+
+This might give you the additional information you need.
+
+Suppose we want to test a subroutine to determine whether a 
+given string is a palindrome (as discussed in several chapters 
+in this book, see for example Exercise~\ref{palindrome} and 
+Subsection~\ref{palindrome_2}). You could perform that test 
+by writing something like this:
+\index{palindrome}
+
+\begin{verbatim}
+# file is-palindrome.p6
+use v6;
+
+sub is-palindrome($s) { $s eq $s.flip }
+
+multi sub MAIN( $input ) {
+    if is-palindrome( $input ) {
+        say "'$input' is palindrome.";
+    }
+    else {
+        say "'$input' is not palindrome.";
+    }
+}
+
+multi sub MAIN(:$test!) {
+    use Test;
+    plan 4;
+    ok is-palindrome(''), 'empty string';
+    ok is-palindrome('aba'), 'odd-sized example';
+    ok is-palindrome('abba'), 'even-sized example';
+    nok is-palindrome('blabba'), 'counter example';
+}
+\end{verbatim}
+
+Usually, tests are stored in different files placed in a ``t'' 
+subdirectory. Here, for this short test, everything is in the 
+same file, but two multi {\tt MAIN} subroutines are supplied 
+to either test whether a passed parameter is a palindrome, or to 
+run the test plan. See Section~\ref{MAIN} (p.~\pageref{MAIN} 
+and Subsection~\ref{MAIN_sub} (p.~\pageref{MAIN_sub})
+if you need a refresher on the {\tt MAIN} subroutine.
+\index{MAIN}
+\index{multi subroutines}
+
+You can run these tests as follows:
+
+\begin{verbatim}
+$ perl6 is-palindrome.p6 abba
+'abba' is palindrome.
+$ perl6 is-palindrome.p6 abbaa
+'abbaa' is not palindrome.
+$
+$ perl6 is-palindrome.p6 --test
+1..4
+ok 1 - empty string
+ok 2 - odd-sized example
+ok 3 - even-sized example
+ok 4 - counter example
+\end{verbatim}
+
+Try this example, play with it, change some lines, add 
+new tests, and see what happens.
+
+Writing such unit tests may appear to be tedious work. 
+The truth, though, is that it is manual testing that is 
+somewhat tedious and, it you try, you'll find that 
+writing and using such test scenarios makes the testing 
+work much less cumbersome. You usually write the tests 
+once, and run them very often. And you will be surprised 
+how many bugs you will find even if you are sure your 
+code is correct! Also, once you've written 
+a test suite for something, you might still be using it 
+years later, for example for nonregression testing after 
+a software change. This can be not only a time saver, but 
+also a guarantee that you're supplying good quality software.
+\index{non-regression test}
+
+Many organizations actually write their tests even before 
+writing the programs. This process is called 
+\emph{test-driven development} and there are many areas where 
+it is quite successful. In fact, the Rakudo/Perl~6 compiler 
+had a very large test suite (more than 40,000 tests) long 
+before the compiler was ready. In a way, the test suite 
+even became the true specification of the project, so that 
+you could use the same test suite for verifying another 
+implementation of Perl~6.
+\index{test-driven development}
+
+An additional advantage of 
+such an approach is that measuring the ratio of tests that 
+pass may often be a better metric of software completion than  
+the usual ``wet finger in the wind'' estimates, such as, say, 
+a ratio of the number of code lines written versus the estimate 
+of the final number of code lines.
+\index{software metric}
+
+\section{Glossary}
+
+\begin{description}
+
+\item[First-class object:] An object that can be passed around 
+as an argument to or as a return value from a subroutine. 
+In Perl, subroutines are first-class objects (also called 
+first-class citizens). 
+\index{first-class object}
+\index{first-class citizen}
+
+\item[Callback function] A function or subroutine that is 
+passed as an argument to another function.
+\index{callback function}
+
+\item[higher-order function:] A function or subroutine that takes 
+another subroutine (or a simple code block) as an argument. The 
+{\tt map}, {\tt grep}, {\tt reduce}, and {\tt sort} built-in 
+functions are examples of higher-order functions.
+\index{higher-order function}
+\index{function!higher-order}
+\index{map}
+\index{grep}
+\index{reduce}
+
+\item[Anonymous subroutine] A subroutine that has no name. Also 
+commonly called a \emph{lambda}. Although they are not exactly 
+the same thing, pointy blocks can also be assimilated to 
+anonymous subroutines.
+\index{anonymous subroutine}
+\index{lambda}
+
+\item[Closure] A function that can access to variables that 
+are lexically available where the function is defined, even 
+if those variables are no longer in scope where the function 
+is called.
+\index{closure}
+
+\item[pipeline programming:] A programming model in which 
+pieces of data (usually lists) undergo successive 
+transformations as in a pipeline or an assembly line.
+\index{pipe-line programming}
+
+\item[Reduction] A process through which a list of values is 
+reduced to a single value. For example, a list of numbers 
+can be reduced, for example, to an average, a maximum value, 
+or a median. Some languages call this process \emph{folding}.
+\index{reduction}
+
+\item[Metaoperator] An operator that acts on another operator 
+to provide new functionality.
+\index{metaoperator}
+
+\item[Algorithmic complexity] A rough measure of the number 
+of computing operations (and time) needed to perform some 
+computing on relatively large data sets, and, more precisely, 
+a measure of how an algorithm scales when the data set grows.
+\index{algorithmic complexity}
+
+\item[Laziness] A process of delayed evaluation whereby, for 
+example, one populates a list or processes the items of a list only 
+on demand, when required, to avoid unnecessary processing.
+\index{laziness}
+
+\item[Iterator] A piece of code that returns values on demand 
+and keeps track of where it has arrived, so as to be able 
+to know what the next value to be provided should be.
+\index{iterator}
+
+\item[Cache] To cache a value is to store it in memory (in a 
+variable, an array, a hash, etc.) in order to avoid the need to 
+compute it again, thereby hopefully saving some computation time.
+\index{cache}
+
+\item[Currying] Currying a function that takes several 
+arguments means to create another function that takes fewer 
+arguments (where the missing arguments are stored within 
+the new curried function).
+\index{curry}
+
+\item[test-driven development:] A development methodology 
+where the tests are written from the specifications before 
+the actual program, so that it becomes easier to check that 
+the program complies with the specifications.
+\index{test-driven development}
+
+\end{description}
+
+\section{Exercise: Quick Sort}
+\label{quicksort}
+\index{quick sort}
+\index{sort!quick sort}
+
+\begin{exercise}
+Quick sort is a ``divide and conquer'' sorting algorithm invented 
+by Tony Hoare in 1959. It relies on partitioning the array 
+to be sorted. To partition an array, an element called a pivot 
+is selected. All elements smaller than the pivot are moved before 
+it and all greater elements are moved after it. The lesser and 
+greater sublists are then recursively sorted through the same 
+process and finally reassembled together.
+\index{Hoare, Charles Antony Richard}
+\index{divide and conquer algorithm}
+
+One of the difficulties is to select the right pivot. Ideally 
+it should be the median value of the array items, since this would 
+give partitions of approximately equal sizes, thereby making 
+the algorithm optimally efficient, but finding the 
+median for each partition would take some time and ultimately 
+penalize the performance. Various variants of the quick sort 
+have been tried, with different strategies to (usually 
+arbitrarily) select a pivot. Here, we select an element at or near 
+the middle of the partition.
+\index{pivot!quick sort algorithm}
+
+The following is a typical nonfunctional implementation 
+of the quick sort algorithm.
+
+\begin{verbatim}[fontshape=up]
+sub quicksort(@input) {
+    sub swap ($x, $y) {
+        (@input[$x], @input[$y]) = @input[$y], @input[$x];
+    }
+    sub qsort ($left, $right) {
+        my $pivot = @input[($left + $right) div 2];
+        my $i = $left;
+        my $j = $right;
+        while $i < $j {
+            $i++ while @input[$i] < $pivot;
+            $j-- while @input[$j] > $pivot;
+            if $i <= $j {
+                swap $i, $j;
+                $i++;
+                $j--;
+            }
+        }
+        qsort($left, $j) if $left < $j;
+        qsort($i, $right) if $j < $right;
+    }
+    qsort(0, @input.end)
+}
+my @array = pick 20, 1..100;;
+quicksort @array;
+say @array;
+\end{verbatim}
+
+The array is modified in place (which has the advantage of 
+requiring limited memory), which means that the original array 
+is modified. 
+
+For functional programming, internal data is immutable, so that 
+you're copying data fragments into new lists, rather than modifying 
+them ``in place.''
+
+In the same spirit as what we've done in section~\ref{funcstyle} 
+for the merge sort algorithm, try to write a functional style 
+implementation of the quick sort algorithm. Hint: this can be 
+done in about half a dozen lines of code. 
+
+Solution: \ref{sol_quicksort}.
+\index{quick sort}
+
+\end{exercise}
+

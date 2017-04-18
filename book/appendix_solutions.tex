@@ -1,0 +1,5570 @@
+\chapter{Solutions to the Exercises}
+
+This (long) chapter provides solutions to the exercises 
+suggested in the main matter of this book. However, it 
+contains much more than that.
+\index{solutions to the exercises}
+
+First, in many cases, it provides several different solutions, 
+illustrating different approaches to a problem, discussing 
+their respective merits or drawbacks and often 
+showing solutions that may be more efficient than others.
+
+Second, it often provides a lot of additional information 
+or complementary examples.
+
+Just the sheer volume of code examples of this chapter is 
+likely to teach you a lot about programming in general and 
+about the Perl~6 language in particular.
+
+Finally, this chapter sometimes introduces (with examples) new 
+concepts that are covered only in later chapters of the book. 
+Having seen such examples may help you to get a smoother 
+grasp to these new ideas when you get to these chapters. 
+In a few cases, this chapter covers or introduces notions 
+that will not be covered anywhere else in the book.
+
+When you solve an exercise, even if you're confident that you 
+did it successfully, please make sure to consult the solutions 
+in this chapter and to try them: you're likely to learn quite 
+a bit from them.
+
+\section{Exercises of Chapter~\ref{funcchap}: Functions and Subroutines}
+
+\subsection{Exercise~\ref{right_justify}: Subroutine right-justify (p.~\pageref{right_justify})}
+\label{sol_right_justify}
+\index{right-justify}
+
+The aim is to write a subroutine that prints a string
+with enough leading spaces so that the last letter 
+of the string is in column 70 of the display.
+
+This is the first real exercise of this book, so let's 
+do it step by step:
+
+\begin{verbatim}
+use v6;
+sub right-justify ($input-string) {
+    my $str_length = chars $input-string;
+    my $missing_length = 70 - $str_length;
+    my $leading-spaces = " " x $missing_length;
+    say $leading-spaces, $input-string;
+}
+right-justify("Larry Wall");
+right-justify("The quick brown fox jumps over the lazy dog");
+\end{verbatim}
+
+This subroutine:
+\begin{itemize}
+\item Assigns the input string length to the \verb'$str_length' variable;
+\item Computes into the \verb'$missing_length' variable the 
+number of spaces that will need to be added at the beginning 
+of the displayed line to have it end in column 70;
+\item Creates the \verb'$leading-spaces' string with the 
+needed number of spaces;
+\item Prints out the \verb'$leading-spaces' and 
+\verb'$input-string' one after the other to obtain the desired 
+result.
+\end{itemize}
+
+This displays the following:
+
+\begin{verbatim}
+                                                            Larry Wall
+                           The quick brown fox jumps over the lazy dog
+\end{verbatim}
+
+We can, however, make this code shorter by composing some of the 
+statements and expressions:
+\index{composition}
+
+\begin{verbatim}
+sub right-justify ($input-string) {
+    my $leading-spaces = " " x (70 - $input-string.chars);
+    say $leading-spaces, $input-string;
+}
+\end{verbatim}
+
+It could even be boiled down to a shorter single-line subroutine:
+
+\begin{verbatim}
+sub right-justify ($input-string) {
+    say " " x 70 - $input-string.chars, $input-string;
+}
+\end{verbatim}
+
+This works fine, but it may be argued that this last version is 
+less clear. In fact, the \verb'$leading-spaces' temporary 
+variable used in the previous version had a name that 
+self-documented what the subroutine is doing. You can make 
+very concise code as in the last example above, but sometimes 
+it may become a little bit too terse, so there is a tradeoff 
+between concision and clarity.
+
+Note that there are two built-in functions, {\tt printf} and 
+{\tt sprintf}, that can perform a similar task, but we will 
+cover them later. There is also a \verb'.fmt' method for 
+producing formatted output.
+\index{printf function}
+\index{sprintf function} 
+\index{fmt method}
+
+\subsection{Exercise~\ref{do_it_twice}: Subroutine do-twice (p.~\pageref{do_it_twice})}
+\label{sol_do_it_twice}
+\index{do-twice}
+
+To add an addressee to the greeting, we need to:
+\begin{itemize}
+\item Pass a second argument in the call to 
+{\tt do-twice} (the string ``World'')
+\item Add a new parameter in the {\tt do-twice} subroutine 
+signature (\verb'$addressee')
+\index{signature}
+\item Add this new parameter as an argument in the calls 
+to \verb'$code'
+\item Add a signature with one parameter (\verb'$addr') in 
+the definition of the {\tt greet} subroutine 
+\item Use this new parameter in the print statement
+\end{itemize} 
+
+This leads to the following code:
+
+\begin{verbatim}
+sub do-twice($code, $addressee) {
+    $code($addressee); 
+    $code($addressee);
+}
+sub greet (Str $addr) {
+    say "Hello $addr!";
+}
+do-twice &greet, "World";
+\end{verbatim}
+
+This displays:
+
+\begin{verbatim}
+Hello World!
+Hello World!
+\end{verbatim}
+
+For the next question, we replace the {\tt greet} subroutine 
+by the {\tt print-twice} subroutine:
+
+\begin{verbatim}
+sub do-twice($code, $message) {
+    $code($message); 
+    $code($message);
+}
+sub print-twice($value) {
+    say $value;
+    say $value
+}
+do-twice &print-twice, "What's up doc";
+\end{verbatim}
+
+This prints ``What's up doc'' four times.
+
+Finally, we add the new {\tt do-four} subroutine and let 
+it call the {\tt do-twice} subroutine twice, printing the 
+message eight times:
+
+\begin{verbatim}
+sub do-twice($code, $message) {
+    $code($message); 
+    $code($message);
+}
+sub print-twice($value) {
+    say $value;
+    say $value
+}
+sub do-four ($code, $message) {
+    do-twice $code, $message;
+    do-twice $code, $message;
+}
+do-four &print-twice, "What's up doc";
+\end{verbatim}
+
+\subsection{Exercise~\ref{draw_a_grid}: Subroutine print-grid 
+(p.~\pageref{draw_a_grid})}
+\label{sol_draw_a_grid}
+\index{print-grid}
+
+To print a grid such as the one requested in the exercise, 
+we need to print each line one by one, and we basically 
+have two types of lines: the three ``dotted lines'' and 
+the eight lines without dashes, which we'll call ``empty 
+lines'' for lack of a better name, because they are are 
+partly empty (no dashes).
+
+To avoid code repetition, one way to do it is to create 
+a string for each of the two line types and to print 
+these strings in accordance with the needs.
+
+This is one possible solution:
+
+\begin{verbatim}
+use v6;
+
+my $four-dashes = "- " x 4;
+my $dotted_line = ("+ " ~ $four-dashes ) x 2 ~ "+" ;
+my $spaces = " " x 9;
+my $empty-line = ("|" ~ $spaces ) x 2 ~ "|" ;
+
+sub say-four-times($value) {
+    say $value;
+    say $value;
+    say $value;
+    say $value;
+}
+sub print-grid {
+    say $dotted_line;
+    say-four-times $empty-line;
+    say $dotted_line;
+    say-four-times $empty-line;
+    say $dotted_line;
+}
+print-grid;
+\end{verbatim}
+
+There are obviously better ways to do something four times 
+than just repeating \verb'say $value;' four times as in the 
+{\tt say-four-times} subroutine above, but this will be covered in 
+the Chapter\ref{conditionals} (see Section~\ref{for_loops}).
+
+To draw a similar grid with four rows and four columns, we first 
+need to modify the strings used for printing the lines:
+
+\begin{verbatim}
+my $dotted_line = ("+ " ~ $four-dashes ) x 4 ~ "+" ;
+# ...
+my $empty-line = ("|" ~ $spaces ) x 4 ~ "|" ;
+\end{verbatim}
+
+In addition to that, we could modify {\tt print-grid} to just print 
+each line the required number of times. But that would involve 
+quite a bit of code repetition, and the aim of this exercise 
+is to use subroutines to permit code reuse.
+
+There are now two things that we repeatedly need to do four times. 
+It makes sense to write a {\tt do-four-times} subroutine that 
+will be used both for creating the {\tt say-four-times} subroutine (in 
+charge of printing the four empty lines) and for calling 
+entire rows four times. This subroutine will be passed the 
+code reference for doing the specific actions required:
+
+\begin{verbatim}
+my $four-dashes = "- " x 4;
+my $dotted_line = ("+ " ~ $four-dashes ) x 4 ~ "+" ;
+my $spaces = " " x 9;
+my $empty-line = ("|" ~ $spaces ) x 4 ~ "|" ;
+
+sub do-four-times ($code) {
+    $code();
+    $code();
+    $code();
+    $code();
+}
+sub say-four-times($value) {
+    do-four-times(sub {say $value});
+}
+sub print-bottom-less-grid {
+    say $dotted_line;
+    say-four-times $empty-line;
+}
+sub print-grid {
+    do-four-times(&print-bottom-less-grid);
+    say $dotted_line;
+}
+print-grid;
+\end{verbatim}
+
+In addition, rather than declaring global variables for the 
+line strings, it is better practice to declare and define them 
+within the subroutines where they are used. We also no longer 
+need the {\tt say-four-times} subroutine; we can just 
+pass the relevant arguments to the {\tt do-four-times} 
+subroutine to the same effect. This could lead to the 
+following program:
+
+\begin{verbatim}
+sub do-four-times ($code, $val) {
+    $code($val);
+    $code($val);
+    $code($val);
+    $code($val);
+}
+sub print-bottom-less-grid($dot-line) {
+    say $dot-line;
+    my $spaces = " " x 9;
+    my $empty-line = ("|" ~ $spaces ) x 4 ~ "|" ;
+    do-four-times(&say, $empty-line);
+}
+sub print-grid {
+    my $four-dashes = "- " x 4;
+    my $dotted_line = ("+ " ~ $four-dashes ) x 4 ~ "+" ;
+    do-four-times(&print-bottom-less-grid, $dotted_line);
+    say $dotted_line;
+}
+print-grid;
+\end{verbatim}
+\index{print-grid}
+
+
+\section{Exercises of Chapter~\ref{conditionals}: Conditionals and Recursion}
+
+\label{sol_do_n_times}
+
+\subsection{Subroutine do-n-times, Exercise Suggested in Section~\ref{do_n_times} (p.~\pageref{do_n_times})}
+
+We need a subroutine that takes a function 
+and a number, {\tt \$num}, as arguments, and that calls
+the given function {\tt \$num} times.
+
+\index{function!recursive}
+The {\tt do-n-times} subroutine is recursive and is 
+calling itself each time with a decremented argument. It 
+stops ``recursing'' when this argument is 0. \verb'$subref' is an anonymous subroutine called within the body of 
+{\tt do-n-times}:
+
+\begin{verbatim}
+sub do-n-times ($coderef, Int $num) {
+     return if $num <= 0;
+     $coderef();
+     do-n-times $coderef, $num - 1;
+}
+
+my $subref = sub { say "Carpe diem";}
+
+do-n-times $subref, 4;
+\end{verbatim}
+
+This prints:
+
+\begin{verbatim}
+Carpe diem
+Carpe diem
+Carpe diem
+Carpe diem
+\end{verbatim}
+
+\subsection{Exercise~\ref{int_div_modulo}: Days, Hours, 
+Minutes, and Seconds (p.~\pageref{int_div_modulo})}
+\label{sol_int_div_modulo}
+
+The following is one possible way of converting a number 
+of seconds into a number of days, hours, minutes, and seconds:
+\index{modulo operator}
+\index{operator!mod}
+\index{integer division}
+\index{operator!div}
+
+
+\begin{verbatim}
+days-HMS(240_000);
+
+sub days-HMS (Int $seconds) {
+    my $minutes = $seconds div 60;
+    my $sec_left = $seconds mod 60;
+    my ($hours, $min_left) = $minutes div 60, $minutes mod 60;
+    my ($days, $hours_left) = $hours div 24, $hours mod 24;
+    say "$days $hours_left $min_left $sec_left"; 
+              #  prints: 2 18 40 0
+}
+\end{verbatim}
+
+The first two lines do the integer division and modulo 
+operation separately. For the next two cases, we do both 
+operations in one single line, using a list syntax.
+
+The \verb'$minutes', \verb'$hours', and \verb'$days' variables 
+are all computed in essentially the same way. The code could 
+be made more modular by  using a subroutine to compute 
+\verb'$minutes', \verb'$hours', and \verb'$days'. Although 
+fruitful subroutines will really be studied in the course 
+of the next chapter, we have seen a couple of examples of 
+them and can provide the gist about how they could be used:
+
+\begin{verbatim}
+sub div_mod (Int $input, Int $num-base) {
+    return $input div $num-base, $input mod $num-base;
+}
+sub days-HMS (Int $seconds) {
+    my ($minutes, $sec_left) = div_mod $seconds, 60;
+    my ($hours, $min_left)   = div_mod $minutes, 60;
+    my ($days, $hours_left)  = div_mod $hours, 24;
+    say "$days $hours_left $min_left $sec_left"; 
+}
+\end{verbatim}
+
+To ask a user to enter a number of seconds, you might 
+do this:
+\index{prompt}
+\index{function!prompt}
+
+\begin{verbatim}
+my $sec = prompt "Please enter the number of seconds: ";
+days-HMS $sec.Int;
+\end{verbatim}
+
+In real life, it would usually be good to verify that the 
+user-provided input is a positive integer and ask again if it is 
+not. As a further exercise, you might try to insert the 
+above code into a recursive subroutine that prints an 
+error message and calls itself again if the user input is 
+not valid. The solution to the next exercise 
+(Section~\ref{sol_fermat_ex}) gives an example of a recursive 
+subroutine designed to prompt 
+the user to supply input again; this might help you figure 
+out how to do it if you encounter difficulty. 
+\index{input!validation}
+
+Try replacing the following code line:
+\begin{verbatim}
+say "$days $hours_left $min_left $sec_left"; 
+\end{verbatim}
+%
+with this one:
+\index{printf function}
+
+\begin{verbatim}
+printf "%d days %d hours %d minutes %d seconds \n", days-HMS 240_000;
+\end{verbatim}
+to see better-formatted output.
+
+\subsection{Exercise~\ref{fermat_ex}: Fermat's Theorem (p.~\pageref{fermat_ex})}
+\label{sol_fermat_ex}
+\index{Fermat, Pierre}
+\index{Fermat's Last Theorem}
+
+The {\tt check-fermat} subroutine checks whether:
+
+\[ a^n + b^n = c^n \]
+%
+                                       }, 
+is true for the supplied values of \emph{a}, \emph{b}, 
+\emph{c}, and \emph{n}.
+
+\begin{verbatim}
+sub check-fermat (Int $a, Int $b, Int $c, Int $n) {
+    if $a**$n + $b**$n == $c**$n {
+        if $n > 2 {
+            say "Holy smokes, Fermat was wrong!" if $n > 2;
+        } elsif $n == 2 or $n ==1 {
+            say "Correct";
+        }
+        return True; 
+    }
+    return False
+}
+
+say "Correct for 3, 4, 5, 2" if check-fermat 3, 4, 5, 2;
+get-input();
+
+sub get-input {
+    say "Your mission, Jim, should you decide to accept it, is to ";
+    say "provide values of A, B, C and n satisfying Fermat's equation:";
+    say "  A ** n + B ** n = C * *n";
+    my $a = prompt "Please provide a value for A: ";
+    my $b = prompt "Please provide a value for B: ";
+    my $c = prompt "Please provide a value for C: ";
+    my $n = prompt "Please provide a value for the exponent: ";
+    if check-fermat($a.Int, $b.Int, $c.Int, $n.Int) {
+        say "The equation holds true for your values";
+    } else {
+        say "Nope. The equation is not right."
+    }
+    my $try-again = prompt "Want to try again (Y/N)?";
+    get-input if $try-again eq 'Y';
+}
+\end{verbatim}
+%
+
+Fermat's last theorem has been proven and, needless to say, 
+the mission is truly impossible if $n > 2$; perhaps this 
+time Jim Phelps should decline to accept the mission.
+
+\subsection{Exercise~\ref{triangle}: Is it a Triangle? (p.~\pageref{triangle})}
+\label{sol_triangle}
+\index{triangle}
+
+This is a possible routine to find out whether you can 
+make a triangle with three given stick lengths:
+
+\begin{verbatim}
+sub is-triangle ( Numeric $x, Numeric $y, Numeric $z) {
+    my $valid = True;
+    $valid = False if $x > $y + $z;
+    $valid = False if $y > $x + $z;
+    $valid = False if $z > $x + $y;
+    if $valid {
+        say "Yes"; 
+    } else {
+        say "No";
+    }
+}
+is-triangle 1, 3, 4;  # -> Yes
+is-triangle 1, 3, 6;  # -> No
+\end{verbatim}
+
+Another way to do this would be to start by finding the greatest 
+length and test only that one, but that does not make the 
+algorithm significantly simpler.
+
+Prompting the user to input three length has been shown in 
+the previous two exercises; there is nothing really new here.
+However, this is one new way of doing it:
+
+\begin{verbatim}
+my ($a, $b, $c) = split " ", 
+    prompt "Please enter three lengths (separated by spaces): ";
+is-triangle $a.Int , $b.Int , $c.Int;
+\end{verbatim}
+
+
+\subsection{Exercise~\ref{fibonacci}: The Fibonacci Numbers? (p.~\pageref{fibonacci})}
+\label{sol_fibonacci}
+\index{Fibonacci}
+\index{Fibonacci!numbers}
+
+The Fibonacci numbers are a sequence of numbers in which the 
+first two numbers are equal to 1 and any subsequent number is the 
+sum of the two preceding ones, for example:
+\begin{verbatim}
+1, 1, 2, 3, 5, 8, 13, 21, 34, ...
+\end{verbatim}
+
+Printing the first 20 Fibonacci numbers:
+
+\begin{verbatim}
+sub n_fibonacci (Int $n) {
+    my $fib1 = 1;
+    my $fib2 = 1;
+    say $_ for $fib1, $fib2;
+    for 3..$n {
+        my $new_fib = $fib1 + $fib2;
+        say $new_fib;
+        ($fib1, $fib2) = $fib2, $new_fib;
+    }
+}
+n_fibonacci 20;
+\end{verbatim}
+
+Printing the $n$th Fibonacci number:
+
+\begin{verbatim}
+my $n = prompt "Enter the searched Fibonacci number: ";
+$n = $n.Int;
+say fibo($n);
+
+sub fibo (Int $n) {
+    my ($fib1, $fib2) = 1, 1;
+    for 3..$n {
+        my $new_fib = $fib1 + $fib2;
+        ($fib1, $fib2) = $fib2, $new_fib;
+    }
+    return $fib2;
+}    
+\end{verbatim}
+\index{Fibonacci!numbers}
+
+\subsection{Exercise~\ref{sub_recurse}: The {\tt recurse} Subroutine (p.~\pageref{sub_recurse})}
+\label{sol_sub_recurse}
+\index{recursion}
+
+Examining the code of the {\tt recurse} subroutine, the 
+first thing you should notice is that each time it 
+is called recursively, the first argument (\verb'$n') is 
+decremented by one compared to the previous call. If the 
+initial value of \verb'$n' is a \emph{positive integer}, the 
+succession of calls will eventually lead to the base case 
+where \verb'$n == 0', and the cascade of recursive calls 
+will eventually stop. 
+
+If \verb'$n' is not an integer or if it is negative, we will get 
+into infinite recursion.
+
+One way to visualize how the program runs is to display 
+the subroutine parameters at each call:
+
+\begin{verbatim}
+sub recurse($n,$s) {
+    say "Args : n = $n, s = $s";
+    if ($n == 0) {
+        say $s;
+    } else {
+        recurse $n - 1, $n + $s;
+    }
+}
+recurse 3, 0;
+\end{verbatim}
+This would print:
+\begin{verbatim}
+Args : n = 3, s = 0
+Args : n = 2, s = 3
+Args : n = 1, s = 5
+Args : n = 0, s = 6
+6
+\end{verbatim}
+
+\index{guardian pattern}
+To guard against arguments leading to infinite recursion, 
+we can add integer type constraints to the subroutine 
+signature and some code to stop recursion if the first 
+argument is negative, for example:
+\index{signature}
+
+\begin{verbatim}
+sub recurse(Int $n, Int $s) {
+    say "Args : n = $n, s = $s";
+    if $n == 0 {
+        say $s;
+    } elsif $n < 0 {
+        die 'STOP! negative $n, we need to give up';
+    } else {
+        recurse $n - 1, $n + $s;
+    }
+}
+\end{verbatim}
+%
+
+Now, if we call {\tt recurse} with a negative value for 
+\verb'$n', we get an error message:
+
+\begin{verbatim}
+Args : n = -1, s = 0
+STOP! negative $n, we need to give up
+  in sub recurse at recurse2.pl6 line 6
+  in block <unit> at recurse2.pl6 line 12
+\end{verbatim}
+%
+
+And if we call it with a non integer value for \verb'$n':
+
+\begin{verbatim}
+===SORRY!=== Error while compiling recurse2.pl6
+Calling recurse(Rat, Int) will never work with declared
+signature (Int $n, Int $s)
+at recurse2.pl6:12
+------> <BOL><HERE>recurse 1.5, 0;
+\end{verbatim}
+%
+
+\index{multi!keyword}
+\index{multi!subroutine}
+Another possibility might be to use a feature of Perl~6 which 
+we haven't covered yet, \emph{multi} subroutines, described in 
+Section~\ref{multisubs} (p.~\pageref{multisubs}). The idea is 
+to declare two versions of the {\tt recurse} subroutine, 
+which have the same name but different signatures. 
+The compiler will figure out which version of {\tt recurse} 
+to call depending on which signature applies to the 
+arguments passed to the subroutine:
+
+\begin{verbatim}
+multi recurse(Int $n where $n >= 0, $s) {
+    say "Args : n = $n, s = $s";
+    if ($n == 0) {
+        say $s;
+    } else {
+        recurse $n - 1, $n + $s;
+    }
+}
+
+multi recurse($n , $s) {
+    say "Args : n = $n, s = $s";
+    # do something else for such a case, for example:
+    # recurse (abs $n.Int), $s; # calling the 1st version of recurse
+    # or simply:
+    say 'STOP! invalid $n, we need to give up';
+}
+\end{verbatim}
+
+If the first parameter is a positive integer, the 
+first version of {\tt recurse} will be called. 
+Otherwise, the second version that will run:
+
+\begin{verbatim}
+$ perl6 recurse.pl6
+Args : n = 6.1, s = 0
+STOP! negative $n, we need to give up
+
+$ perl6 recurse.pl6
+Args : n = -1, s = 0
+STOP! invalid $n, we need to give up
+\end{verbatim}
+%
+
+Try running the following code for the second 
+definition of {\tt recurse}:
+
+\begin{verbatim}
+multi recurse($n , $s) {
+    say "Args : n = $n, s = $s";
+    recurse (abs $n.Int), $s;
+}
+\end{verbatim}
+%
+to see what is happening in that case.
+
+\section{Exercises of Chapter~\ref{fruitchap}: Fruitful Functions}
+
+\subsection{Compare, exercise at the end of Section~\ref{compare} (p.~\pageref{compare})}
+\label{sol_compare}
+\index{compare function}
+
+Here's a subroutine that takes two numbers and compares them, 
+and returns 1 if the first one is larger than the second, 0 if 
+they are equal, and -1 otherwise (i.e., if the second is larger 
+than the first):
+
+\begin{verbatim}
+sub compare (Numeric $x, Numeric $y) {
+    return 1 if $x > $y;
+    return 0 if $x == $y;
+    return -1;
+}
+
+say compare 4, 7;   # -1
+say compare 7, 4;   # 1
+say compare 5, 5;   # 0
+\end{verbatim}
+
+Note: this exemplifies a three-way {\tt compare} function 
+commonly used for sorting in a number of programming 
+languages, including older versions of Perl (such as 
+Perl~5). In Perl~6, the operators implementing this 
+functionality (the three-way comparators \verb'cmp', 
+\verb'leg' and \verb'<=>') return special types of 
+values: {\tt Order::More}, {\tt Order::Less}, and 
+{\tt Order::Same}. (See Section~\ref{sorting} 
+\ifplastex \else
+on sorting in the chapter about arrays and lists 
+\fi
+for more details.)
+\index{compare function}
+\index{sorting}
+
+\subsection{Hypotenuse, exercise at the end of Section~\ref{hypotenuse} (p.~\pageref{hypotenuse})}
+\label{sol_hypotenuse}
+\index{hypotenuse}
+
+The aim is to use an incremental development plan for 
+calculating the hypotenuse of a right triangle (using 
+the Pythagorean theorem). 
+
+We could start with an outline of the subroutine:
+
+\begin{verbatim}
+sub hypotenuse(Numeric $x, Numeric $y) {
+    return 0;
+}
+say hypotenuse 3, 4;
+\end{verbatim}
+%
+
+This will obviously print 0.
+
+Next, we calculate the hypotenuse and print it within the subroutine:
+
+\begin{verbatim}
+sub hypotenuse(Numeric $x, Numeric $y) {
+    my $hypotenuse = sqrt ($x ** 2 + $y ** 2);
+    say "hypotenuse = $hypotenuse";
+    return 0.0;
+}
+say hypotenuse 3, 4;
+\end{verbatim}
+%
+
+This prints:
+
+\begin{verbatim}
+hypotenuse = 5
+0
+\end{verbatim}
+%
+
+\index{hypotenuse}
+The subroutine is calculating correctly the hypotenuse (5), 
+but is still returning the 0 dummy value. We can now return 
+safely the result (and remove the scaffolding):
+
+\begin{verbatim}
+sub hypotenuse(Numeric $x, Numeric $y) {
+    my $hypotenuse = sqrt ($x ** 2 + $y ** 2);
+    return $hypotenuse;
+}
+say hypotenuse 3, 4;
+\end{verbatim}
+%
+
+This prints correctly the value of the hypotenuse.
+
+Finally, we can, if we wish, remove the temporary variable 
+to further simplify the subroutine:
+\begin{verbatim}
+sub hypotenuse(Numeric $x, Numeric $y) {
+    return sqrt ($x ** 2 + $y ** 2);
+}
+say hypotenuse 3, 4;
+\end{verbatim}
+%
+\index{hypotenuse}
+
+\subsection{Chained Relational Operators(in Section~\ref{isbetween})}
+\label{sol_isbetween}
+\index{is-between}
+\index{chained relational operator}
+\index{chained conditional}
+\index{conditional!chained}
+
+We need a subroutine to figure out whether $x \le y \le z$ 
+is true or false. We simply need to test it with a chained relational operator and return that:
+
+\begin{verbatim}
+sub is-between(Numeric $x, Numeric $y, Numeric $z) {
+    return $x <= $y <= $z;
+}
+say is-between 3, 5, 6; # True
+say is-between 3, 8, 7; # False
+say is-between 6, 5, 6; # False
+say is-between 6, 6, 7; # True
+\end{verbatim}
+%
+
+Note that the tests provided here are just a limited number of 
+examples, given for illustration purposes. A more complete test 
+suite might be needed (testing for example negative and non 
+integer numbers). We will see later better ways 
+of building more robust test suites (see for example 
+Section~\ref{test_module} and the exercise 
+solution in Section~\ref{sol_fact_operator}).
+\index{test module}
+
+
+\subsection{The Ackermann Function (Exercise~\ref{ackermann})}
+\label{sol_ackermann}
+\index{Ackermann function}
+
+Write a subroutine to compute the Ackermann function. The Ackermann function, $A(m, n)$, is defined as follows:
+
+\begin{eqnarray*}
+A(m, n) = \begin{cases} 
+              n+1 & \mbox{if } m = 0 \\ 
+        A(m-1, 1) & \mbox{if } m > 0 \mbox{ and } n = 0 \\ 
+A(m-1, A(m, n-1)) & \mbox{if } m > 0 \mbox{ and } n > 0.
+\end{cases} 
+\end{eqnarray*}
+%
+Here's one way to compute the Ackermann function in Perl:
+
+\begin{verbatim}
+sub ack (Int $m, Int $n) {
+    return $n + 1 if $m == 0;
+    return ack($m - 1, 1) if $n == 0;
+    return ack($m - 1, ack($m, $n-1));
+}
+say ack 3, 4;    # -> 125
+\end{verbatim}
+
+We have used parentheses to better show the structure, but 
+it works well without them. Even in the last code line with
+two calls to the subroutine, the subroutine signature with 
+two integer numbers is sufficient for the Perl compiler 
+to understand which arguments are associated with which call:
+\index{signature}
+
+\begin{verbatim}
+sub ack (Int $m, Int $n) {
+    # say "m n = $m, $n";
+    return $n + 1 if $m == 0;
+    return ack $m - 1, 1 if $n == 0;
+    return ack $m - 1, ack $m, $n-1;
+}
+\end{verbatim}
+%
+\index{Ackermann, Wilhelm}
+
+The Ackermann function is defined for nonnegative integers. 
+As a further exercise, modify the {\tt ack} subroutine to 
+prevent negative arguments. We discussed two different ways 
+of doing that in Section~\ref{guardian}.
+\index{guardian pattern}
+
+
+\subsection{Palindromes (Exercise~\ref{palindrome})}
+\label{sol_palindrome}
+\index{palindrome}
+\index{recursion}
+
+Write a recursive subroutine that checks if a word is a 
+palindrome:
+
+\begin{verbatim}
+sub first_letter(Str $word where $word.chars >= 2){
+    return substr $word, 0, 1;
+}
+
+sub last_letter(Str $word){
+    return substr $word, *-1, 1;
+}
+
+sub middle_letter(Str $word){
+    return substr $word, 1, *-1;
+}
+
+sub is_palindrome(Str $word) {
+    return True if $word.chars <= 1;
+    return False if first_letter($word) ne last_letter($word);
+    return is_palindrome(middle_letter($word))
+}
+for ("bob", "otto", "laurent", "redivider", "detartrated") -> $x {
+    say "Is $x a palindrome? Answer: ", is_palindrome($x);
+}
+\end{verbatim}
+
+Result:
+\begin{verbatim}
+Is bob a palindrome? Answer: True
+Is otto a palindrome? Answer: True
+Is laurent a palindrome? Answer: False
+Is redivider a palindrome? Answer: True
+Is detartrated a palindrome? Answer: True
+\end{verbatim}
+
+The third parameter (length) of the {\tt substr} built-in 
+function is optional. In that case, {\tt substr} will return 
+all characters from a given position. So the \verb'first_letter'  
+subroutine could be simplified as follows:
+
+\begin{verbatim}
+sub first_letter(Str $word where $word.chars >= 2){
+    return substr $word, 0;
+}
+\end{verbatim} 
+
+And the \verb'last_letter' subroutine could benefit from the same 
+simplification.
+
+Note: the built-in {\tt flip} function or {\tt .flip} method 
+of Perl returns a reversed version of a string and would 
+provide a much easier solution:
+
+\begin{verbatim}
+sub is_palindrome(Str $word) {
+    return $word eq $word.flip;
+}
+\end{verbatim}
+\index{flip function}
+\index{palindrome}
+
+\subsection{Powers (Exercise~\ref{power})}
+\index{power}
+\label{sol_power}
+
+Write a recursive subroutine checking whether a number is 
+a power of another number:
+
+\begin{verbatim}
+sub is-power-of (Int $a, Int $b) {
+    return False unless $a %% $b;
+    return True if $a == $b;
+    return is-power-of Int($a/$b), $b;
+}
+
+say is-power-of 16, 4;
+say is-power-of 25, 5;
+say is-power-of 125, 5;
+say is-power-of 600, 20;
+say is-power-of 8000, 20;
+\end{verbatim}
+%
+
+Example run:
+\begin{verbatim}
+True
+True
+True
+False
+True
+\end{verbatim}
+
+Adding an execution trace to visualize the recursive calls:
+
+\begin{verbatim}
+sub is-power-of (Int $a, Int $b) {     
+    return False unless $a %% $b;      
+    return True if $a == $b;           
+    say "$a\t$b";                      
+    return is-power-of Int($a/$b), $b; 
+}                                      
+\end{verbatim}
+
+Running {\tt is-power-of} with arguments 1024 and 2, 
+with a printed trace of \verb'$a' and \verb'$b':
+
+\begin{verbatim}
+1024    2
+512     2
+256     2
+128     2
+64      2
+32      2
+16      2
+8       2
+4       2
+True
+\end{verbatim}
+%
+\index{power}
+
+\subsection{Finding the GCD of Two Numbers, Exercise~\ref{gcd} (p.~\pageref{gcd})}
+\index{gcd}
+\index{greatest common divisor (GCD)}
+\index{GCD (greatest common divisor)}
+\label{sol_gcd}
+
+Write a subroutine that returns the greatest common divisor of two numbers:
+
+\begin{verbatim}
+sub gcd(Int $a, Int $b) {
+    return $a if $b == 0;
+    return $b if $a == 0;
+    return gcd($b, $a mod $b);
+}
+
+say gcd 125, 25;
+say gcd 2048, 256;
+say gcd 256, 4096;
+say gcd 2048, 1;
+say gcd 0, 256;
+say gcd 33, 45;
+\end{verbatim}
+
+\index{Euclid's algorithm}
+\index{algorithm!Euclid's}
+Note that there is a simpler method to find the GCD of 
+two numbers without using the modulo function. It is known
+as Euclid's algorithm and is considered as the oldest known 
+algorithm (see \url{https://en.wikipedia.org/wiki/Euclidean_algorithm}). The Euclidean algorithm is based on 
+the observation that the GCD of two numbers does not change 
+if the larger number is replaced by its difference with 
+the smaller number.
+
+This might be implemented in Perl with the following recursive 
+subroutine:
+
+\begin{verbatim}
+sub gcd(Int $a, Int $b) { 
+    return gcd($b, $a - $b) if $a > $b;
+    return gcd($a, $b - $a) if $b > $a;
+    return $a;
+}
+\end{verbatim}
+%
+
+This code works perfectly well in \emph{almost} all cases, 
+at least for all strictly positive input values, 
+but try to follow the flow of execution if one of the 
+two arguments passed to the subroutine, say {\tt \$b}, 
+is zero. In this case, {\tt gcd} enters in an infinite 
+recursion. This is often called an \emph{edge case} or a 
+\emph{corner case}, i.e., a special input value for which 
+an apparently well-working program ceases to function properly.
+\index{edge case}
+\index{corner case}
+
+We have a similar problem for negative input values.
+
+One solution might be to add a signature constraint (or 
+use a type subset):
+\index{subset!type}
+\index{type subset}
+\index{signature}
+\begin{verbatim}
+sub gcd(Int $a where $a > 0, Int $b where $b > 0) {
+    ...
+}
+\end{verbatim}
+%
+
+but this is not really satisfactory because the GCD of any 
+nonzero integer and 0 is well defined mathematically and 
+is equal to the first number.
+
+Leaving aside for the moment the case of negative numbers, 
+we could rewrite our subroutine as follows:
+
+\begin{verbatim}
+sub gcd(Int $a, Int $b) { 
+    return $a if $b == 0;
+    return $b if $a == 0;
+    return gcd($b, $a - $b) if $a > $b;
+    return gcd($a, $b - $a) if $b > $a;
+    return $a;
+}
+\end{verbatim}
+%
+
+Concerning negative numbers, there is a theorem stating that 
+the GCD of $a$ and $b$ is the same as the GCD of $a$ and $-b$:
+
+\begin{center}
+{\tt gcd(a,b) = gcd(−a,b) = gcd(a,−b) = gcd(−a,−b)}
+\end{center}
+%
+
+We can modify further the {\tt gcd} subroutine:
+
+\begin{verbatim}
+sub gcd(Int $a is copy, Int $b is copy) { 
+    $a = -$a if $a < 0;
+    $b = -$b if $b < 0;
+    return $a if $b == 0;
+    return $b if $a == 0;
+    return gcd($b, $a - $b) if $a > $b;
+    return gcd($a, $b - $a) if $b > $a;
+    return $a;
+}
+\end{verbatim}
+%
+
+This is now working fine, but remember that a recursive 
+subroutine may be called many times and, for each call,
+the first four code lines in the program above are 
+executed, although they are really useful only at the 
+first call: once these conditions have been checked during 
+the first call to the subroutine, we know that the 
+arguments must be and remain valid in the chain of recursive 
+calls, so these checks are useless after the first call.
+This is somewhat wasteful and may lead to unnecessary performance problems.
+
+Ideally, it might be better to separate these four lines 
+that check the preconditions from the cascade of recursive 
+calls. For example, might write two subroutines:
+
+\begin{verbatim}
+sub gcd1(Int $c, Int $d) {
+    return gcd1($d, $c - $d) if $c > $d;;
+    return gcd1($c, $d - $c) if $d > $c;
+    return $c;
+}
+
+sub gcd(Int $a is copy, Int $b is copy) { 
+    $a = -$a if $a < 0;
+    $b = -$b if $b < 0;
+    return $a if $b == 0;
+    return $b if $a == 0;
+    return gcd1 $a, $b;
+}
+\end{verbatim}
+%
+
+Now, {\tt gcd} is making all the necessary checks on the 
+initial arguments and calls the recursive {\tt gcd1} 
+subroutine with arguments that have been sanitized and 
+will not lead to infinite recursion. Note that we have 
+renamed the parameters within {\tt gcd1} for better 
+clarity, but this was not necessary; it would just work 
+the same if we had kept {\tt \$a} and {\tt \$b}.
+
+The preceding code works perfectly well.
+
+There may be a last problem, though. Someone being not 
+careful enough (or wanting to be too clever) might decide 
+to call directly {\tt gcd1}, thus annihilating the benefits 
+of the checks made by {\tt gcd}. To prevent that, we can make good 
+use of the fact that subroutines have lexical scope in Perl~6 
+and can be made local to another subroutine: we can declare 
+and define {\tt gcd1} within the body of the {\tt gcd} 
+subroutine, so that {\tt gcd1} can be called only from 
+within the {\tt gcd} subroutine:
+\index{lexical subroutine}
+
+\begin{verbatim}
+sub gcd(Int $a is copy, Int $b is copy) { 
+    sub gcd1($c, $d) {
+        return gcd1($d, $c - $d) if $c > $d;
+        return gcd1($c, $d - $c) if $d > $c;
+        return $c;
+    }
+    $a = -$a if $a < 0;
+    $b = -$b if $b < 0;
+    return $a if $b == 0;
+    return $b if $a == 0;
+    return gcd1 $a, $b;
+}
+
+say gcd 125, 25;       # 25
+say gcd 2048, 256;     # 256
+say gcd 256, 4096;     # 256
+say gcd 2048, 1;       # 1
+say gcd 0, 256;        # 256
+say gcd 33, 45;        # 3
+say gcd -4, 6;         # 2
+\end{verbatim}
+
+Chapter~\ref{iteration} will come back to lexical scoping.
+
+\index{gcd}
+\index{Euclid's algorithm}
+\index{algorithm!Euclid's}
+
+You may be interested to know that there is a builtin {\tt gcd} 
+function in Perl~6.
+
+\section{Exercises of Chapter~\ref{iteration} (Iteration)}
+ 
+
+\subsection{Exercise~\ref{test_sqrt}: Square Root (p.~\pageref{test_sqrt})}
+\label{sol_test_sqrt}
+\index{square root}
+\index{iteration}
+
+We need a subroutine to find the square root of a number by 
+computing successively better approximations of the root, using 
+Newton's method.
+\index{Newton's method}
+\index{Newton, Isaac}
+
+For this exercise, we've made the following somewhat 
+arbitrary decisions:
+\begin{itemize}
+\item We have chosen an \emph{epsilon} value of $10^{-11}$ (or {\tt 1e-11}).
+\item We have used \verb'$a/2' as the initial estimate 
+of $\sqrt{\$a}$. 
+\end{itemize}
+
+Note that it might make more sense to make this 
+initial estimate within the {\tt my-sqrt} subroutine, 
+rather than having the caller pass it as an argument. The 
+rationale for doing it in the caller is that, in some cases, 
+the caller might have information on the range of the input 
+value and might therefore be able to provide a better 
+initial estimate, leading the algorithm to converge toward 
+the solution slightly faster.
+
+Here's out implementation of Newton's method for computing 
+the square root of a number:
+\index{Newton's method}
+
+\begin{verbatim}
+sub my-sqrt ($a, $estimate is copy) {
+    my $epsilon = 1e-11;
+    while True {
+        # say "-- Intermediate value: $estimate";
+        my $y = ($estimate + $a/$estimate) / 2;
+        last if abs($y - $estimate) < $epsilon;
+        $estimate = $y;
+    }
+    return $estimate;
+}
+
+sub print-result ($a, $r, $s, $d) {
+    printf "%d  %.13f  %.13f  %.6e \n", $a, $r, $s, $d;
+}
+
+sub test-square-root {
+    say "a  mysqrt(a)\t    sqrt(a)\t     diff";
+    for 1..9 -> $a {
+        my $init-estimate = $a/2;
+        my $result = my-sqrt $a, $init-estimate;
+        my $sqrt = sqrt $a;
+        my $diff = abs($result - $sqrt);
+        print-result($a, $result, $sqrt, $diff);
+    }
+}
+    
+test-square-root;
+\end{verbatim}
+
+\index{printf function}
+The {\tt printf} ("formatted print") function used in 
+the {\tt print-result} subroutine is derived from the 
+C~programming language. Its first argument is a 
+\emph{format string}, which describes how each of 
+the following arguments should be formatted. Here, the 
+format string requests the compiler to output the 
+first subsequent argument as a signed integer (the 
+\verb'%d' part of the format string), the 
+next two arguments as floating-point numbers with
+13~digits after the decimal point (the \verb'%.13f' part), and 
+the last argument as a floating-point number in scientific 
+notation with 6~digits after the decimal point (\verb'%.6e').
+
+
+
+\subsection{Exercise~\ref{pi_estimate}: Pi Estimate (p.~\pageref{pi_estimate})}
+\label{sol_pi_estimate}
+\index{Ramanujan, Srinivasa}
+\index{Ramanujan, Srinivasa!pi estimate}
+\index{pi!estimate}
+
+Pi estimate according to Srinivasa Ramanujan's algorithm:
+
+
+\begin{verbatim}
+sub factorial(Int $n) {
+    return 1 if $n == 0;
+    return $n * factorial $n-1;
+}
+
+sub estimate-pi {
+    #`{ ======================================
+        Algorithm by Srinivasa Ramanujan 
+        (see http://en.wikipedia.org/wiki/Pi)
+        ======================================
+      }
+    my $factor = 2 * 2.sqrt / 9801;
+    my $k = 0;
+    my $sum = 0;
+    while True {
+        my $num = factorial(4*$k) * (1103 + 26390*$k);
+        my $den = factorial($k)**4 * 396**(4*$k);
+        my $term += $factor * $num / $den;
+        # say "Intermediate term = $term";
+        last if abs($term) < 1e-15;
+        $sum += $term;
+        $k++;
+    }
+    return 1 / $sum;
+}
+
+say estimate-pi;
+# say pi - estimate-pi;
+\end{verbatim}
+
+This prints: 3.14159265358979.
+
+Notice how we have used a multiline comment to 
+give some additional information about the subroutine.
+\index{multiline comment}
+\index{comment}
+
+Uncommenting the intermediate print statement shows the 
+steps toward the solution:
+
+\begin{verbatim}
+Intermediate term = 0.31830987844047
+Intermediate term = 7.74332048352151e-009
+Intermediate term = 6.47985705171744e-017
+-4.44089209850063e-016
+\end{verbatim}
+
+\section{Exercises of Chapter~\ref{strings} (Strings)}
+
+\subsection{Exercise in Section~\ref{stringtraversal}: String Traversal (p.~\pageref{stringtraversal})}
+\label{sol_stringtraversal}
+\index{string}
+\index{string traversal}
+
+The backward traversal of a word with a {\tt while} loop may
+be written as follows:
+\index{while loop}
+
+\begin{verbatim}
+my $fruit = "banana";
+my $index = $fruit.chars;
+while $index > 0 { 
+    $index--;
+    my $letter = substr $fruit, $index, 1; 
+    say $letter; 
+}
+\end{verbatim}
+%
+
+The {\tt chars} method returns the length of the string. The 
+{\tt substr} function will find letters under \verb'$index' 
+between 0 and \verb'$length - 1'. It is therefore practical 
+to decrement the \verb'$index' variable before using the
+{\tt substr} function. 
+\index{chars function}
+\index{substr function}
+
+The \verb'while' loop of the preceding code example can be 
+written more concisely:
+
+\begin{verbatim}
+my $fruit = "banana";
+my $index = $fruit.chars;
+while $index > 0 { 
+    say substr $fruit, --$index, 1; 
+}
+\end{verbatim}
+%
+
+Here, we print directly the value returned by {\tt substr}, 
+without using a temporary variable, and we decrement the 
+\verb'$index' variable within the expression using {\tt substr}.
+We need to use the prefix form of the decrement operator 
+because we need \verb'$index' to be decremented before it is 
+used by {\tt substr}.
+\index{prefix decrement operator}
+\index{substr function}
+
+The loop would be even more concise if we used a {\tt while} with 
+a statement modifier (or the postfix syntax of {\tt while}):
+\index{statement modifier}
+\index{postfix!syntax}
+
+\begin{verbatim}
+my $fruit = "banana";
+my $index = $fruit.chars;
+say substr $fruit, --$index, 1 while $index;
+\end{verbatim}
+%
+
+This is the same idea, using the {\tt flip} function to 
+reverse the string:
+\index{flip function}
+
+\begin{verbatim}
+my $fruit = flip "banana";
+my $index = 0;
+say substr $rev_fruit, $index++, 1 while $index < $rev_fruit.chars;
+\end{verbatim}
+%
+
+The aim of this exercise was to train you to use loops to 
+traverse the string. Combining the {\tt flip} and {\tt comb} 
+functions or methods would of course make our solution much 
+simpler (and probably faster):
+\index{comb function and method}
+
+\begin{verbatim}
+.say for "banana".flip.comb;
+\end{verbatim}
+
+
+\subsection{Exercise in Section~\ref{stringtraversal}: The Ducklings (p.~\pageref{stringtraversal})}
+\label{sol_ducklings}
+
+The first idea that may come to mind for this exercise is to build 
+a modified list of prefixes this way:
+
+\begin{verbatim}
+for 'J' .. 'N', 'Ou', 'P', 'Qu' -> $letter { #...}
+\end{verbatim}
+%
+
+But this does not work properly because it creates a list 
+of four elements in which the first element is itself a 
+sublist ``J'' to ``N'':
+
+\begin{verbatim}
+> say ('J'..'N', 'Ou', 'P', 'Qu').perl;
+("J".."N", "Ou", "P", "Qu")
+\end{verbatim}
+%
+
+We will come back to this later in the book, but let us just say 
+that we need to \emph{flatten} this combination of lists into 
+one single iterable list, which can be done with the 
+{\tt flat} method or function or the ``|'' operator:
+\index{list flattening}
+
+\begin{verbatim}
+for ('J' .. 'N', 'Ou', 'P', 'Qu').flat     -> $letter {#...}
+# or: for flat 'J' .. 'N', 'Ou', 'P', 'Qu' -> $letter {...}
+# or: for |('J' .. 'N'), 'Ou', 'P', 'Qu'   -> $letter {...}
+# Note: parentheses needed in the last example above with | 
+# to overcome precedence problem
+\end{verbatim}
+%
+
+With this small difficulty removed, the solution is now easy:
+
+\begin{verbatim}
+my $suffix = 'ack';
+for ('J' .. 'N', 'Ou', 'P', 'Qu').flat -> $letter {
+    say $letter ~ $suffix;
+}
+\end{verbatim}
+%
+
+Here again, we could make the code slightly more concise with 
+the postfix syntax of {\tt for} and the \verb'$_' topical 
+variable:
+\index{statement!for}
+\index{topical variable}
+
+\begin{verbatim}
+my $suffix = 'ack';
+say "$_$suffix" for flat 'J' .. 'N', 'Ou', 'P', 'Qu';
+\end{verbatim}
+%
+
+Here, we introduced another simple and common way of 
+concatenating two strings: simply inserting the two 
+variables one after the other within double quotes and 
+letting variable interpolation do the work.
+\index{variable!interpolation}
+
+
+\subsection{Exercise in Section~\ref{stringtraversal}: Counting the Letters of a String (p.~\pageref{stringtraversal})}
+\label{sol_count_letters}
+\index{string traversal}
+
+This subroutine counts the number of occurrences of 
+a specific letter within a word (or any string):
+
+\begin{verbatim}
+sub count (Str $word, Str $letter) {
+    my $count = 0;
+    for $word.comb -> $letter {
+        $count++ if $letter eq 'a';
+    }
+    return $count;   
+}
+say count "banana", "a";   # -> 3
+\end{verbatim}
+%
+
+The solution to Exercise~\ref{count_a} 
+(p.~\pageref{sol_count_a}) below uses the 
+{\tt index} and {\tt substr} functions to perform 
+the same count .
+
+
+\subsection{Section~\ref{regex_loop}: Simulating a Regex with a Loop (p.~\pageref{regex_loop})}
+\label{sol_regex_loop}
+
+The aim is to find in a string any letter that is 
+immediately preceded by the letter ``l'' and followed by 
+the letter ``w''.
+
+If you try to do the specified search with the techniques 
+we've seen so far, you'll find out that there are a number 
+of edge cases making it quite complicated.
+
+This is a possible solution:
+
+\begin{verbatim}
+sub traverse (Str $word, Str $start_letter, Str $end_letter) {
+    my $found_start = False;
+    my $capture_next = False;
+    my $target_letter;
+    for 0..$word.chars - 1 -> $idx {
+        my $letter = substr $word, $idx, 1;
+        next unless $letter eq $start_letter or $found_start;
+        if ($capture_next) {
+            $target_letter = $letter;
+            $capture_next = False;
+            next;
+        }
+        if $letter eq $start_letter and not $found_start {
+            $found_start = True;
+            $capture_next = True;
+            next;
+        }
+        # if we get there, we have found a candidate target letter
+        if $letter eq $end_letter {
+            return $target_letter
+        } else {
+            # wrong match, let's start again, we need to backup
+            if $target_letter eq $start_letter {
+                 $target_letter = $letter;
+                 $capture_next = False;
+            } elsif $letter eq $start_letter {
+                 $capture_next = True;
+            } else {
+               $capture_next = False;
+               $found_start = False;
+            } 
+        } 
+    }
+    return;  # not found!
+}          
+
+for <s b   l w   l o   s m   y l   a z> -> $st, $end {
+    say "$st $end: ", traverse "yellow submarine", $st, $end;  
+}
+\end{verbatim}
+
+As you can see, this is quite complicated because of 
+the various edge cases that need to be handled. Compare this with 
+the one-line regex that does the same:
+\index{regex}
+
+\begin{verbatim}
+say ~$0 if "yellow submarine" ~~ /l(.)w/;
+\end{verbatim}
+
+To tell the truth, I haven't chosen the simplest way of 
+doing it.
+
+It is much easier to loop on every letter of the string 
+except the first one and the last one and, for each such 
+letter, to check what the previous letter and the next 
+are. Then you simply need to return the current letter if 
+the previous and the next match the conditions:
+
+\begin{verbatim}
+sub traverse (Str $word, Str $start_letter, Str $end_letter) {
+    my $found_start = False;
+    my $capture_next = False;
+    my $target_letter;
+    for 1..$word.chars - 2 -> $idx {
+        if $start_letter eq substr $word, $idx - 1, 1
+          and $end_letter eq substr $word, $idx + 1, 1 {
+            return substr $word, $idx, 1;
+        }
+     }
+    return;  # not found!
+}          
+
+for <s b   l w   l o   s m   y l   a z> -> $st, $end {
+    say "$st $end: ", traverse "yellow submarine", $st, $end;  
+}
+\end{verbatim}
+
+In the test cases at the end, I use a {\tt for} loop with a 
+pointy block construct in which I pick \emph{two} of the 
+items in the list each time through the loop. The numbers of 
+spaces between the items of the list are technically useless 
+and irrelevant to the way the syntactic construct works; they 
+are just a formatting help for the reader to better see how 
+the letters will be grouped in the process.
+\index{for loop}
+\index{pointy block}
+\index{pointy block!using several items}
+
+This displays:
+\begin{verbatim}
+s b: u
+l w: o
+l o: l
+s m: Nil
+y l: e
+a z: Nil
+\end{verbatim}
+
+This is much simpler than the previous attempt, but it would 
+still be quite difficult to change something, for example 
+to add a new condition: the structure of the code would 
+probably need to be reworked quite a bit.
+
+Even compared with this simpler solution, the regex solution 
+really shines orders of magnitude brighter.
+
+
+\subsection{Exercises in Subsection~\ref{regex_exercises}: Regex Exercises (p.~\pageref{regex_exercises})}
+\label{sol_regex_exercises}
+\index{regex}
+
+As is often the case in Perl, and even more so with 
+regexes, there is more than one way to do it (TIMTOWTDI). 
+Most of the exercises suggested here have more than one 
+solution (and sometimes many).
+\index{TIMTOWTDI}
+\index{there is more than one way to do it}
+
+With regexes, you also have to think carefully about the 
+input data to figure out what should be matched and what 
+should be rejected.
+
+\subsubsection{Ten digits in a row}
+
+Here's a way to find 10~consecutive digits in a string:
+
+\begin{verbatim}
+my $string = "567867 8778689 6765432 0123456789 897898";
+say ~$0 if $string ~~ /(\d ** 10)/; # -> 0123456789
+\end{verbatim}
+
+We are simply using the \verb'\d' (digit) character class 
+together with a quantifier specifying this class 10~times .
+\index{character class}
+
+Note that we have used capturing parentheses here in order 
+to populate the matched number into \verb'$0'. We could also 
+omit parentheses and retrieve the number from the match object:
+\index{regex!capture}
+
+
+\begin{verbatim}
+my $string = "567867 8778689 6765432 0123456789 897898";
+say ~$/ if $string ~~ /\d ** 10/; # -> 0123456789
+\end{verbatim}
+%
+
+The above solutions would match any 10-digit sequence 
+within a longer sequence of digits, which may or may not 
+be what you need. For example:
+
+\begin{verbatim}
+my $string = "567867 87786896765432 0123456789 897898";
+say ~$0 if $string ~~ /(\d ** 10)/; # -> 8778689676
+\end{verbatim}
+
+If you want to match more precisely a sequence of 10~digits 
+(not more than 10), you need to specify what you 
+want to have ``around'' the match. For example, to 
+match the sole 10-digit sequence above, you might use 
+the nondigit character class:
+
+\begin{verbatim}
+my $string = "567867 87786896765432 0123456789 897898";
+say ~$0 if $string ~~ /\D (\d ** 10) \D/; # -> 0123456789
+\end{verbatim}
+
+But that would not match a 10-digit sequence at the start 
+or the end of the string:
+
+\begin{verbatim}
+my $string = "5678670001 87786896765432 0123456789 897898";
+say ~$0 if $string ~~ /\D (\d ** 10) \D/; # -> 0123456789
+\end{verbatim}
+
+A better solution might be to use word boundary anchors:
+\index{anchor!word boundary}
+\index{anchor!left word boundary}
+\index{anchor!right word boundary}
+\index{anchor!start of word}
+\index{anchor!end of word}
+
+\begin{verbatim}
+my $string = "5678670001 87786896765432 0123456789 897898";
+say ~$0 if $string ~~ /<< (\d ** 10) >>/; # -> 5678670001
+\end{verbatim}
+
+Quite a bit of reflection may sometimes be needed to ensure 
+that we match exactly what we want. 
+
+\subsubsection{An octal number}
+
+Here's a possible solution for finding an octal number (i.e., 
+a number composed only of digits between 0 and 7) in 
+a string:
+
+\begin{verbatim}
+my $string = "567867 8778689 6765432 0123456789 897898";
+say ~$0 if $string ~~ /\D (<[0..7]>+) \D/; # -> 6765432
+\end{verbatim}
+
+\index{character class}
+The character class is \verb'<[0..7]>' for digits between 
+0 and 7. The \verb'+' quantifiers means: as many as possible 
+of this character class. And the \verb'\D' (non digit) are 
+there to prevent the regex from matching part of a larger 
+number with nonoctal digits (for example from matching 567 
+in the first number). Depending on the exact requirement, 
+using word boundary anchors as in the previous exercise's 
+solution might be better.
+\index{quantifier}
+
+\subsubsection{First word at the start of the string}
+
+To find the first word in a string, we can just search the 
+first sequence of word characters (characters belonging to 
+the \verb'\w' character class) in the string:
+\index{character class}
+
+\begin{verbatim}
+my $string = "The greatest thing you'll ever learn " ~
+             "is just to love and be loved in return" ~
+             "(Nature Boy, Nat King Cole)";
+say ~$0 if $string ~~ /(\w +)/;  # -> The
+\end{verbatim}
+
+
+\subsubsection{First word starting with an ``a''}
+
+Here's a way to find the first word starting with the letter 
+``a'' in a sentence:
+
+\begin{verbatim}
+my $string = "Four scores and seven years ago our fathers ...";
+say ~$0 if $string ~~ /\W (a \w+)/;  # -> and
+\end{verbatim}
+
+\subsubsection{First word starting with a lowercase vowel}
+
+To make sure that the match does not start with a vowel in 
+the middle of a word, we might start the pattern with a 
+\verb'\W' (nonword character) or, better, with a \verb'<<' 
+left word boundary:
+\index{anchor!left word boundary}
+
+\begin{verbatim}
+my $string = "Democracy is the worst form of government, " ~
+             "except for all the others. (Churchill)";
+say ~$0 if $string ~~ /<< (<[aeiouy]> \w*)/;  # -> is
+\end{verbatim}
+
+Here we use a \verb'*' (rather than \verb'+') quantifier 
+because a word containing only one vowel is eligible as 
+a word starting with a vowel.
+\index{quantifier}
+
+\subsubsection{A mobile number}
+
+For a 10-digit number starting with ``06'' or ``07'', the 
+easiest solution is probably to use a \verb'<[67]>' character 
+class:
+\index{character class}
+
+\begin{verbatim}
+my $string = "567867 8778689 0123456789 0723456789 3644";
+say ~$0 if $string ~~ /(0<[67]>\d ** 8)/;  # -> 0723456789
+\end{verbatim}
+
+\subsubsection{First word starting with a vowel (lower- or uppercase)}
+
+We can simply ignore case for the whole word:
+\index{adverb!:ignorecase}
+\begin{verbatim}
+my $string = " Ask not what your country can do for you — " ~
+             " ask what you can do for your country. (JFK)";
+say ~$0 if $string ~~ /:i << (<[aeiouy]> \w*)/;  # -> Ask
+\end{verbatim}
+
+\subsubsection{Repeated letters}
+
+We can capture any letter and check whether the next one is 
+the same as the capture:
+\index{capture}
+
+\begin{verbatim}
+say ~$0 if 'appeal' ~~ /((\w)$0);  # -> pp
+\end{verbatim}
+
+For capturing the second group of repeated letters:
+
+\begin{verbatim}
+say ~$1 if 'coffee' ~~ /(\w)$0.*((\w)$0)/;  # -> ee
+\end{verbatim}
+
+And for the third group:
+
+\begin{verbatim}
+say ~$2 if 'Mississippi' ~~ /(\w)$0.*(\w)$0.*((\w)$0)/; # -> pp
+\end{verbatim}
+
+
+\subsection{Exercise in Section~\ref{isreverse}: {\tt is-reverse} Subroutine (p.~\pageref{isreverse})}
+\label{sol_isreverse}
+\index{is-reverse}
+
+The second bug in the {\tt is-reverse} subroutine is located 
+on this line:
+\index{bug}
+
+\begin{verbatim}
+    while $j > 0 {
+\end{verbatim}
+%
+
+The {\tt \$j} index should be allowed to loop down until 0 
+(included) if we want to compare the first letter of 
+{\tt \$word2} with the last letter of {\tt \$word1}.
+
+The corrected version of the  {\tt is-reverse} subroutine 
+might be:
+
+\begin{verbatim}
+sub is-reverse(Str $word1, Str $word2) {
+    return False if $word1.chars != $word2.chars;
+    
+    my $i = 0;
+    my $j = $word2.chars - 1;
+
+    while $j >= 0 {
+        return False if substr($word1, $i, 1) ne substr($word1, $j, 1);
+        $i++; $j--;
+    }
+    return True;
+}
+\end{verbatim}
+%
+
+\subsection{Exercise~\ref{count_a}: Counting Letters (p.~\pageref{count_a})}
+\label{sol_count_a}
+\index{count letters}
+
+Counting the number of ``a'' letters in a word with the {\tt index} 
+function implies looking for the first ``a'' from the 
+beginning of the string, then looking for the next one 
+from the position immediately after, and so on until no 
+more ``a'' letters are found.
+
+\index{infinite loop}
+\index{loop!infinite}
+\index{last statement}
+\index{index function}
+Here, we make an infinite loop from which we break out with 
+the {\tt last} statement when {\tt index} no longer finds 
+an ``a''. The {\tt \$count} counter is incremented each time 
+an ``a'' is found, and the {\tt \$idx} keeps track of the 
+current position within the string:
+
+\begin{verbatim}
+sub count_a {
+    my $word = "banana";
+    my $count = 0;
+    my $idx = 0;
+    while True {
+       $idx = index $word, 'a', $idx;
+       last unless $idx.defined;
+       $idx++;
+       $count++;
+    }
+    return $count;
+}
+say count_a();  # -> 3
+\end{verbatim}
+
+Adapting it for any string and any letter is just a matter 
+of passing the right arguments to the subroutine and using 
+within the subroutine its parameters instead of hard-coded 
+values:
+
+\begin{verbatim}
+sub count_index (Str $word, Str $letter) {
+    my $count = 0;
+    my $idx = 0;
+    while True {
+       $idx = index $word, $letter, $idx;
+       last unless $idx.defined;
+       $idx++;
+       $count++;
+    }
+    return $count;
+}
+say count_index "When in the Course of human events...", "n"; # 5
+\end{verbatim}
+
+Counting a given letter in a given word with the {\tt substr} 
+function is straight forward: we just need to loop over 
+each letter of the word and increment a counter when needed:
+\index{substr}
+
+\begin{verbatim}
+sub count_substr (Str $word, Str $letter) {
+    my $count = 0;
+    for 0..$word.chars - 1 {
+        $count++ if $letter eq substr $word, $_, 1;
+    }
+    return $count;
+}
+say count_substr "I have a dream that one day...", "a"; # -> 4
+\end{verbatim}
+
+\subsection{Exercise~\ref{islower}: Lowercase Letters (p.~\pageref{islower})}
+\label{sol_islower}
+\index{count letters}
+
+Only \verb'any_lowercase5' and \verb'any_lowercase7' are correctly 
+checking whether the input string contains at least one lower 
+case letter.
+
+If you did not determine that yourself, really try to find by 
+yourself the mistakes in the others before reading on; you should be 
+able to find the errors in the other subroutines (except 
+perhaps \verb'any_lowercase4', which is admittedly a bit tricky).
+
+The \verb'any_lowercase5' and \verb'any_lowercase7' subroutines 
+perform the search as follows:
+
+\begin{itemize} 
+\item \verb'any_lowercase5' sets {\tt \$flag} 
+to {\tt False} before the loop, changes it to {\tt True} if 
+any character in the string is lowercase, and returns 
+{\tt \$flag} after the completion of the loop.
+
+\item  \verb'any_lowercase7' is also correct (and probably slightly 
+better than \verb'any_lowercase5'). It returns {\tt True} if 
+any character is lower-case and return {\tt False} only if 
+it gets a chance to go to the end of the loop.
+\end{itemize}
+
+The other subroutines have the following mistakes (some have 
+arguably several mistakes; we're going to list at least one of 
+them):
+\begin{itemize} 
+
+\item \verb'any_lowercase1' is only checking the first 
+character of its argument and exiting the loop thereafter.
+
+\item \verb'any_lowercase2' is calling the {\tt is-lower} 
+subroutine on the string {\tt "char"}, not on the 
+{\tt \$char} variable (it also has the same defect as 
+\verb'any_lowercase1').
+
+\item \verb'any_lowercase3' is returning {\tt True} or 
+{\tt False} depending on only the last character of the 
+input string.
+
+\item \verb'any_lowercase4' suffers from a somewhat nasty 
+operator precedence problem: the assignment \verb'$flag = $flag ...' 
+is executed before the {\tt or} relational operator is executed, 
+so that the latter part has no effect. 
+Changing the faulty line to:
+\index{precedence}
+\index{operator!precedence}
+\begin{verbatim}
+$flag = $flag || is-lower $char;   # higher priority operator
+# or
+$flag = ($flag or is-lower $char); # parens to override precedence
+\end{verbatim}
+would solve the problem.
+
+\item \verb'any_lowercase6' is almost correct in terms of its 
+algorithm, but returns the strings {\tt "True"} or 
+{\tt "False"} instead of the Boolean values {\tt True} or 
+{\tt False}.
+
+\item  \verb'any_lowercase8' returns {\tt False} if any 
+character is not lowercase.
+
+\item  \verb'any_lowercase9' also returns {\tt False} if any 
+character is not lowercase.
+
+\end{itemize}
+
+The following is an example of the loop you could write to test 
+each subroutine, each with three input strings:
+
+\begin{verbatim}
+for <FOO bar Baz> -> $str {
+    say "1. $str: ", any_lowercase1 $str;
+    say "2. $str: ", any_lowercase2 $str;
+    say "3. $str: ", any_lowercase3 $str;
+    say "4. $str: ", any_lowercase4 $str;
+    say "5. $str: ", any_lowercase5 $str;
+    say "6. $str: ", any_lowercase6 $str;
+    say "7. $str: ", any_lowercase7 $str;
+    say "8. $str: ", any_lowercase8 $str;
+    say "9. $str: ", any_lowercase9 $str;
+}
+\end{verbatim}
+
+It would be possible to replace the nine print statements 
+with a simple loop, but this requires using features that we 
+haven't studied yet.
+
+You'll see in other chapters ways to better organize test cases,  
+for example in Section~\ref{test_module} (p.~\pageref{test_module}).
+\index{test module}
+
+\subsection{Exercise~\ref{rotate}: Caesar's Cipher (p.~\pageref{rotate})}
+\label{sol_rotate}
+\index{letter rotation}
+\index{rotation, letter}
+\index{Caesar cipher}
+\index{rot13}
+
+Implementing a letter rotation cipher:
+\index{case!lower}
+\index{case!upper}
+\index{lower case}
+\index{upper case}
+
+\begin{verbatim}
+sub rotate-one-letter (Str $letter, Int $shift) {
+    my $upper-end = 'Z'.ord;        # last uppercase letter
+    my $lower-end  = 'z'.ord;       # last lowercase letter
+
+    my $rotated-ord = $letter.ord + $shift;
+    if $letter ~~ /<[a..z]>/ {                # lower case
+        $rotated-ord -= 26 if $rotated-ord > $lower-end;
+    } elsif $letter ~~ /<[A..Z]>/ {           # upper case
+        $rotated-ord -= 26 if $rotated-ord > $upper-end;
+    } else {
+        return $letter;
+    }
+    return $rotated-ord.chr;
+}
+
+sub rotate-one-word (Str $word, Int $shift is copy) {
+    $shift = $shift % 26;
+    $shift = 26 + $shift if $shift < 0;
+    my $rotated-word = "";
+    for 0..$word.chars - 1 {
+        $rotated-word ~=  rotate-one-letter substr($word, $_, 1), $shift;
+    }
+    return $rotated-word;
+}
+
+sub rot13 (Str $word) {
+    return rotate-one-word $word, 13;
+} 
+
+say rotate-one-word "ABDCabcd", 25;
+say rotate-one-word "cheer", 7;
+say rotate-one-word "melon", -10;
+
+say rot13("Fbzr cebsnavgl");
+\end{verbatim}
+
+If you are interested in decoding only ROT13, the {\tt tr} 
+transliteration operator can give you much shorter code. 
+For example {\tt tr/a..m/n..z/} will transliterate all 
+letters in the {\tt a..m} range into their respective 
+equivalents in the {\tt n..z} range.
+\index{tr operator}
+\index{operator!tr}
+\index{one-liner mode}
+
+We can code a ROT13 in a simple Perl one-liner (see Section~\ref{one-liner mode}):
+\index{one-liner mode}
+\label{rot13_oneliner}
+
+\begin{verbatim}
+$ perl6 -e 'my $w = "foobar"; $w ~~ tr/a..mn..z/n..za..m/; say $w;'
+sbbone
+
+$ perl6 -e 'my $w = "sbbone"; $w ~~ tr/a..mn..z/n..za..m/; say $w;"
+foobar
+\end{verbatim}
+
+It is quite easy to add the ranges for capital letters. You might want to do it as a further exercise.
+
+
+\section{Exercises of Chapter~\ref{wordplay} (Word Play)}
+
+\subsection{Exercise~\ref{cartalk}: Consecutive Double Letters (p.~\pageref{cartalk})}
+\label{sol_cartalk}
+\index{Car Talk}
+
+With the looping techniques used in Chapter~\ref{wordplay}, 
+we could write this:
+
+\begin{verbatim}
+sub is_triple_double (Str $word) {
+    # Tests if a word contains three consecutive double letters.
+    my $i = 0;
+    my $count = 0;
+    while $i < $word.chars - 1 {
+        if substr($word, $i, 1) eq substr($word, $i + 1, 1) {
+            $count++;
+            return True if $count == 3;
+            $i += 2;
+        } else {
+            $count = 0;
+            $i++;
+        }
+    }
+    return False;
+}
+
+for 'words.txt'.IO.lines -> $word {
+    say $word if is_triple_double $word;
+}
+\end{verbatim}
+%
+
+This is, however, a typical case where regexes might prove 
+more efficient than looping  (in terms of coding efficiency, 
+i.e., as an approximation, how many code lines are needed 
+for performing a given task).
+\index{regex}
+
+We discussed in Chapter~\ref{strings} that regex captures are 
+populating the \verb'$0', \verb'$1', \verb'$2', etc. special 
+variables. A regex pattern matching any repeated letter might 
+therefore be \verb'/(.) $0/', where the character found 
+by \verb'$0' is the same as the character found by the dot.
+\index{capture} 
+
+Similarly, a regex pattern matching three pairs of repeated 
+letters in a row might be:
+\begin{verbatim}
+say ~$/ if "abbccdde" ~~ /(.)$0 (.)$1 (.)$2/; # -> bbccdd 
+\end{verbatim}
+
+With this, the program to find the words with three double 
+letters in the {\emph words.txt} file takes just three code 
+lines:
+
+\begin{verbatim}
+for 'words.txt'.IO.lines -> $word {
+    say $word if $word ~~ /(.) $0 (.) $1 (.) $2/;
+}
+\end{verbatim}
+%
+
+Both programs find four words, which are variations on 
+``bookkeeper'' and ``bookkeeping.''
+
+The regex version is so simple that you can code it directly 
+at the operating system command line prompt as a one-liner 
+(see Section~\ref{one-liner mode}):
+\index{one-liner mode}
+
+\begin{verbatim}
+$ perl6 -ne '.say if /(.) $0 (.) $1 (.) $2/' words.txt
+bookkeeper
+bookkeepers
+bookkeeping
+bookkeepings
+\end{verbatim}
+
+\subsection{Exercise~\ref{cartalk2}: Palindromes in Odometers (p.~\pageref{cartalk2})}
+\label{sol_cartalk2}
+\index{Car Talk}
+
+The following is a possible program for solving the 
+palindromic odometer puzzle:
+\index{palindrome}
+\index{odometer}
+
+\begin{verbatim}
+sub is-palindrome ($number, $start, $len) {
+    # checks if the relevant substring is a palindrome
+    my $substring = substr $number, $start, $len;
+    return $substring eq flip $substring;
+}
+    
+sub check ($num) {
+    # Checks whether the integer num has the properties described
+    return (is-palindrome($num, 2, 4) and
+        is-palindrome($num + 1, 1, 5) and
+        is-palindrome($num + 2, 1, 4) and
+        is-palindrome($num + 3, 0, 6));
+}
+
+say 'The following are the possible odometer readings:';
+for 1e5..1e6 - 4 -> $number {
+    say $number if check $number;
+}
+\end{verbatim}
+
+Another way to do it would be to use regexes to find out whether 
+we have palindromes:
+
+\begin{verbatim}
+sub check ($num) {
+    # Checks whether the integer num has the properties described
+        $num ~~ /^..(.)(.)$1$0/ and 
+        $num + 1 ~~ /^.(.)(.).$1$0/ and 
+        $num + 2 ~~ /^.(.)(.)$1$0/ and 
+        $num + 3 ~~ /^(.)(.)(.)$2$1$0/;
+}
+
+say 'The following are the possible odometer readings:';
+for 1e5..1e6 - 4 -> $number {
+    say $number if check $number;
+}
+\end{verbatim}
+
+This code is shorter, but is also slower: it takes almost twice 
+as long to execute on my computer. So there is a tradeoff here: 
+The first, faster, way is probably better if you need to run 
+your program many times or often, but you might prefer the second 
+version if this is just a one-off computation. It's up to you to 
+decide.
+
+
+\subsection{Exercise~\ref{cartalk3}: Palindromes in Ages (p.~\pageref{cartalk3})}
+\label{sol_cartalk3}
+\index{palindrome}
+\index{Car Talk}
+
+The following program iterates over possible age differences 
+between 15 and 75 and, for each age, calculates all 
+palindromic possibilities.
+
+\begin{verbatim}
+say 'diff #instances';
+check_diffs();
+say 'daughter  mother';
+num_instances(18, True);
+
+sub are_reversed(Int $i, Int $j) {
+    # $j (mother's age) will always be 2 digits
+    return $j eq flip sprintf '%02d', $i; # format $i on 2 digits
+}
+
+sub num_instances (Int $diff, Bool $flag) {
+    # computes and counts all possibilities for one age difference
+    my $daughter = 0;
+    my $count = 0;
+    while True {
+        my $mother = $daughter + $diff;
+        if are_reversed($daughter, $mother) or 
+		    are_reversed($daughter, $mother+1) {
+            $count++;
+            printf "%02d\t%d\n", $daughter, $mother if $flag;
+        }
+        last if $mother > 99;
+        $daughter++;
+    }
+    return $count;
+}
+
+sub check_diffs () {
+    # enumerates all possible age differences
+    for 15..75 -> $diff {
+        my $nb_cases = num_instances $diff, False;
+        say "$diff   $nb_cases" if $nb_cases > 0;
+    }
+}
+\end{verbatim}
+
+The {\tt while True} statement creates an infinite loop. The 
+loop is stopped, however, by the {\tt last} control flow 
+statement when the mother's age exceeds 99. We will see 
+in section~\ref{C-style loop} a more idiomatic way to build 
+an infinite loop, but this is sufficient for now.
+\index{infinite loop}
+\index{loop!infinite}
+\index{last statement}
+\index{idiomatic}
+
+The {\tt sprintf} function used here transforms any number 
+below 10 into a two-digit number string with a leading 0. 
+Its syntax is similar to that of the {\tt printf} function 
+seen earlier. The difference is that it only creates a new 
+string, but does not print it.
+\index{sprintf function}
+
+Using the \verb'.fmt' method instead of the {\tt sprintf} 
+function, as well as the method syntax for {\tt flip}, in 
+may render the \verb'are_reversed' subroutine somewhat  
+nicer:
+\index{fmt method}
+\index{flip function}
+
+\begin{verbatim}
+sub are_reversed(Int $i, Int $j) {
+    return $j eq $i.fmt('%02d').flip; # format $i on 2 digits
+}
+\end{verbatim}
+
+
+\section{Exercises of Chapter~\ref{arrays} (Arrays and Lists)}
+
+\subsection{Exercise of Section~\ref{stacks_queues}: Implementing a Queue (p.~\pageref{exercise_queue})}
+\label{sol_exercise_queue}
+
+\index{queue}
+This a somewhat simplistic implementation of a queue using 
+an array and the {\tt unshift} and {\ pop} functions:
+\index{enqueue}
+\index{dequeue}
+\index{unshift function}
+\index{pop function}
+
+\begin{verbatim}
+sub enqueue (@queue, $new_item) {
+    unshift @queue, $new_item;
+}
+sub dequeue (@queue) {
+    my $item = pop @queue;
+    return $item;
+}
+my @line = 1, 2, 3, 4, 5;
+enqueue @line, 6;
+say @line;
+say dequeue @line for 1..3;
+\end{verbatim}
+
+\subsubsection{Improving the Queue with Subroutine Signatures}
+
+Let us try to make our queue a bit more robust.
+
+First, we want to add some signatures to our subroutines. We might be tempted to write something like:
+\index{subroutine signature}
+\index{signature}
+
+\begin{verbatim}
+sub enqueue (Array @queue, $new_item) {
+    unshift @queue, $new_item;
+}
+\end{verbatim}
+
+But that does not work, because that would essentially tell 
+Perl that the \verb'@queue' parameter is an array of arrays. 
+What we need here is the following signature syntax:
+\index{signature}
+
+\begin{verbatim}
+sub enqueue (@queue where Array, $new_item) {
+    unshift @queue, $new_item;
+}
+sub dequeue (@queue where Array) {
+    my $item = pop @queue;
+    return $item;
+}
+\end{verbatim}
+
+We probably don't want any type signature here for the 
+\verb'$new_item' parameter of {\tt enqueue}, because we want 
+our queue to be able to operate on any data type in order to 
+make it as generic as possible. But, just as we said it 
+about stacks (Section~\ref{stacks_queues}), we might want to 
+be able to add several items to the data structure in one go. 
+
+\subsubsection{Slurpy (or variadic) parameters}
+
+\label{slurpy_params}
+\index{slurpy parameters}
+\index{variadic parameters}
+\index{signature}
+There are several ways to insert several elements to the 
+queue, but the simplest is probably to use a signature with 
+a \emph{slurpy} parameter (or \emph{variadic} parameter): 
+an array or hash parameter is marked as slurpy by a leading 
+asterisk, which means it can bind to an arbitrary amount 
+of arguments (zero or more). These are called "slurpy" because 
+they slurp up any remaining arguments to a function, like 
+someone slurping up noodles. This also means that a positional 
+slurpy parameter can only be the last one in the signature:
+\index{enqueue}
+\index{dequeue}
+
+\begin{verbatim}
+sub enqueue (@queue where Array, *@new_items) {
+    unshift @queue, $_ for @new_items;
+    # or: unshift @queue, |@new_items;
+}
+sub dequeue (@queue where Array) {
+    my $item = pop @queue;
+    return $item;
+}
+my @line = 4, 5, 6, 7, 8;
+enqueue @line, 3, 2, 1;
+say @line;
+say dequeue @line for 1..3;
+\end{verbatim}
+
+This will display:
+
+\begin{verbatim}
+[1 2 3 4 5 6 7 8]
+8
+7
+6
+\end{verbatim}
+
+See also Section~\ref{slurpy_parameters} for more details 
+on slurpy parameters.
+
+Note that, for an \verb'enqueue' subroutine, we can't 
+simply write:
+\begin{verbatim}
+sub enqueue (@queue where Array, *@new_items) {
+    unshift @queue, @new_items;
+}
+\end{verbatim}
+%
+because, when given an array as a second argument, 
+{\tt unshift} inserts the new items as a sublist. 
+Using the \verb'for' loop or the ``|'' flattening operator 
+solves this slight difficulty. 
+\index{list flattening}
+
+Another possibility is to use the {\tt prepend} built-in 
+function instead of {\tt unshift}, since it does add 
+the flattened elements of the array at the beginning 
+of the queue:
+\index{prepend function}
+
+\begin{verbatim}
+sub enqueue (@queue where Array, *@new_items) {
+    prepend @queue, @new_items;
+}
+\end{verbatim}
+
+\subsubsection{A queue using {\tt shift} and {\tt append}}
+
+\index{append function}
+\index{shift function}
+\index{unshift function}
+\index{push function}
+\index{list flattening}
+The order in which the arguments are passed is a bit 
+counterintuitive. Also, we might prefer not having to use 
+a loop to add the new elements. It is slightly easier to use the {\tt push} 
+and {\tt shift} combination, and to replace {\tt push} by 
+{\tt append}, which does more or less the same thing as 
+{\tt push} but flattens the list just as {\tt prepend} 
+did earlier:
+
+\begin{verbatim}
+sub enqueue (@queue where Array, *@new_items) {
+    append @queue, @new_items;
+}
+sub dequeue (@queue where Array) {
+    my $item = shift @queue;
+    return $item;
+}
+my @line = 1, 2, 3, 4;
+enqueue @line, 6, 7, 8;
+say @line;
+say dequeue @line for 1..3;
+\end{verbatim}
+
+This will display:
+
+\begin{verbatim}
+[1 2 3 4 6 7 8]
+1
+2
+3
+\end{verbatim}
+
+\subsubsection{Exceptions}
+
+\index{exception}
+Finally, one additional weakness needs to be fixed: what 
+happens if the queue is empty when we try to {\tt dequeue} 
+an item? Raising an exception or aborting the program 
+might be what's needed. We might also decide to return an 
+undefined value and let the caller deal with it:
+\index{queue}
+\index{enqueue}
+\index{dequeue}
+
+\begin{verbatim}
+sub enqueue (@queue where Array, *@new_items) {
+    append @queue, @new_items;
+}
+sub dequeue (@queue where Array) {
+    return unless @queue;
+    my $item = shift @queue;
+    return $item;
+}
+my @line;
+enqueue @line, 1, 2, 3;
+say @line;
+for 1..4 -> $count {
+    my $item = dequeue @line;
+    if defined $item {
+        say $item;
+    } else {
+        say "ERROR: The queue is empty !";
+    }
+}
+\end{verbatim}
+
+This produces the following output:
+
+\begin{verbatim}
+[1 2 3]
+1
+2
+3
+ERROR: The queue is empty !
+\end{verbatim}
+
+The {\tt dequeue} subroutine could be made simpler by 
+using the ternary conditional operator (see 
+Section~\ref{ternary operator}) and returning the {\tt Nil} 
+value if the queue is empty:
+\index{Nil}
+
+\begin{verbatim}
+sub dequeue (@queue where Array) {
+    @queue ?? @queue.shift !! Nil
+}
+\end{verbatim}
+
+
+\index{stack}
+\index{queue}
+As a further exercise, you might want to apply to the 
+example code for stacks (seen in Section~\ref{stack_code} 
+on p.~\pageref{stack_code}) the changes we have made 
+above to the management of queues.
+\index{stack}
+
+\subsubsection{Encapsulating the data}
+\label{functional_queue}
+
+Another problem with our implementation of queues is that 
+the \verb'@file' queue is fully accessible to the developer, 
+who might be tempted to peek directly into the array or, 
+worse, to modify it, without using the {\tt enqueue} and 
+{\tt dequeue} subroutines designed to keep the queue 
+consistent. 
+
+\index{encapsulation}
+\index{data hiding}
+We might want to prevent that and make it impossible for 
+the user to tamper with the queue or otherwise access it by 
+any other means than the adequate subroutines. Hiding the 
+information about the implementation or otherwise making 
+it inaccessible by other means than those that have been 
+designed for that purpose is often called data 
+\emph{encapsulation}. One common way to achieve data 
+encapsulation is through object-oriented programming, which 
+we cover in Chapter~\ref{objects}. 
+\index{object}
+
+\index{first-class object}
+\index{object, first-class}
+We can, however, obtain 
+a similar result by combining variable scoping and some 
+material briefly covered in Section~\ref{first_class} about 
+subroutines as first-class objects.
+
+Consider the following implementation of a queue:
+\begin{verbatim}
+sub create-fifo {
+    my @queue;
+    return (
+        sub {return shift @queue;}, 
+        sub ($item) {push @queue, $item;}
+        ) ;
+}
+my ($fifo-get, $fifo-put) = create-fifo();
+$fifo-put($_) for 1..10;
+print " ", $fifo-get() for 1..5; # ->  1 2 3 4 5
+\end{verbatim}
+%
+\index{closure}
+\index{scope}
+\index{FIFO}
+\index{anonymous subroutine}
+The center piece here is the {\tt create-fifo} subroutine.
+The \verb'@queue' array holding the data is lexically 
+scoped to this subroutine and cannot be accessed directly 
+from anywhere else in the program. {\tt create-fifo} returns 
+two anonymous subroutines, one to dequeue items and one 
+to enqueue them. These subroutines are lexical \emph{closures}, 
+which means in simple terms that they can access 
+\verb'@queue', because they have been defined within its 
+scope, even if they are called from somewhere else. Even 
+when {\tt create-fifo} has completed, those subroutines 
+can still access to it because they sort of give an extra 
+life to the array as long as the subroutines are accessible.
+\index{enqueue}
+\index{dequeue}
+
+\index{function factory}
+The rest of the code should be clear: when {\tt create-fifo} is 
+called, it manufactures the two anonymous subroutines that 
+are stored into the \verb'$fifo-get' and \verb'$fifo-put' 
+variables. A subroutine such as {\tt create-fifo} is 
+sometimes called a \emph{function factory} because it 
+generates other subroutines at run time.
+Finally, \verb'$fifo-put' is called ten times to 
+populate the queue with integers from 1 to 10, and 
+\verb'$fifo-get' is called five times to get the first five 
+items of the queue. The queue is encapsulated: there is 
+no way to access to its data other than using the two 
+anonymous subroutines.
+
+Making it possible to enqueue a list of items (rather 
+than a single one) and managing exceptions (such as 
+trying to get an item from an empty queue) are left 
+as an exercise for the reader.
+
+\index{functional programming}
+The techniques used here borrow heavily on a programming 
+paradigm called \emph{functional programming}, a model of 
+programming used by languages such as Lisp, Caml, Clojure, and 
+Haskell. This paradigm is quite different from almost 
+everything we have seen so far, just as object-oriented 
+programming is yet another different paradigm. As you gain 
+more experience as a programmer, you should make a point 
+to understand these different paradigms, because they offer 
+different ways of doing things, and they all have specific 
+advantages for specific types of problems. Knowing all of them 
+gives you more expressive power. One of the good things with 
+Perl~6 is that it gives you a modern and powerful tool to use 
+each of these programming paradigms. 
+Chapter~\ref{functional programming} is all about functional 
+programming, and make sure to read 
+Subsection~\ref{array_functional_programming} in the 
+array and list chapter.
+
+\subsection{Exercise of Section~\ref{modify_array}: Other Ways to Modify an Array (p.~\pageref{splice_exercise})}
+\label{sol_splice_exercise}
+
+\subsubsection{Simulating the {\tt pop} function}
+
+The {\tt my-pop} subroutine uses {\tt splice} to simulate 
+the {\tt pop} function: 
+\index{pop function}
+
+\begin{verbatim}
+sub my-pop (@array where @array > 0) {
+    my @result = splice @array, @array.end, 1;
+    return @result[0];
+}
+my @letters = 'a'..'j';
+my $letter = my-pop @letters;
+say $letter;             # -> j
+say @letters;            # -> [a b c d e f g h i]
+\end{verbatim}
+
+Here, the expression \verb'@array.end' returns the index of 
+the last item of the array. It is also possible to count 
+the array items from the end and to access to the last and 
+penultimate items of a list or an array using the following 
+syntax:
+
+\begin{verbatim}
+> say (1..9)[*-1];
+9
+> say (1..9)[*-2];
+8
+\end{verbatim}
+
+The {\tt my-pop} subroutine could be rewritten as follows:
+
+\begin{verbatim}
+sub my-pop (@array where @array > 0) {
+    my @result = splice @array, *-1, 1;
+    return @result[0];
+}
+\end{verbatim}
+
+You don't have to specify the number of elements with 
+{\tt splice} if you just want the rest. We can also 
+avoid using the \verb'@result'  intermediate array. 
+So we could simplify {\tt my-pop} as:
+\index{pop function}
+\index{splice function}
+
+\begin{verbatim}
+sub my-pop (@array where @array > 0) {
+    @array.splice(*-1)[0]
+}
+\end{verbatim}
+
+
+\subsubsection{Simulating the {\tt push} function}
+
+The only slight difficulty in this exercise is to manage a signature with a 
+``variadic'' list of parameters (or slurpy parameters). This 
+was explained above in subSubsection~\ref{slurpy_params}:
+(p.~\pageref{slurpy_params}).
+\index{push function}
+\index{slurpy parameters}
+\index{variadic parameters}
+\index{signature}
+
+\begin{verbatim}
+sub my-push (@array, *@list) {
+    my @result = splice @array, @array.end + 1, 0, @list;
+    return @array; # push returns the modified list
+                   # (seldom used for arrays)
+}
+my @letters = 'a'..'j';
+my-push  @letters, 'k', 'l', 'm';
+say @letters;      # -> [a b c d e f g h i j k l m]
+\end{verbatim}
+
+\subsubsection{Simulating the {\tt unshift} function}
+
+To simulate the \verb'unshift' function, we can again 
+use slurpy parameters:
+\index{slurpy parameters}
+\index{unshift function}
+
+\begin{verbatim}
+sub my-unshift (@array, *@list) {
+    my @result = splice @array, 0, 0, @list;
+    return @array; # unshift returns the modified list
+                   # (seldom used for arrays)
+}
+my @letters = 'd'..'j';
+my-unshift @letters, 'a'..'c';
+say @letters;      # -> [a b c d e f g h i j]
+\end{verbatim}
+
+\subsubsection{Simulating the {\tt delete} subscript adverb}
+
+Remember the {\tt delete} adverb removes the value, but 
+leaves the slot undefined within the array. The {\tt splice} 
+function would also remove the slot, so this might not be 
+what is really needed here if we want to simulate the 
+behavior of {\tt delete} (although, in a sense, it might 
+also be considered to be an improvement to remove the slot
+altogether). To really simulate {\tt delete}, it is probably 
+better to just ``undefine'' the value:
+\index{delete adverb}
+
+\begin{verbatim}
+sub my-delete (@array, $idx) {
+    my $item = @array[$idx];
+    @array[$idx] = Nil;
+    return $item;
+}
+my @letters = 'a'..'j';
+my $letter = my-delete @letters, 4;
+say $letter;       # -> e
+say @letters;      # -> [a b c d (Any) f g h i j]
+\end{verbatim}
+
+\subsection{Exercise of Section~\ref{map_filter}: Mapping and Filtering the Elements of a List (p.~\pageref{exercise_squares})}
+\label{sol_exercise_squares}
+
+Producing an array containing the square of the numbers in the input list is very straight forward:
+\index{map function}
+
+\begin{verbatim}
+my @squares = map { $_ ** 2 }, 3, 5, 7;     # -> [9 25 49]
+\end{verbatim}
+%
+
+To keep the elements of a list that are perfect squares, one 
+way is to check for each number whether its square root 
+is an integer. For example:
+\index{grep function}
+
+\begin{verbatim}
+my @filt = grep { my $sq = sqrt $_; $sq == $sq.Int}, 3, 9, 8, 16;
+say @filt;                                  # -> [9 16]
+\end{verbatim}
+%
+
+This is working fine with the sample data of the example test, 
+but the program will abort if we try it with a negative input 
+value. We want to avoid that exception and just 
+consider that a negative number is not a perfect square.
+
+Since the code block here would be getting a bit more 
+complicated, we might prefer to use a function 
+reference instead:
+
+\begin{verbatim}
+sub is-square (Numeric $num} { 
+    return False if $num < 0;
+    my $sq = sqtr $num;
+    return $sq == $sq.Int;
+} 
+my @filt = grep &is-square, 3, 9, -6, 16;   # -> [9 16]
+\end{verbatim}
+%
+\subsection{Exercise of Section~\ref{advanced_sort}: Advanced Sorting Techniques (p.~\pageref{sort_exercise})}
+\label{sol_sort_exercise}
+
+The transformation subroutine that can extract the letter 
+groups from the strings is quite straight forward:
+\index{sort!transformation subroutine}
+
+\begin{verbatim}
+sub my_comp (Str $str) {
+    return $0 if $str ~~ /^\d+ (\w+)/; 
+    Nil;   # returning Nil if the regex did not match
+}
+\end{verbatim}
+%
+\index{sort}
+The sort is just the same as in the original chapter:
+\begin{verbatim}
+say sort &my_comp, <22ac 34bd 56aa3 12c; 4abc( 1ca 45bc>;
+     # -> (56aa3 4abc( 22ac 45bc 34bd 12c; 1ca)
+\end{verbatim}
+
+The transformation subroutine is simple enough to be easily 
+replaced by a code block:
+\index{sort!transformation subroutine}
+
+\begin{verbatim}
+my @unsorted = <22ac 34bd 56aa3 12c; 42acd 12cd; 4abc( 1ca 45bc 3dab!>;
+my @sorted = sort {/\d+ (\w+)/; $0 // Nil}, @unsorted;
+say @sorted; 
+     # -> [56aa3 4abc( 22ac 42acd 45bc 34bd 12c; 1ca 12cd; 3dab!]
+\end{verbatim}
+%
+This can also be written with a method invocation syntax:
+\index{invocation!method}
+\index{method invocation}
+\begin{verbatim}
+my @sorted = @unsorted.sort: {/\d+ (\w+)/; $0 // Nil};
+\end{verbatim}
+%
+
+\subsection{Exercise~\ref{nested_sum}: Nested Sum (p.~\pageref{nested_sum})}
+\label{sol_nested_sum}
+
+The most obvious way to compute the sum of all values contained 
+in nested lists or arrays is to use nested loops. For example:
+\index{nested list}
+\index{list!nested}
+
+\begin{verbatim}
+my @AoA = [[1, 2], [3], [4, 5, 6]];
+sub nested-sum (@array) { 
+    my $sum; 
+    for @array -> $item { 
+        for $item.flat -> $nested_item {
+            $sum += $nested_item;
+        }
+    } 
+    return $sum
+}
+say nested-sum @AoA;  # -> 21
+\end{verbatim}
+
+The only slight syntactical difficulty here is that 
+we need to flatten the \verb'$item' sublists in order 
+to traverse them. This could also be done with the ``|'' 
+operator:
+\index{list flattening}
+\begin{verbatim}
+        for |$item -> $nested_item {
+\end{verbatim}
+
+Here is another way to do it, using a {\tt for} loop for 
+traversing the outer array and a reduction operator 
+for adding the elements of the nested lists:
+
+\begin{verbatim}
+my @AoA = [[1, 2], [3], [4, 5, 6]];
+sub nested-sum (@array) { 
+    my $sum; 
+    for @array -> $item { 
+        $sum += [+] $item;
+    } 
+    return $sum
+}
+say nested-sum @AoA;  # -> 21
+\end{verbatim}
+
+Using {\tt map} for flattening the nested lists and 
+the reduction operator can make this code considerably 
+shorter:
+
+\begin{verbatim}
+my @AoA = [[1, 2], [3], [4, 5, 6]];
+sub nested-sum (@array) { 
+    return  [+]  map {|$_}, @array;
+}
+say nested-sum @AoA;  # -> 21
+\end{verbatim}
+
+Comparing this solution needing one line of actual code 
+with the first one shows how expressive the functional 
+programming style can be for handling arrays and lists 
+and hopefully tells you one of the reasons why I have 
+been insisting on this programming style in this 
+chapter.
+
+These solutions work well because it is known that there 
+are at most lists and nested lists (lists of lists). What 
+if the level of ``nestedness'' is not known in advance 
+and can be higher than two? A solution would be to use 
+a recursive subroutine to explore the tree of lists:
+\index{recursion}
+
+\begin{verbatim}
+my @AoA = [[1,2], [3], [4,5,6], [3, [7,6, [3,2]]]];
+sub nested-sum ($input) { 
+    my $sum = 0; 
+    for |$input -> $item { 
+        if $item.WHAT ~~  Int {
+            $sum += $item;
+        } else {
+            $sum += nested-sum $item;
+        }
+    } 
+    return $sum;
+}
+say nested-sum @AoA;  # -> 42
+\end{verbatim}
+
+Remember that a recursive approach is often an efficient 
+tool when dealing with nested or chained data. 
+
+\subsection{Exercise~\ref{cumsum}: Cumulative Sum (p.~\pageref{cumsum})}
+\label{sol_cumsum}
+
+To compute the cumulative sum of a list of numeric values, 
+we just need an accumulator and we push the value of 
+the accumulator each time through the iteration 
+on the array:
+\index{accumulator!list}
+
+\begin{verbatim}
+my @numbers = <2 5 7 6 5 3 6 8>;
+say cumul-sum(@numbers); # -> [2 7 14 20 25 28 34 42]
+
+sub cumul-sum (@array) {
+    my @cumulative;
+    my $partial_sum = 0;
+    for @array -> $element {
+        $partial_sum += $element;
+        push @cumulative, $partial_sum;
+    }
+    return @cumulative;
+}
+\end{verbatim}
+
+But guess what? The code can be much shorter with 
+functional programming. Remember that the reduction 
+metaoperator can give you a list of partial results:
+\index{reduction operator}
+\index{metaoperator}
+\index{functional programming}
+
+\begin{verbatim}
+my @numbers = <2 5 7 6 5 3 6 8>;
+say [\+] @numbers;    # -> (2 7 14 20 25 28 34 42)
+\end{verbatim}
+
+You might think at this point that I have designed these 
+exercises to make my point about the expressive power 
+of functional programming. Not at all! Both this 
+exercise and the previous one are straight from 
+the list chapter of Allen Downey's \emph{Think Python} 
+book on which this book is loosely based. 
+I haven't written these two exercises, but only the 
+solutions presented here.
+
+
+\subsection{Exercise~\ref{middle}: Middle (p.~\pageref{middle})}
+\label{sol_middle}
+
+The easiest way to produce a new list that contains 
+all but the first and last elements of a given list 
+is probably to simply use a slice:
+\index{slice}
+
+\begin{verbatim}
+say middle(5..10);    # -> (6 7 8 9)
+sub middle (@array) { 
+    return @array[1..*-2] 
+}
+\end{verbatim}
+
+Note that \verb'*-1' refers to the index of the last element 
+of an array. To discard the last element, we limit the 
+range to \verb'*-2'.
+
+\subsection{Exercise~\ref{chop}: Chop (p.~\pageref{chop})}
+\label{sol_chop}
+
+The basic difference with the previous exercise is that 
+the array should be modified in place, rather than 
+returned from the function.
+
+Here's one possible soluution, which uses the 
+{\tt shift} and {\tt pop} functions to remove 
+respectively the first and the last element of 
+the array:
+\index{shift function}
+\index{pop function}
+
+\begin{verbatim}
+my @nums = 5..10;
+chop-it(@nums); 
+say @nums;   # -> [6 7 8 9]
+
+sub chop-it (@array) { 
+    shift @array; 
+    pop @array; 
+    return;
+}
+\end{verbatim}
+
+Using a slice is somewhat simpler; just make sure to 
+assign the slice to the array in order to modify the 
+array in place:
+\index{slice}
+
+\begin{verbatim}
+sub chop-it (@array) { 
+    @array = @array[1..*-2];
+    return;
+}
+\end{verbatim}
+%
+
+\subsection{Exercise~\ref{is_sorted}: Subroutine {\tt is-sorted} (p.~\pageref{is_sorted})}
+\label{sol_is_sorted}
+\index{is-sorted}
+
+To check whether a list is sorted, we just need to iterate 
+over its items, keep track of the previous value and compare 
+the current value with the previous one. Return false if 
+any pair of values does not satisfy the comparison, and 
+return true upon getting to the end of the iteration:
+
+\begin{verbatim}
+sub is-sorted (@array) {
+    my $previous = @array[0];
+    for @array -> $current {
+        return False if $current < $previous;
+        $previous = $current;
+    }
+    return True;
+}
+say is-sorted < 2 4 5 7 7 8 9>;    # -> True
+say is-sorted < 2 4 5 7 6 8 9>;    # -> False
+\end{verbatim}
+
+Another approach might be to simply compare the input 
+list with a sorted version of the same:
+\index{sort}
+
+\begin{verbatim}
+sub is-sorted (@array) {
+    return @array eqv @array.sort;
+}
+say is-sorted < 2 4 5 7 7 8 9>;    # -> True
+say is-sorted < 2 4 5 7 6 8 9>;    # -> False
+\end{verbatim}
+
+While this leads to short and simple code, this is not 
+an optimal solution, because it forces the program to 
+sort the input array, which is significantly more costly 
+than just traversing the array, at least when the array 
+to be checked is large.
+
+Once again, functional programming and especially the 
+reduction hyperoperator can lead to much shorter code 
+than the first solution, without incurring the cost 
+of an additional sort:
+\index{functional programming}
+\index{reduction!metaoperator}
+
+\begin{verbatim}
+sub is-sorted (@array) {
+    return [<=] @array }
+}
+say is-sorted < 2 4 5 7 7 8 9>;    # -> True
+say is-sorted < 2 4 5 7 6 8 9>;    # -> False
+\end{verbatim}
+
+By the way, this last version of {\tt is-sorted} will 
+``short-circuit'' and return \verb'False' as soon as it has 
+found values not in the proper order, without iterating 
+over the rest of the list.
+\index{short-circuit evaluation}
+
+\subsection{Exercise~\ref{is_anagram}: Subroutine {\tt is-anagram} (p.~\pageref{is_anagram})}
+\label{sol_is_anagram}
+\index{anagram}
+\index{is-anagram}
+
+When comparing two words to see if they are anagrams, we 
+can start by returning false if they are not the same 
+length, since anagrams obviously have the same letter 
+count. This might make the process faster if the detailed 
+process to compare two strings is time consuming, by 
+avoiding the time-consuming part for cases that will 
+obviously not match.
+
+We don't want to try every permutation of letters 
+since it would take a long time. The 
+easiest way to check for anagrams is probably to start 
+by \emph{normalizing} the input strings, i.e., 
+reorganizing them in such a way that they can easily 
+be compared. The most obvious way is just to sort the 
+letters of the two words and compare the results:
+\index{sort}
+
+\begin{verbatim}
+sub is-anagram (Str $word1, Str $word2) {
+    return False if $word1.chars != $word2.chars;
+    return False if $word1.comb.sort ne $word2.comb.sort;
+    True;
+}
+for <ban bane post stop pots stop post pots pots taps> -> $w1, $w2 {
+    say "$w1 $w2:\t", is-anagram $w1, $w2;
+}
+\end{verbatim}
+
+This produces the following output:
+\begin{verbatim}
+$ perl6 anagrams.pl6
+ban bane:       False
+post stop:      True
+pots stop:      True
+post pots:      True
+pots taps:      False
+\end{verbatim}
+
+Note that this works correctly because the {\tt ne} 
+operator coerces its argument into a string before 
+performing the comparison.
+\index{ne, string inequality operator}
+\index{coercion}
+
+This code can be made shorter (but possibly slightly less 
+efficient) by returning directly the comparison of 
+the sorted versions:
+
+\begin{verbatim}
+sub is-anagram (Str $word1, Str $word2) {
+    return $word1.comb.sort eq $word2.comb.sort;
+}
+\end{verbatim}
+
+
+\subsection{Exercise~\ref{has_duplicates}: Subroutine {\tt has-duplicates} (p.~\pageref{has_duplicates})}
+\label{sol_has_duplicates}
+\index{duplicate}
+\index{has-duplicates}
+
+Within the context of what we have seen so far, the 
+easiest way to find out if a list of strings has 
+duplicates is probably to sort the list, so that 
+possible duplicates will be adjacent, and to 
+compare each item of the sorted array with the 
+previous (or next) one:
+\index{sort}
+
+\begin{verbatim}
+say has-duplicates( < a b c df g xy z r e >); # -> False
+say has-duplicates( < a b c df g xy z c e >); # -> True
+
+sub has-duplicates (@array) {
+    my @sorted = sort @array;
+    for 1..@sorted.end -> $i {
+        return True if @sorted[$i] eq @sorted[$i - 1];
+    }
+    False;
+}
+\end{verbatim}
+%
+
+Here, the loop starts on index 1 (and not 0) because 
+each item is compared with the previous one.
+
+Another way is to iterate on the elements of the sorted 
+array and to keep track of the previous item to enable 
+the comparison:
+
+\begin{verbatim}
+say has-duplicates( < a b c d f y z r e >); # -> False
+say has-duplicates( < a b c d f y z c e >); # -> True
+
+sub has-duplicates (@array) {
+    my @sorted = sort @array;
+    my $previous = shift @sorted;
+    for @sorted -> $item {
+        return True if $item eq $previous;
+        $previous = $item;
+    }
+    False;
+}
+\end{verbatim}
+%
+
+Another possibility is to use the {\tt unique} function 
+of Perl~6, which returns a sequence of unique values 
+from the input list or array. Comparing the item count 
+of the output of {\tt unique} with the element count of 
+the original list will tell us whether some duplicates were 
+removed by {\tt unique}:
+\index{unique function}
+\index{elems function or method}
+
+\begin{verbatim}
+sub has-duplicates (@array) {
+    my @unique-items = unique @array;
+    return False if @unique-items.elems == @array.elems;
+    True;
+}
+\end{verbatim}
+
+This could be rewritten more concisely by chaining the 
+method invocations:
+\index{invocation!method}
+\index{method invocation}
+
+\begin{verbatim}
+sub has-duplicates (@array) {
+    @array.unique.elems != @array.elems;
+}
+\end{verbatim}
+
+Note that Perl also has a {\tt repeated} built-in 
+function, which is the counterpart of {\tt unique} 
+and returns the duplicates of a list:
+\index{repeated method}
+
+\begin{verbatim}
+say <a b c d b f d>.repeated;  # -> (b d)
+\end{verbatim}
+
+The {\tt has-duplicates} subroutine can just coerce 
+the output of {\tt repeated} into a Boolean:
+\index{coerce}
+\begin{verbatim}
+sub has-duplicates (@array) {
+    ?@array.repeated
+}
+\end{verbatim}
+
+
+Another efficient way of finding or removing duplicates 
+from a list or an array is to use \emph{hashes}, a 
+built-in data structure which we cover in 
+Chapter~\ref{hashes} (see Exercise~\ref{has_duplicates_hash}).
+\index{hash}
+
+\subsection{Exercise~\ref{birthdays}: Simulating the Birthday Paradox (p.~\pageref{birthdays})}
+\label{sol_birthdays}
+\index{birthday paradox}
+\index{duplicate}
+
+For simulating the birthday paradox, we need to generate 
+random integers between 1 and 365 (each integer 
+representing a date in the year). For the sake of 
+simplicity, we will generate random integers between 
+0 and 364, which is equivalent for our purposes.
+
+We will run the simulation 1,000 times:
+
+\begin{verbatim}
+
+sub has-duplicates (@array) {
+    return ?@array.repeated
+}
+
+sub has-duplicate-birthdays (Int $num-students) {
+    my @blist;
+    for 1..$num-students {
+        push @blist, 365.rand.Int; # numbers between 0 and 364
+    }
+    return has-duplicates(@blist);
+}
+
+my $dupl-count = 0;
+my $nb-tests = 1000;
+for 1..$nb-tests {
+    $dupl-count++ if has-duplicate-birthdays 23; # 23 students
+}
+say "On $nb-tests tests, $dupl-count had at least one duplicate birthday";
+\end{verbatim}
+
+Note that we have reused the {\tt has-duplicates} 
+subroutine of the previous exercise. It is so short 
+that its code could have been inlined in the 
+\verb'populate-birthdays' subroutine, but it is 
+generally considered good practice to reuse software 
+components that have been developed and tested.
+
+Running the program four times gave the following 
+results:
+
+\begin{verbatim}
+$ perl6 birthdays.pl6
+On 1000 tests, 498 had at least one duplicate birthday
+
+$ perl6 birthdays.pl6
+On 1000 tests, 505 had at least one duplicate birthday
+
+$ perl6 birthdays.pl6
+On 1000 tests, 527 had at least one duplicate birthday
+
+$ perl6 birthdays.pl6
+On 1000 tests, 491 had at least one duplicate birthday
+\end{verbatim}
+
+\index{birthday paradox}
+This simulation confirms that with a sample of 23 persons, 
+there is an approximate 50\% probability that at least 
+two will have the same birthday.
+
+Note that Perl has a {\tt roll} built-in that returns 
+randomly selected elements from a list. This can make 
+the {\tt populate-birthdays} subroutine significantly 
+more concise:
+\index{roll method}
+
+\begin{verbatim}
+sub has-duplicate-birthdays (Int $num-students) {
+    has-duplicates( (^365).roll($num-students) )
+}
+\end{verbatim}
+
+\subsection{Exercise~\ref{push_unshift}: Comparing {\tt push} and {\tt unshift} (p.~\pageref{push_unshift})}
+\label{sol_push_unshift}
+\index{push function}
+\index{unshift function}
+\index{now}
+
+Populating an array with either {\tt push} or 
+{\tt unshift} is something you've seen before. The only new thing 
+here is to compare run times of various solutions.
+The {\tt now} function returns the number of seconds 
+elapsed since a theoretical start point called ``the 
+Epoch,'' usually January 1, 1970. Calling {\tt now} once 
+before running a script and once after will tell 
+us how long it ran through a simple subtraction.
+
+\begin{verbatim}
+my $start_push = now;
+my @push_array;
+for 'words.txt'.IO.lines -> $line {
+    push @push_array, $line;
+}
+say "push took " ~ now - $start_push ~ " seconds.";
+@push_array = ();
+
+my $start_unsh = now;
+my @unsh_array;
+for 'words.txt'.IO.lines -> $line {
+    unshift @unsh_array, $line;
+}
+say "unshift took " ~ now - $start_unsh ~ " seconds.";
+@unsh_array = ();
+\end{verbatim}
+
+This is a sample run of this program:
+\begin{verbatim}
+push took 1.870107 seconds.
+unshift took 2.2291266 seconds.
+\end{verbatim}
+
+Try it for yourself and run it several times. You should 
+probably notice that {\tt push} is consistently 
+faster than {\tt unshift}, even though the difference 
+is not that large.
+
+The reason is presumably that since {\tt unshift} is 
+inserting items at the start of the array, Perl has 
+to move data around in order to reorganize the whole 
+array many times over, whereas, using {\tt push} 
+for inserting items at the end of the array implies 
+less internal house keeping.
+
+As a further exercise, you may try to explore other 
+ways to populate an array, such as {\tt append} or 
+{\tt splice}.
+\index{splice function}
+\index{append function}
+
+If you are just going to insert each line from the 
+input file into an array without changing anything to 
+those lines, then slurping the data into the array 
+without a loop will be simpler and much faster:
+\index{slurp}
+
+\begin{verbatim}
+my $start_slurp = now;
+my @slurp_array = 'words.txt'.IO.lines;
+say "slurp took " ~ now - $start_slurp ~ " seconds.";
+\end{verbatim}
+
+This is four to five times faster:
+\begin{verbatim}
+slurp took 0.42602506 seconds.
+\end{verbatim}
+
+Note that you don't really need to call the \verb'now' 
+function at the beginning of the program: you can use 
+\verb'INIT now' to retrieve the time when the 
+program began to run:
+
+\begin{verbatim}
+my @slurp_array = 'words.txt'.IO.lines;
+say "slurp took " ~ (now - INIT now) ~ " seconds.";
+\end{verbatim}
+\index{now}
+\index{INIT now}
+
+\subsection{Exercise~\ref{bisection}: Bisection Search in a List (p.~\pageref{bisection})}
+\label{sol_bisection}
+\index{bisect}
+\index{membership!bisection search}
+\index{bisection search}
+\index{search!bisection}
+\index{membership!binary search}
+\index{binary search}
+\index{search!binary}
+\index{half-interval search}
+
+We can start with a recursive bisection algorithm:
+\index{recursion}
+
+
+\begin{verbatim}
+sub bisect (@word_list, Str $word) {
+    my $index = (@word_list.elems / 2).Int;
+    return False if $index == 0 and @word_list[$index] ne $word;
+    my $found = @word_list[$index];
+    if $word lt $found {
+        # search the first half
+        return bisect @word_list[0..$index-1], $word;
+    } elsif $word gt $found {
+        # search the second half
+        return bisect @word_list[$index+1..*-1], $word;
+    }
+    True;     # if we get there, we've found the word
+}
+
+for <a f w e q ab ce> -> $search { 
+    if bisect [<a b d c e f g>], $search {
+        say "found $search";
+    } else {
+        say "did not find $search";
+    }
+}
+\end{verbatim}
+
+This will display the following output:
+\begin{verbatim}
+found a
+found f
+did not find w
+found e
+did not find q
+did not find ab
+did not find ce
+\end{verbatim}
+
+There are a couple of weaknesses, though, in this 
+implementation. First, on each recursive call, 
+{\tt bisect} passes as an argument an array 
+that may be quite large, and this is not very 
+efficient both in terms of memory usage (to store 
+the successive subsets of the original array) and 
+in terms of CPU cycles (the time to copy these 
+arrays).
+
+In addition, we can figure out whether the target word can 
+be found in the list (and there are many cases where 
+we don't need more information than that), but we don't 
+know where it was found (i.e., on which subscript of 
+the original array), which is often what is really 
+needed.
+
+A better option might be to have only one copy of the 
+original array, say as a global variable, and to pass 
+around subscript ranges. But global variables are 
+usually very much frowned upon because they tend to go 
+against the tenets of structured programming and can 
+be dangerous (even though this would arguably be a 
+case where a global variable does make some sense). 
+We can actually do better than global 
+variables and still have the benefit of not passing 
+the whole array around again and again thanks to the 
+fact that, in Perl~6, subroutines are \emph{closures}, 
+which means that they can use variables that exist in 
+the environment where they are created.
+\index{closure}
+
+In the following code, {\tt bisect} is no longer a 
+recursive subroutine; it is a very simple subroutine 
+that just sets up the environment for {\tt bisect2},
+which is the recursive routine and is defined within 
+the body of {\tt bisect}. Because the array and the 
+searched word exist within {\tt bisect}, {\tt bisect2} 
+will be able to access to them. The parameters to 
+{\tt bisect2} are now just two subscripts representing 
+the range in which it will have to look up for the 
+word:
+\index{recursion}
+
+\begin{verbatim}
+sub bisect (Str $word, @word_list) {
+    sub bisect2 ($low_idx, $high_idx) {
+        my $mid_idx = (($low_idx + $high_idx) /2).Int;
+        my $found = @word_list[$mid_idx];
+        return $mid_idx if $word eq $found;
+        return -1 if $low_idx >= $high_idx;
+        if $word lt $found {
+            # search the first half
+            return bisect2 $low_idx, $mid_idx - 1;
+        } else {
+            # search the second half
+            return bisect2 $mid_idx+1, $high_idx;
+        }
+    }
+    my $max_index = @word_list.end;
+    return bisect2 0, $max_index;
+}
+
+for <a f w e q ab ce g> -> $search { 
+    my $result = bisect $search, [<a b d c e f g>];
+    if $result == -1 {
+        say "did not find $search";
+    } else {
+        say "found $search on position $result";
+    }
+}
+\end{verbatim}
+
+As a further exercise, adapt the above program to 
+search for English words in \emph{words.txt}. Notice 
+how fast this is. Please 
+be aware that it works correctly because the words 
+in this file are listed in alphabetical order.
+
+Try to change 
+the code to count and display the number of steps 
+necessary to find a given word. Compare this with the number 
+of steps it would take on average for a linear search 
+(i.e., traversing the array linearly until the word 
+is found or can be declared to be absent). Can you 
+guess why this search algorithm is sometimes 
+called a \emph{logarithmic search}?
+\index{logarithmic search}
+
+You may also want to try to write a nonrecursive solution 
+using a loop.
+
+
+\subsection{Exercise~\ref{reverse_pair}: Reverse Pairs (p.~\pageref{reverse_pair})}
+\label{sol_reverse_pair}
+\index{reverse word pair}
+
+Finding reverse pairs requires reading each word of 
+the list and checking the list to see whether the reversed 
+words exist in the list. This means that you are 
+going to look up about 113,000 words in a list having 
+113,000 words. Your lookup method needs to be efficient.
+The obvious solution is to use the bisection search 
+implemented in the previous exercise:
+\index{bisection search}
+\index{search!bisection}
+
+\begin{verbatim}
+sub bisect (Str $word, @word_list) {
+    # see the code in the previous exercise
+}
+
+my @array = 'words.txt'.IO.lines;
+
+for @array -> $word {
+    my $reverse = $word.flip;
+    my $res = bisect $reverse, @array;
+    say "$word and $reverse form a reverse pair" if $res >= 0;
+}
+say now - INIT now;
+\end{verbatim}
+
+On my laptop (a decent box, but not a racehorse), 
+the whole process ran in about 42~seconds, i.e., 
+less than 0.4~millisecond per lookup.
+
+If you think about it, the {\tt for} loop in the code 
+above is really filtering from the word list those words 
+belonging to a reverse pair. This could be implemented 
+with a {\tt grep} using the {\tt bisect} subroutine to 
+select the matches:
+\index{for loop}
+\index{grep}
+
+\begin{verbatim}
+say "$_ and $_.flip() form a reverse pair" 
+    for @array.grep( { bisect( .flip, @array ) >= 0 } );
+\end{verbatim}
+
+With the algorithm used here, each reverse pair is found 
+twice (once for each word of the pair). When examining 
+any given word from the list, we actually don't need to 
+search backward in the part of the list before that word because 
+if that word forms a pair with another word that comes before in 
+alphabetic order, we've already found the pair when 
+processing that other word. So it would be more efficient and 
+faster to search only forward, i.e., to look for the reverse 
+word in the part of the list coming after the word being 
+examined. As a further exercise, modify the {\tt for} loop 
+to search words forward.
+
+\subsubsection{Comparing bisection search with hash lookup}
+
+Bisection search is fairly fast, but hash lookup is 
+even faster. Although we haven't studied hashes yet, 
+try the following code:
+\index{hash}
+\index{bisection search}
+\index{search!bisection}
+
+\begin{verbatim}
+my %hash = map { $_ => 1}, 'words.txt'.IO.lines;
+for %hash.keys -> $word {
+    my $reverse = $word.flip;
+    say "$word and $reverse form a reverse pair" 
+        if %hash{$reverse}:exists;
+}
+say now - INIT now;
+\end{verbatim}
+
+Don't worry about understanding the code for the time 
+being, but notice how much shorter it is. And how much 
+faster it runs: on the same laptop, the execution time is 
+about 16~seconds (less than 0.15 millisecond per lookup). 
+I hope this will whet your appetite for Chapter~\ref{hashes}.
+
+Note that the output of this example is not sorted because 
+a hash does not keep the order of the input data, as we 
+will see in Chapter~\ref{hashes}. It would be fairly easy to 
+keep the sort order, for example by using an array in 
+addition to the hash, but that is not really the 
+subject here.
+
+\subsubsection{Creating and using a module}
+
+\index{module}
+\label{bisect_module}
+Coming back to the {\tt bisect} subroutine, copying 
+and pasting this subroutine from the program of the 
+previous exercise into the code of this exercise is 
+not the best way to reuse code. Suppose a bug is 
+found in that subroutine; it now needs to be fixed 
+in two different programs; the chance that the bug gets 
+corrected in one program and forgotten for the other 
+is quite significant. Even if it is not forgotten, this 
+is twice the same work, and this increases the chance 
+of making another mistake in the process. The bug fix 
+also needs testing twice. Even if there is no bug, we 
+might need an enhancement and this again has to be done 
+twice. 
+\index{code reuse}
+
+A good way to reuse software while maintaining only 
+one copy of the reused subroutine is to insert it into 
+a Perl module, i.e., in a separate file that will be 
+loaded into our programs needing to use it.
+
+The module file might be named \emph{BisectSearch.pm} 
+and contain the following code:
+\index{BisectSearch module}
+\index{module!BisectSearch}
+\index{module!creating a module}
+\index{is export!trait}
+\index{trait!is export}
+
+\begin{verbatim}
+unit module BisectSearch;
+
+sub bisect (Str $word, @word_list) is export {
+    sub bisect2 ($low_idx, $high_idx) {
+        my $mid_idx = (($low_idx + $high_idx) /2).Int;
+        my $found = @word_list[$mid_idx];
+        return $mid_idx if $word eq $found;
+        return -1 if $low_idx >= $high_idx;
+        if $word lt $found {
+            # search the first half
+            return bisect2 $low_idx, $mid_idx - 1;
+        } else {
+            # search the second half
+            return bisect2 $mid_idx+1, $high_idx;
+        }
+    }
+    my $max_index = @word_list.end;
+    return bisect2 0, $max_index;
+}
+
+sub some-other-sub is export {
+    # does something useful
+}
+\end{verbatim}
+
+Note that the module name given at the top of the code 
+and the root file name have to correspond. The only other 
+change to the code of the subroutine is adding the 
+{\tt is export} trait to the signature of the subroutine.
+\index{signature}
+\index{trait}
+
+\index{module!using a module}
+Now a Perl program will be able to load this module 
+and to use the {\tt bisect} and {\tt some-other-sub} 
+subroutines. For example:
+\index{use lib}
+\index{module!use}
+\index{use module}
+\begin{verbatim}
+use lib ".";  # tells Perl to look for modules in the current dir
+use BisectSearch;
+
+my @array = 'a'..'m';
+for < a f w e q ab ce g > -> $search { 
+    my $result = bisect $search, @array;
+    if $result == -1 {
+        say "did not find $search";
+    } else {
+        say "found $search : item # $result";
+    }
+}
+\end{verbatim}
+%
+
+Perl has a list of places to look for modules, 
+which may vary from one Perl installation to another. 
+The first line {\tt use lib ".";} tells Perl to also 
+look for modules into the current directory. This is 
+just an example; you might prefer using a dedicated 
+directory for your modules. The 
+second line {\tt use BisectSearch;} tells Perl to 
+load the module and import the exported subroutines. Now, 
+the program can use the {\tt bisect} subroutine just as if 
+it had been defined within the program.
+
+That's it, folks! Simple, isn't it? Just try it! Well, there 
+are a few more things to know about modules, but you 
+already know enough to create and use modules. 
+
+You might want to review some of the other subroutines we 
+have written so far and stick those that might be useful 
+again into a module. Hint: some of the array and string 
+subroutines we've seen are likely candidates.
+\index{module}
+
+\subsection{Exercise~\ref{interlock}: Interlocking Words (p.~\pageref{interlock})}
+\label{sol_interlock}
+
+First, it seems that it was a good idea to create the 
+\verb'BisectSearch' module, it's going to be reused immediately.
+
+Second, we need some thinking. The first idea that might 
+come to mind to solve the problem might be to have a 
+nested loop on the word list in order to find all pairs 
+of two words, interlock them, and see whether the resulting 
+combined string exists in the list. But this is quite bad 
+because this means creating 113,000 squared pairs, i.e., more 
+than 12.5~billion pairs. Even if a relatively large part 
+of these pairs can be eliminated before having to look up in 
+the word list since a pair can be interlocked only if the 
+letter count difference between the two words is 0 or 1, 
+checking all these pairs will take ages.
+
+Let us see what happens if we work the other way around: for 
+each word on the word list, we ``intersplit'' the word into 
+one string with the even-rank letters and one with the odd-rank 
+letters, and then check if these substrings belong to the 
+list. At most, we will need 226,000~searches--in fact much less 
+because we don't need to look up for the second string if the 
+first string did not match anything.
+
+This is our suggested solution:
+\begin{verbatim}
+use lib ".";
+use BisectSearch;
+
+my @array = 'words.txt'.IO.lines;
+for @array -> $word {
+    my ($word1, $word2) = intersplit($word);
+    say "$word: $word1, $word2" if bisect($word1, @array) >= 0 
+        and bisect($word2, @array) >= 0;
+}
+
+sub intersplit (Str $word) {
+    my @letters = $word.comb;
+    my $evens = join '', map {@letters[$_] if $_ %% 2}, @letters.keys;
+    my $odds = join '', map {@letters[$_] if $_ % 2}, @letters.keys;
+    return ($evens, $odds);
+}
+\end{verbatim}
+
+The {\tt intersplit} subroutine is not optimal in the 
+sense that it traverses the \verb'@letters' array twice 
+each time it is called. We can improve it using a pointy 
+block taking two parameters (one odd- and one even-rank 
+letters):
+\begin{verbatim}
+sub intersplit (Str $word) {
+    my (@evens, @odds);
+    for $word.comb -> $even, $odd {
+        push @evens, $even;
+        push @odds, $odd;
+    }
+    @evens.join, @odds.join;
+}
+\end{verbatim}
+
+As a further exercise, can you find any words that are 
+three-way interlocked, that is, every third letter forms a 
+word, starting from the first, second, or third? Hint: it 
+will probably be easier if you start from the revised 
+version of {\tt intersplit} just above.
+
+\section{Exercises of Chapter~\ref{hashes} (Hashes)}
+
+\subsection{Exercise at the end of Section~\ref{hash_descr}: A hash Is a Mapping (p.~\pageref{ex_employees})}
+\label{sol_ex_employees}
+\index{hash}
+
+Here's how to populate one pair at a time:
+
+\begin{verbatim}
+my %wages;
+%wages{"Liz"} = 3000;
+%wages{"Bob"} = 2500;
+%wages{"Jack"} = 2000;
+%wages{"Betty"} = 1800;
+say "Bob's salary is %wages{'Bob'}";
+for <Liz Jack> -> $employee {
+    say "The salary of $employee is %wages{$employee};
+}
+\end{verbatim}
+
+You can avoid quotation marks around the keys by using 
+the \verb'<...>' angle brackets operator:
+
+\begin{verbatim}
+my %wages;
+%wages<Liz> = 3000;
+%wages<Bob> = 2500;
+# ...
+say "Bob's salary is %wages<Bob>";
+\end{verbatim}
+
+And here's how to assign the full hash in one go:
+
+\begin{verbatim}
+my %wages = Liz => 3000, Bob => 2500, Jack => 2000, Betty => 1800;
+say %wages; # -> Betty => 1800, Bob => 2500, Jack => 2000, Liz => 3000
+\end{verbatim}
+
+\subsection{Exercise~\ref{wordlist2}: Storing the Word List into a Hash (p.~\pageref{wordlist2})}
+\label{sol_wordlist2}
+
+The standard way to store the word list in a hash might 
+be to read each line of the file in a {\tt for} loop 
+and store each word as the key of the hash. The content 
+of the value is not important; we will store 1 (it may 
+also make sense to store the \verb'True' Boolean value):
+\index{for loop}
+
+\begin{verbatim}
+my %words;
+for 'words.txt'.IO.lines -> $line {
+    %words{$line} = 1
+}
+\end{verbatim}
+
+An alternative approach is to assign to the hash the 
+output of a {\tt map} expression returning a pair for each 
+line of the file:
+\index{map}
+
+\begin{verbatim}
+my %hash = map { $_ => 1}, 'words.txt'.IO.lines;
+\end{verbatim}
+%
+
+\subsection{Exercise~\ref{mem_ackerman}: Memoizing the Ackermann Function (p.~\pageref{mem_ackerman})}
+\label{sol_mem_ackerman}
+\index{memoize}
+
+The original implementation of the Ackermann function looked 
+like this:
+
+\begin{verbatim}
+sub ack ($m, $n) {
+    return $n + 1 if $m == 0;
+    return ack($m - 1, 1) if $n == 0;
+    return ack($m - 1, ack($m, $n-1));
+}
+\end{verbatim}
+
+It is not possible to memoize the cases where either \verb'$m' 
+or \verb'$n' is zero, because the other value is unknown. Only 
+the code corresponding to the last code line can be memoized, 
+but that's okay because it does the bulk of the work anyway.
+
+The next problem is that the hashes seen so far had only one 
+key, but the Ackermann function takes two parameters. The 
+simple workaround is to create a composite key, i.e., to 
+concatenate the two parameters with a separator to create 
+the keys of the hash. This leads to this possible solution:
+
+\begin{verbatim}
+my %ack-memo;
+sub mem-ack (Int $m, Int $n) {
+    return $n + 1 if $m == 0;
+    return mem-ack($m - 1, 1) if $n == 0;
+    %ack-memo{"$m;$n"} = mem-ack($m - 1, mem-ack($m, $n-1))
+        unless %ack-memo{"$m;$n"}:exists;
+    return %ack-memo{"$m;$n"};
+}
+say mem-ack 3, 4;
+\end{verbatim} 
+
+To benchmark the two solutions, you may use the following 
+code:
+
+\begin{verbatim}
+my %ack-memo;
+sub mem-ack (Int $m, Int $n) {
+    return $n + 1 if $m == 0;
+    return mem-ack($m - 1, 1) if $n == 0;
+    %ack-memo{"$m;$n"} = mem-ack($m - 1, mem-ack($m, $n-1)) 
+        unless %ack-memo{"$m;$n"}:exists;
+    return %ack-memo{"$m;$n"};
+}
+my $start = now;
+say mem-ack 3, 4;
+say "mem-ack runtime: ", now - $start;
+dd %ack-memo;
+
+sub ack ($m, $n) {
+    return $n + 1 if $m == 0;
+    return ack($m - 1, 1) if $n == 0;
+    return ack($m - 1, ack($m, $n-1));
+}
+$start = now;
+say ack 3, 4;
+say "ack runtime: ", now - $start;
+\end{verbatim}
+
+But don't try to run it with values of \verb'$m' greater 
+than 3; it is useless. If we were to find an Ackermann 
+value for a pair of numbers already seen, that would 
+mean that we have entered an infinite loop. So there is 
+in fact no point trying to memoize the Ackermann function.
+\index{infinite loop}
+\index{loop!infinite}
+
+\index{multidimensional array}
+\index{array!multidimensional}
+We have used composite keys for \verb'%ack-memo', but we 
+can have multidimensional hashes just as there are 
+multidimensional arrays (see Section~\ref{multidimensional_array}. 
+We only need to have two keys, each between its pair of 
+curly brackets:
+\index{multidimensional hash}
+\index{hash!multidimensional}
+\index{bracket!curly}
+\index{curly bracket}
+\begin{verbatim}
+my %h;
+%h{'a'}{'b'}= 'ab';
+%h{'a'}{'c'}= 'ac';
+%h{'a'}{'d'}= 'ad';
+%h{'b'}{'c'}= 'bc';
+dd %h; 
+# -> Hash %h = {:a(${:b("ab"), :c("ac"), :d("ad")}), :b(${:c("bc")})}
+\end{verbatim}
+%
+
+or use a semi-colon to separate the keys:
+\index{semi-colon}
+
+\begin{verbatim}
+my %i;
+%i{'a';'b'} = 'ab';
+%i{'a';'c'} = 'ac';
+%i{'b';'c'} = 'bc';
+dd %i; # -> Hash %i = {:a(${:b("ab"), :c("ac")}), :b(${:c("bc")})}
+\end{verbatim}
+%
+
+\subsection{Exercise~\ref{has_duplicates_hash}: Finding Duplicates with a Hash (p.~\pageref{has_duplicates_hash})}
+\label{sol_has_duplicates_hash}
+\index{duplicate}
+
+We need to loop on the array, store the array elements in 
+a hash and detect whether an element is found in the hash. 
+Here's one way to do that:
+
+\begin{verbatim}
+sub has-duplicates (@array) {
+    my %seen;
+    for @array -> $elmt {
+        return True if %seen{$elmt}:exists;
+        %seen{$elmt} = 1;
+    }
+    return False;
+}
+\end{verbatim}
+
+As a further exercise, generate a list of 50,000~random 
+integers between 0 and 1,000,000,000, and then, using 
+the various methods we have demonstrated, check to see 
+whether this list contains any duplicates and measure the 
+runtime of these various methods. If you encounter difficulties doing 
+this, take a look at the solutions to the ``has duplicates'' 
+(see Subsection~\ref{sol_has_duplicates}) and ``birthday paradox'' (see 
+Subsection~\ref{sol_birthdays}) exercises to get some coding clues. An 
+example of simple benchmarking is presented in the exercise just 
+above.
+
+Once your subroutines are working properly, launch the 
+whole process at least 10 times to see if the differences 
+are significant.
+
+\subsection{Exercise~\ref{exrotatepairs}: Rotate Pairs (p.~\pageref{exrotatepairs})}
+\label{sol_exrotatepairs}
+
+Consider the word ``iron'' and rotate it by three~letters. This 
+gives the word ``folk''. This also means that if ``folk'' 
+is rotated by 23~letters, we will get ``iron.'' Since 
+we are going to scan all the words of our word list, we will 
+find this ``rotate pair'' when we try a shift of three~letters 
+on ``iron'', so that there no need to try a 23-letter rotation 
+on ``folk.'' More generally, we need to try only rotations 
+between 1 and 13~letters. 
+
+The following code iterates through the words of the list, 
+rotates each of them by every shift between 1 and 13, and 
+looks up the result in the hash:
+
+\begin{verbatim}
+sub rotate-one-letter (Str $letter, Int $shift) {
+    my $last  = 'z'.ord;       # last lower-case letter
+    my $rotated-ord = $letter.ord + $shift;
+    if $letter ~~ /<[a..z]>/ { 
+        $rotated-ord -= 26 if $rotated-ord > $last;
+    } else {
+        return $letter;
+    }
+    return $rotated-ord.chr;
+}
+
+sub rotate-one-word (Str $word, Int $shift) {
+    my $rotated-word = "";
+    for 0..$word.chars - 1 {
+        $rotated-word ~=  rotate-one-letter substr($word, $_, 1), $shift;
+    }
+    return $rotated-word;
+}
+
+my %words = map { $_ => 1}, 'words.txt'.IO.lines;
+
+for %words.keys -> $string {
+    for 1..13 -> $shift {
+        my $rotated = rotate-one-word $string, $shift;
+        say " $string and $rotated are shifted by $shift"
+            if %words{$rotated}:exists;
+    }
+}
+\end{verbatim}
+
+Rotating each word of a 113,000 list by each shift between 
+1 and 13 is quite long. Running the program on the word list 
+will take some time, probably about 10 to 15~minutes.
+Using the \verb'.trans' built-in (see documentation in 
+\url{https://docs.perl6.org/routine/trans}) might speed up 
+the process. Try it and judge for yourself.
+
+\subsection{Exercise~\ref{homophones}: Homophones (p.~\pageref{homophones})}
+\label{sol_homophones}
+\index{homophone}
+
+We are looking for words that \emph{sound} the same 
+when we remove either the first or the second letter.
+
+This is a solution using both the \emph{words.txt} word list 
+used before and the CMU phonetic dictionary:
+\index{CMU Pronouncing Dictionary}
+
+\begin{verbatim}
+my %phonetic;
+
+sub load-phonetic ($file-name) {
+    for $file-name.IO.lines -> $line {
+        next if $line !~~ /^\w/; 
+        my ($key, $val) = $line.split("  ", 2);
+        $key = lc $key;
+        %phonetic{$key} = $val;
+    }
+}
+
+load-phonetic('cmu_dict.txt');
+my %words = map { $_ => 1}, 'words.txt'.IO.lines;
+
+say "Starting the search";
+
+for %words.keys -> $word {
+    next unless %phonetic{$word}:exists;
+    my $shorter = $word.substr(1);
+    next unless %words{$shorter}:exists;
+    next unless %phonetic{$shorter}:exists;
+    next unless %phonetic{$word} eq %phonetic{$shorter};
+    my $other-shorter = $word.substr(0, 1) ~ $word.substr(2);
+    next unless %words{$other-shorter}:exists;
+    next unless %phonetic{$other-shorter}:exists;
+    next unless %phonetic{$other-shorter} eq %phonetic{$shorter};
+    say "$word $shorter $other-shorter %phonetic{$shorter}"
+}
+\end{verbatim}
+
+But this is somewhat inefficient because we don't actually 
+need the word list, since the CMU dictionary is another 
+word list that we can use (and we can't use words 
+that would be in the word list and not in the CMU dictionary, 
+because the program wouldn't be able to figure out how 
+they sound). The following program uses only the CMU 
+dictionary and saves the time to load the word list and 
+do checks on it:
+
+\begin{verbatim}
+my %phonetic;
+
+sub load-phonetic ($file-name) {
+    for $file-name.IO.lines -> $line {
+        next if $line !~~ /^\w/; 
+        my ($key, $val) = $line.split("  ", 2);
+        $key = lc $key;
+        %phonetic{$key} = $val;
+    }
+}
+
+load-phonetic('cmu_dict.txt');
+
+for %phonetic.keys -> $word {
+    my $shorter = $word.substr(1);
+    next unless %phonetic{$shorter}:exists;
+    next unless %phonetic{$word} eq %phonetic{$shorter};
+    my $other-shorter = $word.substr(0, 1) ~ $word.substr(2);
+    next unless %phonetic{$other-shorter}:exists;
+    next unless %phonetic{$other-shorter} eq %phonetic{$shorter};
+    say "$word $shorter $other-shorter %phonetic{$shorter}"
+}
+\end{verbatim}
+
+\section{Exercises of Chapter~\ref{data_struct_sel}}
+
+\subsection{Exercise in Section~\ref{given_when}: the {\tt given ... when} Switch Statement (p.~\pageref{proceed_ex})}
+\label{sol_proceed_ex}
+\index{given statement}
+\index{when statement}
+\index{proceed clause}
+
+To test the switch statement with various values, you might 
+write something like this:
+
+\begin{verbatim}
+for <5 42 43 101 666 1024 2048> -> $value {
+    given $value {
+        when 0..9      { say "$_: One digit"}
+        when 10..99    { say "$_: Two digits" ; proceed; }
+        when 42        { say "$_: Response to the question" }
+        when /^\d**3$/ { say "$_: Three digits" }
+        default        { say "$_: More than three digits" }
+    }
+    say '';
+}
+\end{verbatim}
+
+This will display the following result:
+
+\begin{verbatim}
+5: One digit
+
+42: Two digits
+42: Response to the question
+
+43: Two digits
+43: More than three digits
+
+101: Three digits
+(...)
+\end{verbatim}
+
+You can see the error when the input value is 43.
+
+As a solution, it is possible to change the order of the 
+{\tt when} clauses:
+
+\begin{verbatim}
+for <5 42 43 101 666 1024 2048> -> $value {
+    given $value {
+        when 0..9      { say "$_: One digit"}
+        when 42        { say "$_: Response to the question"; proceed; }
+        when 10..99    { say "$_: Two digits"}
+        when /^\d**3$/ { say "$_: Three digits" }
+        default        { say "$_: More than three digits" }
+    }
+    say '';
+}
+\end{verbatim}
+
+This now works correctly, but the output for 42 is no longer 
+in the same order. If we want to keep the original order,  
+we may need to add a {\tt when} statement with an empty block:
+\index{when statement}
+
+\begin{verbatim}
+for <5 42 43 101 666 1024 2048> -> $value {
+    given $value {
+        when 0..9      { say "$_: One digit"}
+        when 10..99    { say "$_: Two digits"; proceed}
+        when 42        { say "$_: Response to the question"; }
+        when 10..99    { }
+        when /^\d**3$/ { say "$_: Three digits" }
+        default        { say "$_: More than three digits" }
+    }
+    say '';
+}
+\end{verbatim}
+
+Or we could remove the need for {\tt proceed} by inserting 
+the code for the 42 case into the two-digit block: 
+
+\begin{verbatim}
+for <5 42 43 101 666 1024 2048> -> $value {
+    given $value {
+        when 0..9      { say "$_: One digit"}
+        when 10..99    { say "$_: Two digits"; 
+                         say "$_: Response to the question" if $_ == 42
+                       }
+        when /^\d**3$/ { say "$_: Three digits" }
+        default        { say "$_: More than three digits" }
+    }
+    say '';
+}
+\end{verbatim}
+
+It would also be possible to nest a \verb'when' subexpression 
+within the \verb'when 10..99' expression:
+\index{proceed clause}
+
+\begin{verbatim}
+for <5 42 43 101 666 1024 2048> -> $value {
+    given $value {
+        when 0..9      { say "$_: One digit"}
+        when 10..99    { say "$_: Two digits"; 
+                         when 42 {say "$_: Response to the question";}
+                       }
+        when /^\d**3$/ { say "$_: Three digits" }
+        default        { say "$_: More than three digits" }
+    }
+    say '';
+}
+\end{verbatim}
+
+\subsection{Exercise in Section~\ref{operator_construction}: Constructing New Operators (p.~\pageref{fact_operator})}
+\label{sol_fact_operator}
+\index{factorial}
+\index{factorial!operator}
+\index{creating new operators}
+
+The ``!'' negation operator is a prefix operator (i.e., placed 
+before the term that it negates). For the factorial operator, 
+we need a postfix operator (placed after the term upon which it 
+acts), so this difference will be sufficient to enable the 
+Perl compiler to distinguish between the two operators.
+
+We use the reduction metaoperator to compute the result:
+
+\begin{verbatim}
+sub postfix:<!> (Int $n) {
+    [*] 2..$n;
+}
+say 5!; # -> 120
+\end{verbatim}
+
+
+\index{signature}
+The signature ensures the operand is an integer (failing which 
+we get an error). We may want to guard against a 
+negative integer, which we can do by raising an error if 
+\verb'$n' is negative. In addition, we can use the {\tt Test} 
+standard module to automatize our tests:
+\index{test module}
+\index{testing}
+
+\begin{verbatim}
+sub postfix:<!> (Int $n) {
+    fail "The operand is not a positive integer" if $n < 0;
+    [*] 2..$n
+}
+use Test;
+plan 5;
+dies-ok {(-1)!}, "Factorial fails for -1";
+eval-dies-ok "(2.5)!", "Factorial fails for 2.5";
+ok 0! == 1, "Factorial 0";
+ok 1! == 1, "Factorial 1";
+ok 5! == 120, "Factorial of a larger integer";
+done-testing;
+\end{verbatim}
+
+\index{test plan}
+The {\tt plan 5;} line says that the test plan contains 
+five~individual tests. Then the two first tests check that 
+the factorial operator fails for invalid input values. And 
+it checks the output for some valid input.
+
+The {\tt done-testing} specifies that the test has finished. 
+This function is really useful when you don't have a plan, 
+for example when you don't know yet how many test you'll run. 
+Here, we have a plan, so using {\tt done-testing} isn't necessary.
+\index{done-testing}
+
+The following is the output of the tests:
+
+\begin{verbatim}
+1..5
+ok 1 - Factorial fails for -1
+ok 2 - Factorial fails for 2.5
+ok 3 - Factorial 0
+ok 4 - Factorial 1
+ok 5 - Factorial of a larger integer
+\end{verbatim}
+
+If we had a test error on test~3, we would have obtained 
+something like this:
+
+\begin{verbatim}
+ok 1 - Factorial fails for -1
+ok 2 - Factorial fails for 2.5
+not ok 3 - Factorial 0
+
+# Failed test 'Factorial 0'
+# at test_fact.pl6 line 8
+ok 4 - Factorial 1
+ok 5 - Factorial of a larger integer
+1..5
+# Looks like you failed 1 test of 5
+\end{verbatim}
+
+Here, we have put the tests in the same file as the subroutine 
+definition for the sake of simplicity of the example. Normally, 
+the tests would be in a separate file, usually in a ``t'' 
+directory and with a \verb'.t' extension.
+
+Testing and the {\tt Test} module are further discussed  
+in Section~\ref{test_module} (p.~\pageref{test_module}).
+More information about testing can be found at: 
+\url{https://doc.perl6.org/language/testing}.
+
+\subsection{Exercise in Section~\ref{sets_and_bags}: Sets, Bags and Mixes (p.~\pageref{diff_with_set})}
+\label{sol_diff_with_set}
+\index{set}
+\index{bag}
+\index{type!bag}
+\index{baghash}
+\index{type!baghash}
+
+We can't just replace the \verb'%histogram' with a bag, because 
+bags are immutable (i.e., cannot be changed after creation) 
+and the \verb'%histogram' hash is populated progressively as 
+the lines of the book are being read from the file. You may use 
+a baghash (the mutable version of a bag) and are encouraged 
+to try it.
+
+However, the aim here is to extract the words of the book that 
+are not in the word list. In other words, we no longer care 
+about word frequencies, but just need a unique list of words 
+that appear at least once in the book, so a set would 
+be sufficient to satisfy our needs. The question is how to 
+populate the set at creation time.
+
+We can change the {\tt process-line} subroutine so that it 
+processes the line as previously but, instead of populating a 
+hash, just returns the list of words. And we can create the 
+set with a {\tt map} function calling that subroutine:
+
+\begin{verbatim}
+my $skip = True;                    # flag to skip the header
+sub process-line(Str $line is copy) {
+    $skip = False if defined index $line, "*END*THE SMALL PRINT!";
+    next if $skip;
+    $line ~~ s:g/<[-']>/ /;         # Replacing dashes and 
+                                    # apostrophes with spaces
+    $line ~~ s:g/<[;:,!?.()"_`]>//; # removing punctuation symbols
+    $line = $line.lc;               # setting string to lower case
+    return $line.words;
+}
+
+my $book-set = set map { process-line $_},  "emma.txt".IO.lines; 
+my $word-list = set "words.txt".IO.lines;
+my $unknown-words = $book-set (-) $word-list;
+say $unknown-words.keys.head(20);
+\end{verbatim}
+
+This works well, but once we've done that, we can also 
+get rid of the \verb'$book-set' data structure and 
+just filter directly the words extracted from the book:
+
+\begin{verbatim}
+my $skip = True; # flag to skip the header
+
+sub process-line($line is copy) {
+    # (same as above)
+}
+
+my $word-list = set "words.txt".IO.lines;
+my @unknown-words = unique grep {$_ ∉ $word-list}, 
+                    grep { $_ }, 
+                    map { | process-line $_},  
+                    "emma.txt".IO.lines; 
+say @unknown-words.head(20);
+\end{verbatim}
+
+Testing such a program may take some time, because it has to 
+process the full book each time. For the purposes of initial 
+testing, one tip is to reduce the amount of input 
+data to speed up the tests. You may achieve that by 
+preparing a smaller file with just a limited number 
+of lines from the original \emph{emma.txt} file. 
+Another simple way is to read only some lines from the 
+book, which you can do with a slice on the code line that 
+reads the file. For example, to read only the first 2,000~lines 
+of the book file:
+
+\begin{verbatim}
+my @unknown-words = unique grep {$_ ∉ $word-list}, 
+                    grep { $_ }, 
+                    map { | process-line $_},  
+                    ("emma.txt".IO.lines)[0..1999]; 
+\end{verbatim}
+
+This can also be used to get rid of the header. Since the 
+actual text of the book starts on line 254, we can have:
+
+\begin{verbatim}
+my @unknown-words = unique grep {$_ ∉ $word-list}, 
+                    grep { $_ }, 
+                    map { | process-line $_},  
+                    ("emma.txt".IO.lines)[253..1999]; 
+\end{verbatim}
+and remove from {\tt process-line} the code to skip the header.
+
+\subsection{Exercise in Section~\ref{randomwords}: Random Words (p.~\pageref{randhist})}
+\label{sol_randhist}
+\index{histogram!random choice}
+
+We have made a {\tt BisectSearch} module containing a {\tt bisect} 
+subroutine. It would be great to reuse it, but we can't because 
+it is currently doing string comparisons and we need numerical 
+comparisons.
+ 
+The best solution at this point is probably to make a copy of 
+the subroutine and modify it 
+to make numeric comparisons. The subroutines can have the same 
+name provided they are declared as multi subroutines and have 
+a different signature: the first parameter of the new multi 
+subroutine should be an {\tt Int} instead of a {\tt Str}. Since 
+the changes to be made are quite small and easy, this is 
+left as an exercise for the reader.
+\index{signature}
+
+The program using that module might look like this:
+
+\begin{verbatim}
+use lib ".";
+use BisectSearch;
+my %histogram;
+
+sub process-line(Str $line is copy) {
+    $line ~~ s:g/<[-']>/ /; 
+    $line ~~ s:g/<[;:,!?.()"_`]>//; 
+    $line = $line.lc; 
+    return $line.words;
+}
+%histogram{$_}++ for grep {$_},
+                     map { | process-line $_}, 
+                     ("emma.txt".IO.lines)[253..*]; 
+my (@words, @freqs);
+my $total_freq = 0;
+for %histogram.kv -> $word, $freq {
+    $total_freq += $freq;
+    push @words, $word;
+    push @freqs, $total_freq;
+}
+my $rand_int = $total_freq.rand.Int;
+my $idx = bisect $rand_int, @freqs;
+say @words[$idx];
+\end{verbatim}
+
+\subsection{Exercise in Section~\ref{markov}: Markov Analysis (p.~\pageref{markov_analysis})}
+\label{sol_markov_analysis}
+\index{Markov analysis}
+
+Before we present our solution to the exercise, we want 
+to briefly introduce a functionality that is useful for 
+retrieving and validating the command-line arguments passed 
+to a program: the {\tt MAIN} subroutine.
+
+\subsubsection{The {\tt MAIN} subroutine}
+\label{MAIN_sub}
+\index{MAIN}
+\index{program!argument}
+\index{argument!to the program}
+\index{command-line argument}
+\index{argument!command-line}
+
+The arguments passed to a program are usually stored in the 
+\verb'@*ARGS' special array. You can just browse the items of this 
+array to retrieve the arguments. The following one-liner is 
+an example of this:
+\index{one-liner mode}
+
+\begin{verbatim}
+$ perl6 -e 'say $_ for reverse @*ARGS' one two three
+three
+two
+one
+\end{verbatim}
+
+There is however another way to do it, the {\tt MAIN} 
+subroutine that we briefly discussed in Section~\ref{MAIN} 
+(p.~\pageref{MAIN}). If there is a subroutine 
+called {\tt MAIN} in the program, then the program will start 
+by executing this subroutine, whose parameters will be the 
+arguments passed to the program. This means that the signature 
+of the {\tt MAIN} subroutine will make it possible to retrieve the 
+parameters and check their validity.
+
+In our example solution below, the {\tt MAIN} subroutine is declared 
+as follows:
+
+\begin{verbatim}
+sub MAIN (Str $book, Int $word-count, Int $order = 2, 
+            Int $start-line = 0) {
+    # body of subroutine here
+}
+\end{verbatim}
+
+The program will thus check that the arguments passed to it match 
+the {\tt MAIN} subroutine signature. In the example, the first 
+parameter has to be a string and the second one an integer; the 
+third and fourth parameters are optional and will be defaulted 
+respectively to 2 and 0 if the corresponding arguments are not 
+provided.
+\index{signature}
+
+If the arguments passed to the program don't match the {\tt MAIN} 
+signature, the program will die after having printed an 
+automatically generated usage message:
+
+\begin{verbatim}
+$ perl6  markov.pl6 emma.txt 100 2 foo
+Usage:
+  markov.pl6 <book> <word-count> [<order>] [<start-line>]
+\end{verbatim}
+The \verb'$start-line' parameter has to be an integer. Since 
+the corresponding argument (``foo'') is not an integer, the 
+program displays a message showing the program usage.
+
+Validating the command-line arguments passed to a program 
+can sometimes be a relatively tedious task. But, with this 
+{\tt MAIN} subroutine signature mechanism, it can often be 
+reduced to a single line of code, the {\tt MAIN} signature.
+
+\subsubsection{Solution to the Markov analysis exercise}
+\index{Markov analysis}
+
+This is a possible way to perform a Markov analysis of a 
+text file:
+
+\begin{verbatim}
+my %prefixes;
+
+sub MAIN (Str $book, Int $word-count, Int $order = 2, 
+              Int $start-line = 0) {
+    process-line($order, $_) for ($book.IO.lines)[$start-line..*]; 
+    say make-text($order, $word-count);
+}
+
+sub process-line($order, Str $line is copy) {
+    $line ~~ s:g/<[-']>/ /; 
+    $line ~~ s:g/<[;:,!?.()"_`]>//; # removing punctuation symbols
+    $line = $line.lc;               # setting string to lower case
+    return unless $line ~~ /\w/;
+    process-words($order, $line.words);
+}
+
+sub process-words ($order, @new-words) {
+    state @word-buffer = ();
+    push @word-buffer, |@new-words;
+    while (@word-buffer.elems >= $order * 2) {
+        my $key = @word-buffer.shift ~ " " ~ 
+             (join ' ', @word-buffer[0..$order - 2]);
+        my $value = @word-buffer[$order -1];
+        push %prefixes{$key}, $value;
+    }
+}
+
+sub make-text (Int $order, Int $w-count) {
+    my @prefix = %prefixes.keys.pick.words;
+    my $count = 0;
+    my $text = join " ", @prefix;
+    while $count <= $w-count {
+        my @possible-suffixes = |%prefixes{join " ", @prefix};
+        last unless @possible-suffixes;
+        my $new-word = |@possible-suffixes.pick;
+        $text ~= " $new-word";
+        shift @prefix;
+        push @prefix, |$new-word;
+        $count++
+    }
+    return $text;
+}     
+\end{verbatim}
+
+This program may be called on the \emph{emma.txt} file with 
+the following syntax:
+
+\begin{verbatim}
+$ perl6  markov.pl6 emma.txt 100 2 253
+\end{verbatim}
+
+\subsection{Exercises on the Huffman Code in Section~\ref{huffman_exercise} (p.~\pageref{huffman_exercise})}
+
+\subsubsection{The Frequency Table (Section~\ref{letter_frequency})}
+\label{sol_letter_frequency}
+\index{frequency!table}
+
+We have already seen problems similar to this one. This 
+is a possible solution using the pipeline programming model 
+described in Section~\ref{most_common_words} 
+(page~\pegeref{most_common_words}):
+\index{pipe-line programming}
+
+\begin{verbatim}
+my %frequencies;
+%frequencies{$_}++ for grep {/<[a..z]>/}, map {.lc}, 
+    "goldbug.txt".IO.lines.comb;
+my $total_count = [+] values %frequencies;
+say "$_ :\t%frequencies{$_} \t", 
+    sprintf "%5.2f", %frequencies{$_}*100/$total_count  
+    for reverse sort {%frequencies{$_}}, %frequencies.keys;
+\end{verbatim}   
+
+This displays:
+\begin{verbatim}
+e :     7625    13.10
+t :     5485     9.42
+a :     4477     7.69
+o :     4208     7.23
+i :     4183     7.18
+n :     3912     6.72
+s :     3516     6.04
+h :     3372     5.79
+r :     3278     5.63
+d :     2533     4.35
+l :     2324     3.99
+u :     1893     3.25
+c :     1523     2.62
+m :     1499     2.57
+f :     1392     2.39
+w :     1303     2.24
+p :     1169     2.01
+y :     1146     1.97
+g :     1143     1.96
+b :     1031     1.77
+v :     525      0.90
+k :     351      0.60
+x :     120      0.21
+j :     111      0.19
+q :     60       0.10
+z :     44       0.08
+\end{verbatim}
+
+Remember that Edgar Allan Poe's character claimed the succession 
+of the most commonly used letters in English ran as 
+follows:
+\index{Poe, Edgar Allan}
+
+\begin{verbatim}
+e a o i d h n r s t u y c f g l m w b k p q x z
+\end{verbatim}
+
+So it appears that Poe's character was approximately 
+right, but certainly not very accurate, in his estimates of the 
+letter frequencies in an English text. It appears that he 
+especially grossly underestimated the frequency of the ``t'' letter. 
+Running the same program against the text of Jane Austen's 
+novel \emph{Emma} that we have used previously produces very 
+close results:
+
+\begin{verbatim}
+e :     87029   12.57
+t :     60035    8.67
+a :     54884    7.93
+o :     53877    7.78
+n :     47773    6.90
+i :     47172    6.82
+s :     42920    6.20
+h :     42819    6.19
+r :     41453    5.99
+d :     28870    4.17
+l :     27971    4.04
+(...)
+\end{verbatim}
+
+\subsubsection{Huffman Coding of a DNA Strand (Section~\ref{huffman_code_2})}
+\label{sol_huffman_code_2}
+\index{Huffman!code}
+\index{DNA (deoxyribonucleic acid)}
+
+At each step in the algorithm, we need to look for 
+the two letters with the lowest frequencies. Rather than 
+having to repeatedly go through all the items in the 
+frequency hash (or to sort the values each time), we 
+will use a data structure maintaining the values 
+sorted according to our needs.
+
+We start with the \verb'%frequencies' hash built in the 
+previous exercise and transform it into a sorted collection 
+of pairs mapping each letter to its frequency. We create 
+a {\tt insert-pair} subroutine that adds the newly created 
+pairs (the dummy letters) at the right place in the pair array 
+to keep the array sorted according to our needs:
+\index{array!of pairs}
+\index{pair}
+
+\begin{verbatim}
+my %code;
+my @pairs;
+push @pairs, $_ => %frequencies{$_} for 
+    sort {%frequencies{$_}}, %frequencies.keys;
+
+sub insert-pair (@list, $new-elem) {
+    my $val = $new-elem.value;
+    for @list.keys -> $i {
+        if @list[$i].value >= $val {
+            splice @list, $i, 0, $new-elem;
+            return;
+        }
+    }
+    push @list, $new-elem; # putting the new element at the end of 
+                           # the list if right place not found earlier
+}
+\end{verbatim}
+
+We loop over the pairs, pick up the two with the smallest 
+frequencies, merge them into a new pair, and add it at the right 
+place with the {\tt insert-pair} subroutine. The loop ends when 
+there are only two pairs left. At the same time, we populate at 
+each step of the loop the new \verb'%code' hash with the partial codes 
+found:
+
+\begin{verbatim}
+loop {
+    my $least1 = shift @pairs;
+    my $least2 = shift @pairs;
+    my $new-pair = $least1.key ~ $least2.key => $least1.value + $least2.value;
+    insert-pair @pairs, $new-pair;
+    %code{$least1.key} =  $least1.key ~ $least2.key ~ "|.";
+    %code{$least2.key} =  $least1.key ~ $least2.key ~ "|-";
+    last if @pairs <= 2;
+}
+%code{@pairs[0].key} = ".";
+%code{@pairs[1].key} = "-";
+\end{verbatim}
+
+At the end of the loop, the pair array contains two pairs:
+
+\begin{verbatim}
+[c => 10 tga => 11]
+\end{verbatim}
+
+and the \verb'%code' hash contains the partial codes for each 
+letter or dummy letter:
+
+\begin{verbatim}
+{a => ga|-, c => ., g => ga|., ga => tga|-, t => tga|., tga => -}
+\end{verbatim}
+
+We then use another loop to substitute the pseudo-letters and get 
+rid of them, until we are left with only the actual letters of the 
+original input string:
+
+\begin{verbatim}
+loop {   
+    my $done = True;
+    for %code.keys -> $letter {
+        next if $letter.chars > 1;
+        my ($val, $code) = split '|', %code{$letter};
+        next unless defined $val and defined $code;
+        $done = False;
+        my $result = %code{$val} ~ $code;
+        %code{$letter} = $result;
+    }
+    last if $done;
+}
+my %encode;
+%encode{$_} = %code{$_} for grep {$_.chars < 2 }, %code.keys;
+\end{verbatim}
+
+The \verb'%encode' hash contains the Huffman table:
+\index{Huffman!table}
+\index{DNA (deoxyribonucleic acid)}
+
+\begin{verbatim}
+c => .
+t => -.
+g => --.
+a => ---
+\end{verbatim}
+
+\subsubsection{Huffman Coding of a More Complex String (Section~\ref{huffman_code_2})}
+
+For this question, we will use a small paragraph specially written 
+to contain only a few letters of the alphabet:
+
+\begin{quote}
+Eastern Tennessee anteaters ensnare and eat red ants, detest ant
+antennae (a tart taste) and dread Antarean anteater-eaters. Rare
+Andean deer eat tender sea reeds, aster seeds and rats’ ears. Dessert?
+Rats’ asses.
+\end{quote}
+
+As a first step, we will simplify a bit the problem by folding all 
+letters to lowercase and use only the letters, eliminating spaces 
+and punctuation from the computation of the frequency table:
+
+\begin{verbatim}
+my $string = "Eastern Tennessee anteaters ensnare and eat red ants, detest ant
+antennae (a tart taste) and dread Antarean anteater-eaters. Rare
+Andean deer eat tender sea reeds, aster seeds and rats’ ears. Dessert?
+Rats’ asses."; 
+
+my %frequencies;
+%frequencies{$_}++ for grep { /\w/ }, $string.lc.comb;
+\end{verbatim}
+
+This eloquent treatise on the eating habits of various fauna 
+yields the following frequency table:
+\index{frequency!table}
+
+\begin{verbatim}
+e :     40      23.53
+a :     32      18.82
+t :     24      14.12
+s :     22      12.94
+n :     20      11.76
+r :     19      11.18
+d :     13      7.65
+\end{verbatim}
+
+Using the same code as in the previous question generates the 
+following Huffman table:
+\index{Huffman!table}
+
+\begin{verbatim}
+a => ..
+e => .-
+s => -.-
+n => -..
+t => --.
+d => ---.
+r => ----
+\end{verbatim}
+
+\subsubsection{Encoding the Input String (Section~\ref{huffman_code_2})}
+\index{Huffman!encoding}
+
+We want not only to encode an input string with the Huffman code, but 
+we also want to then be able to decode it and to recognize the original 
+input. Because of that, we no longer want to filter out punctuation  
+from the translation table, which will therefore grow much larger than 
+before. Spaces (both horizontal spaces and line returns) will be handled 
+differently: we'll keep them unchanged in the encoded pseudo-Morse 
+string, as this will make it easier to check and to display the result.
+
+The frequency table now includes punctuation characters which exist 
+in the input string:
+
+\begin{verbatim}
+%frequencies{$_}++ for grep {/<[\w] + [.,()’?-]>/}, $string.lc.comb;
+\end{verbatim}
+
+The frequency table now has 14 entries:
+\index{frequency!table}
+
+\begin{verbatim}
+e :     40      22.10
+a :     32      17.68
+t :     24      13.26
+s :     22      12.15
+n :     20      11.05
+r :     19      10.50
+d :     13       7.18
+. :     3        1.66
+, :     2        1.10
+’ :     2        1.10
+) :     1        0.55
+- :     1        0.55
+? :     1        0.55
+( :     1        0.55
+\end{verbatim}
+
+And the Huffman table (\verb'%encode' hash) now looks like this:
+\index{Huffman!table}
+
+\begin{verbatim}
+e => .-
+a => ---
+s => -..
+n => ..-
+t => --.
+r => ...
+d => -.--
+. => -.-.-.
+( => -.-..-.
+’ => -.-.--.
+? => -.-..--
+) => -.-...-
+- => -.-....
+, => -.-.---
+\end{verbatim}
+
+The encoding subroutine is very simple:
+
+\begin{verbatim}
+sub encoding (Str $input, %encode) {
+    my $output;
+    for $input.lc.comb -> $letter {
+        $output ~= %encode{$letter} // $letter;
+    }
+    return $output;
+}
+\end{verbatim}
+
+Each letter of the input is converted to lowercase (since we have 
+limited our table to lower case), translated into its pseudo-Morse 
+code equivalent, and concatenated to the output string. If a letter
+is not found in the \verb'%encode' hash, then it is stored into 
+the output as it is: this makes it possible to insert the spaces 
+and end-of-line characters into the output string.
+\index{pseudo-Morse}
+\index{case!lower}
+
+The result is as follows (slightly reformatted to fit in this book):
+\begin{verbatim}
+.-----..--..-.....- --..-..-..-.--..-...-.- ---..---..------..-...-..
+.-..--....----....- ---..--.-- .------. ....--.-- ---..---.-..-.-.---
+-.--.---..--..--. ---..---.
+---..---..-..-..----.- -.-..-.--- --.---...--. --.----..--..--.-...- 
+---..--.-- -.--....-----.-- ---..---.---....----..-
+---..---..------..-...-.-.....------..-...-..-.-.-. ...---....-
+---..--.--.----..- -.--.-.-... .------. --..-..--.--.-... -...----
+ ....-.--.---..-.-.--- ----..--..-... -...-.--.---.. ---..--.-- 
+ ...-----.-..-.-.--. .----...-..-.-.-. -.--.--..-...-...--.-.-..--
+...-----.-..-.-.--. ----..-...--..-.-.-.
+\end{verbatim}
+
+Interestingly, the input string has 213~characters and the output 
+string has 589~bits. If we were storing the 14~different characters of 
+the input with equal-length codes, we would need four bits per 
+character, which would require 1052~bits. So Huffman coding 
+achieved a compression ratio 1.78 times better than the best possible 
+equal-length codes. And the ASCII encoding of the input string 
+required 213~bytes, i.e., 1704~bits; the Huffman-encoded output 
+required almost three times less. 
+
+\subsubsection{Decoding the Pseudo-Morse String (Section~\ref{huffman_code_2})}
+\index{Huffman!decoding}
+
+For decoding efficiently the pseudo-Morse string, we need to reverse 
+the Huffman table, i.e., create a hash in which the pseudo-Morse codes 
+are the keys and the letters are the values. Reversing the \verb'%encode' 
+hash is straight forward:
+\index{reverse}
+
+\begin{verbatim}
+my %decode = reverse %encode.kv;
+\end{verbatim}
+
+\index{reverse}
+The \verb'%encode.kv' expression produces a list of keys and values, 
+and the reverse statement transforms it into a list of values and 
+keys. Assigning that list to a new hash produces a new hash in 
+which keys and values are swapped. Note that this works because 
+we know that the values are unique, so that there is no problem 
+of duplicates when promoting them to hash keys.
+
+Decoding the pseudo-Morse string is a bit more complicated than 
+its encoding, because we don't know in advance how many dots and 
+dashes will be needed to obtain a letter. So we need to look at the 
+first character (say a dot) of the pseudo-Morse string. If this 
+character alone constitutes an entry in the translation table, 
+then we have found our first 
+letter, and we can start afresh with the next character as a starting 
+point of a new letter; if not, we need to pick up the next character 
+and see whether the two first characters together form an entry; if yes, 
+we have found a letter and can start from the beginning again; if 
+not we need to see whether the first three characters together form an 
+entry in the table, and so on.
+
+\index{pseudo-Morse}
+For example, with the beginning of the pseudo-Morse string:
+\begin{verbatim}
+.-----..--..-.....-
+\end{verbatim}
+the first dot is not an entry but the ``.-'' combination is an ``e''.
+The next dash is not an entry and neither is ``\verb"--"'', but 
+``\verb"---"'' is an ``a''.
+The next dash is not an entry and neither is ``-.'', but ``-..'' is a ``s''. 
+Similarly, the next three characters, ``\verb"--."'', form a ``t'', and we 
+can go on to decode the word ``eastern''.
+
+We might implement this with two nested loops: one to go through the 
+string and the second one to consume the necessary number of dots and 
+dashes until the end of a letter:
+
+\begin{verbatim}
+sub decoding (Str $input, %decode) {
+    my @codes = $input.comb;
+    my $output;
+    loop {
+        last unless @codes;
+        my $current = shift @codes;
+        $output ~= $current and next if $current ~~ /\s/;
+        $output ~= %decode{$current} and next if %decode{$current}:exists;
+        loop {           # we need more characters to complete a letter
+            $current ~= shift @codes;
+            if %decode{$current}:exists {
+                $output ~= %decode{$current};
+                last;    # we're done with a letter, go back to main loop
+            }
+        }
+    }
+    return $output;
+ }
+\end{verbatim}
+
+This works properly and the output is the same as the original 
+input (except for the fact that we have folded everything to 
+lowercase):
+
+\begin{verbatim}
+eastern tennessee anteaters ensnare and eat red ants, detest ant
+antennae (a tart taste) and dread antarean anteater-eaters. rare
+andean deer eat tender sea reeds, aster seeds and rats’ ears. dessert?
+rats’ asses.
+\end{verbatim}
+
+However, if you think about it, we don't really need two 
+nested loops in the {\tt decoding} subroutine, which can be 
+made a bit more concise as follows:
+
+\begin{verbatim}
+sub decoding (Str $input, %decode) {
+    my ($output, $current);
+    for $input.comb -> $in-code {
+        $output ~= $in-code and next if $in-code ~~ /\s/;
+        $current ~= $in-code;
+        if %decode{$current}:exists {
+            $output ~= %decode{$current};
+            $current = "";
+        }
+    }
+    return $output;
+}
+\end{verbatim}
+
+Here, the \verb'$current' variable accumulates the dots and 
+dashes from the input until it is found to be an entry in 
+the translation table, at which point it is reset to an 
+empty string to prepare for the next letter.
+
+The solution presented above for finding the Huffman code 
+uses the {\tt insert-pair} subroutine to keep ordered the 
+\verb'@pairs' array of pairs. This makes it easy to find the remaining 
+least common letters or pseudo-letters. You might remember 
+from Section~\ref{heap} that heaps are a good data structure 
+when the aim is to access rapidly the smallest items 
+of a collection. As a further exercise, you may want to 
+rewrite the solution using a binary heap. David Huffman's original 
+solution actually used a tree (called the Huffman tree) very 
+similar to a heap.
+\index{heap} 
+\index{Huffman!code}
+\index{Huffman!tree}
+
+
+\section{Exercises of Chapter~\ref{regex_grammars}: Regexes and Grammars}
+
+\subsection{Exercise in Section~\ref{february_rule}: Getting the February Dates Right (p.~\pageref{february_rule})}
+\label{sol_february_rule}
+\index{February!number of days}
+\index{grammar!date}
+\index{leap year}
+
+We want to check whether the February dates are valid.
+
+To begin with, let's exclude February dates that are 
+larger than 29. This can be done by just expanding the 
+code assertion shown in the code to recognize dates:
+
+\begin{verbatim}
+my $string = "Leap day : 2016-02-29.";                                         
+my token year { \d ** 4 }                                        
+my token month {   
+    1 <[0..2]>                            # 10 to 12                     
+    || 0 <[1..9]>                         # 01 to 09                     
+};
+my token day { (\d ** 2) <?{1 <= $0 <= 31 }> }  
+my token sep { '/' || '-' }                                                 
+my rule date { [   <year> (<sep>) <month> $0 <day> 
+                 || <day> (<sep>) <month> $0 <year> 
+                 || <month>\s<day>',' <year>
+                ] <!{ ($<day> > 30 and $<month> ==  4|6|9|11) or 
+                       $<day> > 29 and $<month> eq '02' }>
+}                         
+
+if $string ~~ /<date>/ {
+    say ~$/;                              # 2016-02-29
+    say "Day\t= "   , ~$/<date><day>;     # 29
+    say "Month\t= " , ~$/<date><month>;   # 02
+    say "Year\t= "  , ~$/<date><year>;    # 2016
+}                    
+\end{verbatim}
+
+This is fine. February has 29 days since 2016 is a leap 
+year. But this code would validate Feb. 29 for 2015 or 
+2017, which is wrong since they are not leap years.
+
+\subsubsection{Recognizing a leap year}
+\index{leap year}
+
+\index{Julian calendar}
+In the old Julian calendar (named after Julius Caesar), 
+leap years are years that are divisible by 4. It turned 
+out that the Julian calendar had too many leap years 
+to reflect the astronomical reality, so that the 
+calendar drifted about 3 days for every period of four 
+centuries.
+\index{Caesar, Julius}
+
+\index{Gregorian calendar}
+The Gregorian calendar, introduced by Pope Gregory~XIII 
+in 1582, corrected the Julian calendar with 
+the following additional rule: years divisible by 100 should 
+be leap only if they are also divisible by 400. So, by the 
+Gregorian calendar, 1700, 1800, 1900, and 2100 are not leap, 
+but 2000 and 2400 are leap.
+\index{Gregory XIII, Pope}
+
+Depending on what kind of dates your program is going to 
+encounter, you might decide to simplify the rules. If 
+you are writing a module that is supposed to be accurate for any 
+date far in the past or in the future, you probably want 
+to implement the exact Gregorian rule. But if you know 
+that you're going to meet only dates of the current 
+period, you might choose a much simpler rule.
+
+\index{Y2K bug}
+In particular, since 2000 is an exception to the exception 
+and is leap, any year between 1901 and 2099 is leap if it 
+is divisible by 4 and not leap otherwise. This rule is 
+likely sufficient for any business application 
+written in 2017. There is probably no reason to make it 
+more complicated than it needs to be (although it may be 
+argued that it is the same type of reasoning that led to 
+the great fear of the ``Y2K'' bug). 
+
+With this simplification in mind, a subroutine to find out 
+if a year is leap should simply return true if it is 
+divisible by 4 and might thus look like this:
+\index{leap year}
+
+\begin{verbatim}
+sub is-leap ($year) { # works for years between 1901 and 2099
+    return True if $year %% 4; 
+    return False;
+}
+\end{verbatim}
+
+Or simpler:
+
+\begin{verbatim}
+sub is-leap ($year) { # works for years between 1901 and 2099
+    return $year %% 4; 
+}
+\end{verbatim}
+
+If you want to implement the full Gregorian rule, it might 
+look like this:
+
+\begin{verbatim}
+sub is-leap ($year) { # Gregorian rule for any year
+    return False if $year % 4;   # no if not divisible by 4
+    return True if $year % 100;  # yes if divisible by 4 and not by 100
+    return False if $year % 400; # no if divisible by 100 and not by 400
+    True;                        # yes if divisible by 400
+}
+\end{verbatim}
+
+or, if you like concision (or obfuscation):
+\begin{verbatim}
+sub is-leap ($y) { $y %% 400 or ($y %% 4 and not $y %% 100) }
+\end{verbatim}
+
+The code above is given as an example on how to compute 
+whether a year is leap, since it is an interesting and 
+classical problem, but Perl actually provides a method for that 
+in the {\tt Dateish} role. For example:
+\index{is-leap-year function}
+
+\begin{verbatim}
+> say Dateish.is-leap-year(2016)
+True
+> say Dateish.is-leap-year(2015)
+False
+\end{verbatim}
+
+\subsubsection{Back to the February date validation}
+\index{date!validation}
+
+You \emph{can} add the rules for Feb.~29 in the code example 
+above if you wish, but we would suggest this is getting 
+slightly too complicated for a code assertion within 
+the {\tt date} rule: adding a quick Boolean condition 
+in a code assertion within a rule is fine, but when 
+the condition becomes more complicated, it will tend 
+to make the rule more difficult to understand. Think 
+about the person who will have to maintain the code in 
+a year from now (and that person might be you).
+ 
+We prefer to move the code performing the validation 
+out of the {\tt date} rule into a dedicated subroutine 
+checking all dates for February:
+
+\begin{verbatim}
+sub feb-date-not-valid ($year, $day) {
+    return False if $day <= 28;
+    return True if $day > 29;
+    return False if Dateish.is-leap-year($year);
+    True;
+}
+\end{verbatim}
+
+The {\tt date} rule now looks like this:
+
+\begin{verbatim}
+my rule date { [   <year> (<sep>) <month> $0 <day> 
+                 || <day> (<sep>) <month> $0 <year> 
+                 || <month>\s<day>',' <year>
+               ] <!{ ($<day> > 30 and $<month> ==  4|6|9|11) or 
+                     $<month> eq '02' and feb-date-not-valid $<year>, $<day>}>
+} 
+\end{verbatim}
+
+I had originally called the new subroutine {\tt check-feb-29} 
+but I changed it to {\tt feb-date-not-valid} in order to 
+better show that it returns a true value if the date 
+is not valid. This may seem secondary, but choosing good 
+names for your identifier is important because that 
+self-documents your programs and clarifies their semantics.
+
+Once we've introduced this minimal subroutine, we 
+might go one step further and move the rest of the 
+code assertion into the subroutine, so that the final code 
+assertion would contain only a call to the new version 
+of the subroutine. This is left as a further exercise 
+for the reader.
+
+\subsection{Exercise~\ref{calculator} (p.~\pageref{calculator}): 
+A Grammar for an Arithmetic Calculator}
+\label{sol_calculator}
+\index{calculator}
+\index{arithmetic calculator}
+\index{grammar!arithmetic calculator}
+\index{calculator!grammar}
+
+Here's one possible way to implement an arithmetic calculator.
+
+\subsubsection{The Grammar}
+
+Here's one way to write the grammar:
+\index{grammar}
+\index{token}
+\index{rule}
+
+\begin{verbatim}
+my grammar Calculator {
+    rule TOP            { <expr> }
+    rule expr           { <term> + % <plus-minus-op> }
+    token plus-minus-op { [< + - >] }
+    rule term           { <atom> + % <mult-div-op> }
+    token mult-div-op   { [< * / >] }
+    rule atom {
+        | <num> { make +$<num> }
+        | <paren-expr> { make $<paren-expr>.made}
+    }
+    rule num            { <sign> ? [\d+ | \d+\.\d+ | \.\d+ ] }
+    rule paren-expr     { '(' <expr> ')' }
+    token sign          { [< + - >] }
+}
+\end{verbatim}
+
+This solution is quite simple.
+
+An expression (\verb'expr') is made of one or several terms 
+separated by ``+'' or ``-'' operators. A term is made of one 
+or several atoms separated ``*'' or ``/'' operators. An atom 
+may be a bare number or a parenthesized expression.
+
+\index{precedence}
+This guarantees that precedence rules are satisfied. 
+Multiplications and divisions will be 
+evaluated before additions and subtractions, since, when 
+parsing an expression, you need to evaluate the individual 
+terms before you can complete the expression evaluation. 
+Similarly, since a parenthesized expression is an atom, it 
+will have to be evaluated before the term in which it 
+appears can be fully evaluated. Note that, in the case 
+of a parenthesized expression, the \verb'expr' rule 
+is called recursively.
+\index{recursion}
+
+\subsubsection{The actions}
+\index{actions!class}
+\index{rule}
+
+Notice that we have included two actions in the grammar (in 
+the {\tt atom} rule). One reason was for convenience: since 
+the {\tt atom} rule covers two very different named 
+subrules, it is a bit easier to include the action just 
+in the context of the sub-rules. If an action had been attached 
+to the  {\tt atom} rule, it would have required finding out 
+which sub-rule had been matched to know which action to 
+perform. Nothing difficult, but doing so would have made the  
+code slightly more complex. The other reason was for pedagogical 
+purposes: although it often makes sense to create an actions 
+class, it is useful to know that actions may be inserted in the 
+grammar part. For a very simple grammar, it might be 
+over-engineering to create an actions class with just one or 
+two actions.
+\index{grammar}
+
+The actions class might look like this:
+
+\begin{verbatim}
+class CalcActions {
+    method TOP ($/) {
+        make $<expr>.made
+    }
+    method expr ($/) {
+        $.calculate($/, $<term>, $<plus-minus-op>)
+    }
+    method term ($/) {
+        $.calculate($/, $<atom>, $<mult-div-op>)
+    }
+    method paren-expr ($/) {
+         make $<expr>.made;
+    }
+    method calculate ($/, $operands, $operators) {
+        my $result = (shift $operands).made;
+        while my $op = shift $operators {
+            my $num = (shift $operands).made;
+            given $op {
+                when '+' { $result += $num; }
+                when '-' { $result -= $num; }
+                when '*' { $result *= $num; }
+                when '/' { $result /= $num; }
+                default  { die "unknown operator "}
+            }
+        }
+        make $result;
+    }
+}
+\end{verbatim}
+
+The {\tt calculate} method computes expressions (terms 
+separated by addition or subtraction operators) and terms 
+(atoms separated by multiplication or division operators) 
+from left to right, since these operators are left associative.
+
+This grammar for a calculator and its associated actions class 
+may be tested with the following code:
+\index{grammar!arithmetic calculator}
+
+\begin{verbatim}
+for |< 3*4 5/6 3+5 74-32 5+7/3 5*3*2 (4*5) (3*2)+5 4+3-1/5 4+(3-1)/4 >,
+    "12 + 6 * 5", " 7 + 12 + 23", " 2 + (10 * 4) ", "3 * (7 + 7)" { 
+    my $result = Calculator.parse($_, :actions(CalcActions));
+    # say $result;
+    printf "%-15s %.3f\n", $/,  $result.made if $result;
+}
+\end{verbatim}
+
+which will display the following results:
+
+\begin{verbatim}
+3*4             12.000
+5/6             0.833
+3+5             8.000
+74-32           42.000
+5+7/3           7.333
+5*3*2           30.000
+(4*5)           20.000
+(3*2)+5         11.000
+4+3-1/5         6.800
+4+(3-1)/4       4.500
+12 + 6 * 5      42.000
+ 7 + 12 + 23    42.000
+ 2 + (10 * 4)   42.000
+3 * (7 + 7)     42.000
+\end{verbatim}
+
+You might wonder whether this code works correctly with nested 
+parenthesized expressions. I originally thought, when I wrote this 
+code, that it might malfunction and that I might have to change 
+or add something to get nested parenthesized expressions right and 
+properly balanced. It turns out that it works fine out of the 
+box. For example, consider the following test code with relatively 
+deeply nested parenthesized expressions:
+\index{nested expressions}
+
+\begin{verbatim}
+for "(((2+3)*(5-2))-1)*3", "2 * ((4-1)*((3*7) - (5+2)))"  { 
+    my $result = Calculator.parse($_, :actions(CalcActions));
+    printf "%-30s %.3f\n", $/,  $result.made if $result;
+}
+\end{verbatim}
+
+The result is correct:
+\begin{verbatim}
+(((2+3)*(5-2))-1)*3            42.000
+2 * ((4-1)*((3*7) - (5+2)))    84.000
+\end{verbatim}
+
+\index{exponentiation}
+\index{precedence}
+As an additional exercise, you might want to add exponentiation 
+to the list of allowed operators. Remember that exponentiation has 
+higher precedence than multiplication and division (so you probably 
+want to put it somewhere near the atom level). In the event that 
+you want to handle nested exponentiation operators, also 
+remember that they are usually right associative:
+
+\begin{verbatim}
+2**3**2 = 2**(3**2) = 2 ** 9 = 512;  # Not: (2**3)**2 or 64
+\end{verbatim}
+
+\section{Exercises of Chapter~\ref{functional programming}: Functional Programming}
+
+\subsection{Exercise~\ref{quicksort}: Making a Functional Implementation of Quick Sort)}
+\label{sol_quicksort}
+\index{quick sort}
+\index{sort!quick sort}
+
+Here's one way to implement the quick sort algorithm in 
+functional programming style.
+\index{ functional programming!style}
+
+\begin{verbatim}
+sub quicksort (@input) {
+    return @input if @input.elems <= 1;
+    my $pivot = @input[@input.elems div 2];
+    return flat quicksort(grep {$_ < $pivot}, @input), 
+        (grep {$_ == $pivot}, @input), 
+        quicksort(grep {$_ > $pivot}, @input);
+}
+\end{verbatim}
+
+This functional version of the program reflects directly 
+the approach of the quick sort algorithm:
+\begin{itemize}
+\item If the  array has less than two items, it is already 
+sorted, so return it immediately (this is the base case 
+stopping the recursion).
+\index{base case}
+\index{recursion!base case}
+\item Else, choose an item as a pivot (here, we pick the 
+middle element or one immediately near the middle).
+\item Partition the array into three sublists containing 
+items respectively smaller than, greater than, and equal to 
+the pivot.
+\item Sort the first two sublists by a recursive call to 
+the \verb'quicksort' function, but don't call \verb'quicksort' 
+on the sublist containing items equal to the pivot: not only is 
+it already sorted (all elements are equal), but it would fail 
+to meet the base case and would enter into infinite recursion.
+\index{recursion}
+\item  Return the list obtained by concatenating the three 
+sublists.
+\end{itemize}
+\index{sort!quick sort}
+
+\index{pivot!quick sort algorithm}
+\index{divide and conquer algorithm}
+As noted earlier, the ideal pivot would be the median of the 
+values, but the cost of finding the median would be prohibitive.
+
+In principle, you could choose any item as the pivot, including 
+for example the first or the last item of the array. But for 
+some specific input (such as arrays already almost sorted, 
+forward or backward), this can increase significantly the 
+run time because the partitioning becomes totally unbalanced, 
+thereby losing the advantage of the divide and conquer strategy. 
+Picking an element in the middle, as we did here, strongly reduces 
+the probability of such pathological behavior. Another possible way 
+to prevent such risk is to select the pivot at random among 
+the array elements.
+
+

@@ -1,0 +1,490 @@
+\chapter{Some Final Advice}
+
+\begin{quote}
+\raggedleft 
+\emph{Everyone knows that debugging is twice as hard as writing \\ 
+a program in the first place. So if you're as clever as you \\
+can be when you write it, how will you ever debug it? }\\
+--- Brian Kernighan, "The Elements of Programming Style".
+\end{quote}
+\index{Kernighan, Brian}
+
+\section{Make it Clear, Keep it Simple}
+
+Writing a real-life program is not the same thing as learning 
+the art of programming or learning a new language.
+
+Because the goal of this book is to lead you to learn 
+more advanced concepts or new syntax, I have often been 
+pushing new ways of doing things. But this does not mean that 
+you should try to pack your most advanced knowledge into 
+each of your programs. Quite the contrary.
+
+The rule of thumb is ``KISS'': keep it simple, stupid. The 
+KISS engineering principle (originated in the US Navy 
+around 1960) states that most systems work best if they 
+are kept simple rather than made complicated; therefore 
+simplicity should be a key goal in design and unnecessary 
+complexity should be avoided. This does not mean, however, 
+that you should write simplistic code.
+\index{KISS: keep it simple, stupid}
+
+As an example, if you're looking for a literal substring 
+within a string, use the simple {\tt index} built-in function, 
+rather than firing the regex engine for that. Similarly, 
+if you know the position and length of the substring, then 
+use the {\tt substr} function. But if you need a more ``fuzzy'' 
+match with perhaps some alternatives or a character class, then 
+a regex is very likely the right tool.
+\index{index}
+\index{substr}
+\index{regex}
+
+Another related tenet is ``YAGNI'': you aren't gonna need 
+it. This acronym comes from a school of programming 
+known as ``extreme programming'' (XP). Even if you don't 
+adhere to all the XP principles, this idea is quite sound 
+and well-founded: don't add any functionality until it is 
+really needed.
+\index{YAGNI: you aren't gonna need it}
+
+Try to make your programs as clear as possible, and 
+as simple as you can. Use more advanced concepts if 
+you have to, but don't do it for the sake of showing how 
+masterful you are. Don't try to be clever or, at least, 
+don't be \emph{too} clever.
+
+Remember that code is not only used by the compiler, but 
+is also by humans. Think about them.
+
+Think about the person who will have maintain your code. 
+As some people like to put it: ``Always code as if the person 
+who ends up maintaining your code is a violent psychopath 
+who knows where you live.'' And, if nothing else will convince 
+you, remember that the person maintaining your code might be 
+you a year from now. You may not remember then 
+how that neat trick you used really works.
+
+A final quote from Edsger Dijkstra on this subject: 
+``Simplicity is prerequisite for reliability.''
+\index{Dijkstra, Edsger}
+\index{simplicity}
+
+\section{Dos and Don'ts}
+
+\begin{description}
+
+\item[Don't repeat yourself (DRY):] Avoid code duplication. 
+If you have the same code in different places of your 
+program, then something is most likely wrong. Maybe 
+the repeated code should go into a loop or a separate 
+subroutine, or perhaps even in a module or a library. 
+Remember that copy and paste is a source of evil.
+\index{DRY: don't repeat yourself}
+
+\item[Don't reinvent the wheel:] Use existing libraries 
+and modules when you can; it is likely that they have 
+been thoroughly tested and will work better than the 
+quick fix you're about to write. The Perl~6 ecosystem 
+has a large and growing collection of software modules 
+(see \url{modules.perl6.org}) that you can use in your 
+programs.
+\index{reinventing the wheel}
+
+\item[Use meaningful identifiers] If your variables, 
+subroutines, methods, classes, grammars, modules, 
+and programs have sensible 
+names that convey clearly what they are or what they do, 
+then your code will be clearer and might need fewer 
+comments. Very short names like \verb'$i' or \verb'$n' are 
+usually fine for loop variables, but pretty much anything else needs 
+a name that clearly explains what the content or the purpose is. 
+Names like \verb'$array' or \verb'%hash' may have sometimes been 
+used in some examples of this book to indicate more clearly 
+the nature of the data structure, but they are not recommended in 
+real-life programs. If your hash contains a collection of 
+words, call it \verb'%words' or \verb'%word-list', not 
+\verb'%hash'. The \% sigil indicates that it is a hash anyway.
+\index{meaningful identifier}
+
+\item[Make useful comments and avoid useless ones] A 
+comment like this:
+\begin{verbatim}
+my $count = 1;     # assigns 1 to $count
+\end{verbatim}
+is completely useless. In general, your comments should 
+explain neither what your code is doing nor even how it is doing 
+it (this should be obvious if your code is clear), but 
+rather \emph{why} you are doing that: perhaps you should refer 
+to a math theorem, a law of physics, a design choice, or a 
+business rule.
+\index{comment}
+
+\item[Remove dead code and code scaffolding] Even when 
+writing new code, you may at some point create variables 
+that you don't use in the final version of your code. If so, 
+remove them; don't let them distract the attention of your 
+reader. If you modify an existing program, clean up the place 
+after you've changed it. Remember the boy scout's rule: 
+leave the place better and cleaner than you found it.
+\index{dead code}
+\index{scaffolding}
+
+\item[Test aggressively] Nobody can write any piece of 
+significant software without having a number of initial 
+bugs. Edsger Dijkstra is quoted as saying: ``If 
+debugging is the process of removing software bugs,
+then programming must be the process of putting them in.'' 
+It is unfortunately very true. Even though Dijkstra 
+also said that ``Testing shows the presence, not the absence 
+of bugs,'' testing is an essential part of software 
+development. Write extensive test plans, use them often, and 
+update them as the functionality evolves. See Section~\ref{test_module} 
+(p.~\pageref{test_module}) for some automated testing tools.
+\index{test}
+\index{Dijkstra, Edsger}
+
+\item[Avoid premature optimization] In the words of Donald 
+Knuth: ``Premature optimization is the source of all evil (or 
+at least most of it) in programming.''
+\index{premature optimization}
+\index{Knuth, Donald}
+
+\item[Don't use magical numbers:] Consider this:
+\begin{verbatim}
+my $time-left = 31536000;
+\end{verbatim}
+
+What is this 31,536,000 number coming out of nowhere? 
+There's no way to know just by looking at this line 
+of code. Compare with this:
+
+\begin{verbatim}
+my $secondsInAYear = 365 * 24 * 60 * 60;
+# ...
+my $time-left = $secondsInAYear;
+\end{verbatim}
+
+Isn't the second version clearer? Well, to tell the 
+truth, it would be even better to use a constant in 
+such a case:
+\begin{verbatim}
+constant SECONDS-PER-YEAR = 365 * 24 * 60 * 60;
+\end{verbatim}
+\index{magical number}
+\index{constant}
+
+\item[Avoid hardcoded values:] Hard-coded values are bad.
+If you have to use some, define them as variables or constants 
+at the beginning of your program, and use those variables or 
+constants instead. Hard-coded file paths are especially bad. If you 
+have to use some, use some variables with relative paths:
+\begin{verbatim}
+my $base-dir = '/path/to/application/data';
+my $input-dir = "$base-dir/INPUT";
+my $result-dir = "$base-dir/RESULT";
+my $temp-dir = "$base-dir/TEMP";
+my $log-dir = "$base-dir/LOG";
+\end{verbatim}
+At least, if the path must change, you have to change only 
+the top code line.
+\index{hard-coded value}
+
+\item[Don't ignore errors returned by subroutines or built-in 
+functions:] Not all return values are useful; for example, we 
+usually don't check the return value of a print statement, but 
+that's usually fine because we are interested in the side effect, 
+the fact of printing something out to the screen or to a file, 
+rather than in the return value. In most other cases, you need 
+to know if something went wrong in order to take steps to either 
+recover from the error condition, if possible, or to abort the 
+program gracefully (e.g., with an informative error message) if 
+the error is too serious for the program to continue.
+\index{error!ignoring}
+
+\item[Format your code clearly and consistently] The compiler 
+might not care about code indentation, but human readers do. 
+Your code formatting should help clarify the structure and 
+control flow of your programs.
+\index{indentation}
+
+\item[Be nice and have fun.]
+\index{fun}
+
+\end{description}
+
+\section{Use Idioms}
+\index{idiom}
+
+Any language has its own ``best practice'' methods of use. 
+These are the idioms that experienced programmers use, ways of doing 
+things that have become preferred over time. These idioms are important. 
+They protect you from reinventing the wheel. They are also what 
+experienced users expect to read; they are familiar 
+and enable you to focus on the overall code design rather than
+get bogged down in detailed code concerns. They often formalize 
+patterns that avoid common mistakes or bugs.
+
+Even though Perl~6 is a relatively new language, a number of such 
+idioms have become honed over time. Here are a few of these 
+idiomatic constructs~\footnote{When two solutions are suggested, 
+the second one is usually the more idiomatic one.}.
+\index{idiomatic Perl~6}
+
+
+\begin{description}
+\item[Creating a hash from a list of keys and a list of values] Using slices:
+\index{hash slice}
+
+\begin{verbatim}
+my %hash; %hash{@keys} = @values;
+\end{verbatim}
+
+Using the \emph{zip} operator and a metaoperator with the pair constructor:
+\index{zip operator}
+\index{metaoperator}
+\index{operator!zip}
+
+\begin{verbatim}
+my %hash = @keys Z=> @values;
+\end{verbatim}
+
+For existence tests, the hash values only need to be true. Here is 
+a good way to create a hash from a list of keys:
+\begin{verbatim}
+my %exists = @keys X=> True;
+\end{verbatim}
+
+Or, better yet, use a set:
+\begin{verbatim}
+my $exists = @keys.Set;
+say "exists" if $exists{$object};
+\end{verbatim}
+
+\item[Making mandatory attributes (or subroutine parameters):] 
+This is a nice way of making a mandatory attribute in a class:
+\index{mandatory attribute}
+\begin{verbatim}
+has $.attr = die "The 'attr' attribute is mandatory";
+\end{verbatim}
+This code uses the default value mechanism: if a value is supplied, 
+then the code for the default value does not run. If no value is 
+supplied, then the code dies with the appropriate error message. 
+The same mechanism can be used for subroutine parameters.
+
+Or you could use the \verb'is required' trait:
+
+\begin{verbatim}
+> class A { has $.a is required }; 
+> A.new;
+The attribute '$!a' is required, 
+but you did not provide a value for it.
+\end{verbatim}
+
+You can even pass a explanatory message:
+
+\begin{verbatim}
+> class A { has $.a is required("We need it") }; 
+> A.new;
+The attribute '$!a' is required because We need it,
+but you did not provide a value for it.
+\end{verbatim}
+
+\item[Iterating over the subscripts of an array] The first 
+solution that comes to mind might be:
+\index{end method}
+
+\begin{verbatim}
+for 0 .. @array.end -> $i {...}
+\end{verbatim}
+
+That's fine, but this is probably even better:
+\index{keys function or method}
+
+\begin{verbatim}
+for @array.keys -> $i {...}
+\end{verbatim}
+
+\item[Iterating over the subscripts and values of an array] 
+The \verb'.kv' method, in combination with a pointy block 
+taking two parameters, allows you to easily iterate over an 
+array:
+\index{kv function or method}
+
+\begin{verbatim}
+for @array.kv -> $i, $value {...}
+\end{verbatim}
+
+
+\item[Printing the number of items in an array] Two possible 
+solutions:
+\index{elems function or method}
+
+\begin{verbatim}
+say +@array; 
+# or:
+say @array.elems; 
+\end{verbatim}
+
+\item[Do something every third time] Use the \verb'%%' 
+divisibility operator on the loop variable:
+\index{divisibility}
+\begin{verbatim}
+if $i %% 3 {...}  
+\end{verbatim}
+
+\item[Do something \emph{n} times:] Use the right-open range operator:
+\index{range operator}
+
+\begin{verbatim}
+for 0 ..^ $n {...}
+# or, simpler:
+for ^$n {...} 
+\end{verbatim}
+
+\item[Split a string into words (splitting on space):] 
+A method call without an explicit invocant always uses 
+the \verb'$_' topical variable as an implicit invocant. Thus, 
+assuming the string has been topicalized into \verb'$_':
+\index{split function or method}
+\index{words function or method}
+\index{topical variable}
+\index{invocant}
+
+\begin{verbatim}
+@words = .split(/\s+/);
+# or, simpler:
+@words = .words;
+\end{verbatim}
+
+\item[An infinite loop] A {\tt loop} statement with no parentheses 
+and no argument loops forever: 
+\index{infinite loop}
+\index{loop!infinite}
+
+\begin{verbatim}
+while True {...}
+# or, more idiomatic:
+loop {...}   
+\end{verbatim}
+
+Of course, the body of the {\tt loop} statement must have some 
+kind of flow control statement to exit the loop at some point.
+
+\item[Returning the unique elements of a list] The {\tt unique} 
+method removes duplicates from the input list:
+\index{unique function}
+
+\begin{verbatim}
+return @array.unique;
+\end{verbatim}
+
+Or, if you know that your list is sorted, you can use the 
+{\tt squish} function (which removes adjacent duplicates).
+\index{squish function}
+
+\item[Adding up the items of a list] Use the {\tt reduce} 
+function or the reduction metaoperator:
+\index{reduce function}
+\index{reduction operator}
+\index{sum function or method}
+
+\begin{verbatim}
+my $sum = @a.reduce(* + *);
+# or, simpler:
+my $sum = [+] @a;
+# or yet simpler, using the sum built-in:
+my $sum = @a.sum;  
+\end{verbatim}
+
+\item[Swapping two variables] Use the \verb'.=' mutating 
+method call with the \verb'reverse' function:
+\begin{verbatim}
+( $x, $y ) =   $y, $x;
+# or:
+( $x, $y ) .= reverse; # equivalent to: ($x, $y) = ($x, $y).reverse
+\end{verbatim}
+\index{swapping variables}
+
+\item[Generating random integers between 2 and 6] Use the \verb'..' 
+range operator and the {\tt pick} method:
+\index{pick function or method}
+\index{random number}
+\begin{verbatim}
+$z = 2 + Int(5.rand);
+# or, better:
+$z = (2..6).pick;
+\end{verbatim}
+
+\item[Count by steps of 3 in an infinite loop] Use the \verb'...' 
+sequence operator with the ``*'' whatever star operator and 
+a pointy block:
+\index{whatever operator}
+\index{sequence operator}
+
+\begin{verbatim}
+for 3, * + 3 ... * -> $n {...}
+# or:
+for 3, 6, 9 ... * -> $n {...}    
+\end{verbatim}
+
+\item[Loop on a range of values, discounting the range limits:] Use 
+the open range operator:
+\index{range operator}
+
+\begin{verbatim}
+for ($start+1) .. ($end-1) -> $i {...}
+# or, better:
+for $start ^..^ $end -> $i {...}
+\end{verbatim}
+\end{description}
+
+\section{What's Next?}
+
+A book like this one can't tell you everything about programming,  
+nor about Perl~6. At this point, you should know how to write a 
+program to solve an average-difficulty problem, but a lot of work 
+has been done in the last decades to solve harder problems. So 
+where should you go from here?
+
+Read books about algorithmics, the science of algorithms. Many good 
+books exist on the subject, but I especially recommend the following 
+two (you should be aware, though, that they are not easy):
+\begin{itemize}
+\item Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, 
+and Clifford Stein, \emph{Introduction to 
+Algorithms}, The MIT Press
+\item Donald Knuth, \emph{The Art of Computer Programming}, Addison Wesley 
+(many volumes, many editions).
+\end{itemize}
+
+Read other books about programming, even if they 
+target other programming languages or no specific programming 
+language. They're likely to have a 
+different approach on various points; this will offer you a 
+different perspective and perhaps better comprehension, and 
+will complement what you have read here. 
+Read tutorials, articles, blogs, and forums about programming. 
+Participate when you can. Read the \emph{Introduction to 
+Perl~6} which exists in eight different languages as of 
+this writing (\url{http://perl6intro.com/}). Read the 
+official Perl~6 documentation (\url{https://docs.perl6.org}).
+\index{Perl~6 documentation}
+
+This book has more than a thousand code examples, which is quite 
+a lot, but may not be sufficient if you really want to learn more. 
+You should also read code samples written by others. Look for 
+open source libraries or modules and try to understand what they 
+do and how they do it. Try to use them.
+
+Having said that, I should stress that you can read as many books 
+as you want about the theory of swimming, but you'll never know 
+swimming until you really get around to doing it. The same is true 
+about learning to program and learning a programming 
+language. Write new code. Modify existing examples, and see what 
+happens. Try new things. Go ahead, be bold, dive into the pool and
+swim. The bottom line is: you will really learn by doing.
+
+Learning the art of programming is great fun. Enjoy it!
+\index{fun}
+
