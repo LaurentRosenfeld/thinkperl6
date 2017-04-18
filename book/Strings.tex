@@ -199,7 +199,7 @@ computed from the start of the string.
 \index{function!substr}
 \index{substring}
 
-The opposite of the {\tt index} function is the {\tt substr} 
+The ``opposite'' of the {\tt index} function is the {\tt substr} 
 function or method, which, given a start position and a length, 
 extracts a substring from a string:
 
@@ -255,6 +255,11 @@ dream
 dream
 \end{verbatim}
 %
+Here, the star * may be thought as representing the total size 
+of the string; \verb'*-5' is therefore the position in the string 
+five characters before the end of the string. So, \verb'substr(*-5)' 
+returns the characters from that position to the end of the string, 
+i.e., the last five characters of the string.
 
 \index{substr function}
 \index{substring}
@@ -305,11 +310,13 @@ examples above or a string of several characters, such as
 a comma and a space in the example below:
 
 \begin{verbatim}
-> .say for split  ', ', "Jan, Feb, Mar";
+> .say for split  ", ", "Jan, Feb, Mar";
 Jan
 Feb
 Mar
 \end{verbatim}
+
+Remember that \verb'.say' is a shortcut for \verb'$_.say'.
 
 By default, the delimiters don't appear in the output produced 
 by the {\tt split} function or method, but this behavior can 
@@ -432,8 +439,8 @@ with the separator.
 The {\tt lc} and {\tt uc} routines return respectively a 
 lowercase and an uppercase version of their arguments. 
 There is also a {\tt tc} function or method returning its 
-argument with the first letter case-folded to title case or 
-upper case:
+argument with the first letter converted to title case (or 
+upper case):
 
 \begin{verbatim}
 say lc "April";    # -> april
@@ -618,7 +625,8 @@ interest to you: see Subsection\ref{sol_regex_loop}.
 
 
 If you add some further condition, 
-for example that this letter should be captured only if 
+for example that this letter should be extracted or 
+\emph{captured} (i.e. saved for later use) only if 
 the rest of the string contains the substring ``rin'', 
 this starts to be really tedious. Also, any change to the 
 requirements leads to a substantial rewrite or even 
@@ -652,7 +660,7 @@ the string (or part of it).
 \index{pattern}
 The \verb'/ l (.) w .*? rin /' part is called a regex pattern and means: 
 the letter ``l'', followed by any single character (the dot) to be 
-captured (thanks of the parentheses), followed by the letter ``w'', 
+captured (thanks to the parentheses), followed by the letter ``w'', 
 followed by an unspecified number of characters, followed by the 
 substring ``rin''. Phew! All this in one single code line! Quite 
 powerful, isn't it? If the string matches the pattern, then 
@@ -660,6 +668,11 @@ the match will return a true value and \verb'$0' will be
 populated with the character to be captured---the letter ``o'' 
 in this case.
 \index{capture}
+
+Unless specified otherwise (we will see how later), white space 
+is not significant within a regex pattern. So you can add spaces 
+within a pattern to separate its pieces and make your 
+intentions clearer.
 
 Most of the rest of this chapter will cover the basics of constructing 
 such regex patterns and using them. But the concept of 
@@ -694,8 +707,8 @@ so much that they have little to do with the original
 language theory concept, so that 
 it has been deemed appropriate to stop calling them 
 \emph{regular expressions} and to speak about \emph{regexes}, 
-i.e., a sort of sublanguage that works similarly to regular 
-expressions.
+i.e., a sort of pattern-matching sublanguage that works 
+similarly to regular expressions.
 
 \section{Using Regexes}
 \label{using_regexes}
@@ -810,7 +823,10 @@ The ``m'' operator does not alter the way a regex works; it
 only makes it possible to use delimiters other than slashes. 
 Said differently, the ``m'' prefix is the standard way to 
 introduce a pattern, but it is implicit and can be omitted 
-when the pattern is delimited with slashes.
+when the pattern is delimited with slashes. It is probably best 
+to use slashes, because that's what people commonly use and 
+recognize immediately, and to use other delimiters only when 
+the regex pattern itself contains slashes.
 
 A pattern may also be stored in a variable (or, more 
 accurately, in a regex object), using the $rx//$ operator:
@@ -966,8 +982,11 @@ definition.
 \subsection{Quantifiers}
 \index{quantifier}
 
-A quantifier makes a preceding atom match not exactly once, 
-but rather a specified or variable number of times. For 
+A quantifier makes a preceding atom\footnote{The 
+word \emph{atom} means a single character or several 
+characters or other atoms grouped together (by a set of 
+parentheses or square brackets).} match not exactly once, 
+but rather a specified or variable number of times.  For 
 example \verb'a+' matches one or more ``a'' characters. In 
 the following code, the \verb'\d+' matches one or more 
 digits (three digits in this case):
@@ -1024,7 +1043,9 @@ say 'Is a number < 1,000' if $string ~~ / ^ \d ** 1..3 $ /;
 \end{verbatim}
 %
 
-This matches one to three digits.
+This matches one to three digits. The \verb'^' and \verb'$' 
+characters are anchors representing the beginning and the 
+end of the string and will be covered in the next section.
 
 For matching an exact number of times, just replace the 
 range with a single number:
@@ -1117,9 +1138,9 @@ say "foobaz" ~~ /foo <!before baz>/; # -> Nil (regex failed)
 say "foobar" ~~ /<!after foo> bar/;  # -> Nil (regex failed)
 \end{verbatim}
 %
-I assume that the examples above are rather clear, look into the 
+I assume that the examples above are rather clear. Look into the 
 documentation 
-(\url{https://docs.perl6.org/language/regexes#Look-around_assertions} 
+(\url{https://docs.perl6.org/language/regexes#Look-around_assertions}) 
 if you need further details. 
 
 \subsubsection{Code Assertions}
@@ -1271,7 +1292,7 @@ part of the pattern within parentheses was captured into
 the \verb'$0' special variable. Where there are several 
 parenthesized groups, they are captured into variables 
 named \verb'$0', \verb'$1',  \verb'$2', etc. (from 
-left to right):
+left to right counting the open parentheses):
 
 \begin{verbatim}
 say "$0 $1 $2" if "abcde" ~~ /(a) b (c) d (e)/;       # -> a c e
@@ -1357,8 +1378,9 @@ True
 
 \index{adverb!:sigspace}
 \index{adverb!:s}
-The \verb':sigspace' or \verb':s' adverb makes whitespace 
-significant in a regex:
+I said earlier that whitespace is usually not significant 
+in regex patterns. The \verb':sigspace' or \verb':s' adverb 
+makes whitespace significant in a regex:
 
 \begin{verbatim}
 > say so 'ab' ~~ /a+ b/;
@@ -1953,7 +1975,7 @@ Solution: \ref{sol_isreverse}.
 
 \begin{description}
 
-\item[Object] Something a variable can refer to.  For now,
+\item[Object] Something a variable can store.  For now,
 you can use ``object'' and ``value'' interchangeably.
 \index{object}
 
@@ -2213,7 +2235,9 @@ Since 13 is half the number of letters in our alphabet,
 applying rotation 13 twice returns the original word, 
 so that the same procedure can be used for both encoding 
 and decoding in rotation 13. If you are not
-easily offended, find and decode some of these jokes.  
+easily offended, find and decode some of these jokes. (ROT13 
+is also used for other purposes, such as weakly hiding the 
+solution to a puzzle.) 
 
 Solution: \ref{sol_rotate}.
 

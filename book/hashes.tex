@@ -561,7 +561,7 @@ say %histo.pairs.first: *.value == 1;      # ->  p => 1
 \end{verbatim}
 
 \index{whatever}
-This latter example uses the ``*'' "whatever" parameter 
+This latter example uses the ``*'' \emph{whatever} parameter 
 which we haven't covered yet in this book. Let's just say that, 
 here, the ``*'' stands successively for every pair of the hash, 
 and the {\tt first} function returns the first pair that matches 
@@ -1042,14 +1042,14 @@ above scenario, it could look like this:
 \begin{verbatim}
 sub run-stop  { ... };
 sub run-start { ... };
-my %dispatch = {
-    stop  => &run_stop,
-    start => &run_start,
+my %dispatch = (
+    stop  => &run-stop,
+    start => &run-start,
     h     => { say $help; },
     help  => { say $help; },
     v     => { $verbose = True;},
-}
-my $param = get-param;
+);
+my $param = get-param();
 die "Unknown option $param" unless %dispatch{$param}:exists;
 %dispatch{$param}(); # execute the action specified in %dispatch
 \end{verbatim}

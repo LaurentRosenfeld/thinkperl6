@@ -470,7 +470,7 @@ False
 \end{verbatim}
 
 So there was no need to write the {\tt is-divisible} subroutine. 
-But don't worry, that's alright if you did not remember that. 
+But don't worry, that's all right if you did not remember that. 
 Speakers of natural languages are allowed to have different 
 skill levels, to learn as they go and to put the language 
 to good use before they know the whole language. The same 
@@ -687,8 +687,8 @@ In fact, you are already practicing this leap of faith when you use
 built-in functions.  When you call math functions such as {\tt cos} or {\tt sqrt},
 you don't examine the bodies of those functions.  You just
 assume that they work because the people who wrote the built-in
-functions were good programmers (and because you can safely 
-assume that they have been thoroughly tested).
+functions were likely to be good programmers (and because you 
+can safely assume that they have been thoroughly tested).
 
 The same is true when you call one of your own subroutines.  For
 example, in Section~\ref{boolean}, we wrote a subroutine called 
@@ -734,7 +734,10 @@ such as:
 where the two first terms are equal to 1 and any other term is the 
 sum of the two preceding ones.
 
-Translated into Perl, it looks like this:
+We briefly covered the Fibonacci sequence in Exercise~\ref{fibonacci} 
+of the previous chapter and implemented it with a {\tt for} loop.
+
+Let's now translate the recursive definition into Perl. It looks like this:
 
 \begin{verbatim}
 sub fibonacci ($n) {
@@ -1137,21 +1140,21 @@ The following are subroutines that take a string argument and
 return the first, last, and middle letters:
 
 \begin{verbatim}[fontshape=up]
-sub first_l(Str $word){
+sub first_letter(Str $word){
     return substr $word, 0, 1;
 }
 
-sub last_l(Str $word){
+sub last_letter(Str $word){
     return substr $word, *-1, 1;
 }
 
-sub middle_l(Str $word){
+sub middle_letter(Str $word){
     return substr $word, 1, *-1;
 }
 \end{verbatim}
 %
-We'll see how they work in Chapter~\ref{strings} on strings. 
-For now:
+Don't worry about how they work for the time being; we will see 
+that in Chapter~\ref{strings} on strings. For now:
 
 \begin{enumerate}
 
