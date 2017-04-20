@@ -381,7 +381,7 @@ if "abc\ndef" ~~ /<line> def/ {
 }
 \end{verbatim} 
 
-But, for a token to match, we would have to remove the 
+But, for a rule to match, we would have to remove the 
 space from \emph{within the pattern}:
 
 \begin{verbatim}
@@ -442,10 +442,11 @@ alternation between three possible date formats.
 This code checks that the day in the month is between 0 and 31 
 and that the month is between 01 and 12, and this is 
 probably sufficient to recognize dates in a 
-text in most cases, but this would recognize ``2016-11-31'' as a date, 
-although November only has 30~days. We may want to be a 
-little bit stricter about valid dates and prevent that
-by adding a code assertion to the {\tt date} named rule:
+text in most cases, but this would match ``2016-11-31'' 
+as a date, although November only has 30~days. We may want 
+to be a little bit stricter about valid dates and prevent 
+that by adding a negative code assertion to the {\tt date} 
+named rule:
 \index{code assertion}
 \index{assertion!code}
 
@@ -1507,8 +1508,8 @@ tokens).
 \item[Abstract syntax tree (AST):] a data structure often 
 summarizing the match object and used for further exploitation 
 of the useful data. The match object is populated automatically 
-by Perl, whereas the AST contains information deemed useful by 
-the programmer.
+by Perl, whereas the AST contains information deemed useful and 
+explicitly inserted by the programmer.
 
 \index{actions!class}
 \item[Actions class] a class used in conjunction with a grammar 

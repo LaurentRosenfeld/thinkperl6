@@ -686,7 +686,7 @@ sub is-palindrome (Str $word) {
     my $j = $word.chars - 1;
 
     while $i < $j {
-        return false if substr one-char, $i ne one-char $word, $j;
+        return False if one-char($word, $i) ne one-char($word, $j);
         $i++;
         $j--;
     }

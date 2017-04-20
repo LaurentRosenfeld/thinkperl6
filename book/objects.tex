@@ -703,7 +703,7 @@ say "Rectangle area: ", $rect.area;      # -> Rectangle area: 50
 \index{parameter!named}
 You might have noticed that the arguments passed to the 
 {\tt Rectangle.new} constructor are not in the same order as 
-in the class definition. We did that on purpose 
+in the class definition. I did that on purpose 
 to show that the order is unimportant because we 
 are using named arguments.
 
@@ -1827,7 +1827,7 @@ class Point3D {
     has $!z;
 
     submethod BUILD (:$!x, :$!y, :$!z) {
-    	say "Initialization";
+        say "Initialization";
         $!x := $!x; 
         $!y := $!y; 
         $!z := $!z;
@@ -1924,7 +1924,7 @@ class Point2D {
     has Numeric $.ordinate;
 
     method construct ($x, $y) {
-    	self.bless(abscissa => $x, ordinate => $y);
+        self.bless(abscissa => $x, ordinate => $y);
     }
     method coordinates {        # accessor to both coordinates
         return (self.abscissa, self.ordinate)

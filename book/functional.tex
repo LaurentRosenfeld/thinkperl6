@@ -738,7 +738,7 @@ between 1 and 20:
 \index{reduction!metaoperator}
 
 \begin{verbatim}
-say [lcm] 1..20;                 # -> 232792560
+say [lcm] 1..20;                           # -> 232792560
 \end{verbatim}
 
 For the sum of the digits of factorial 100, we use 
@@ -749,7 +749,7 @@ the digits of the result:
 \index{reduction!metaoperator}
 
 \begin{verbatim}
-say [+] split '', [*] 2..100;    # -> 648
+say [+] split '', [*] 2..100;              # -> 648
 \end{verbatim}
 
 For the square of the sum minus the sum of the squares, 
@@ -938,7 +938,7 @@ Note that this can also be written this way:
 
 \begin{verbatim}
 multi sub infix:<:=:> ($a is rw, $b is rw) {
-    ($a, $b) .= reverse; # equivalent to: ($a, $b) = ($a, $b).reverse 
+    ($a, $b) .= reverse;   # equivalent to: ($a, $b) = ($a, $b).reverse 
 \end{verbatim}
 
 We can now test it for real on the following examples:
@@ -1040,7 +1040,7 @@ like to be able to create our own.
 
 \subsection{Custom Versions of map, grep, etc.}
 
-Let's see how we could write out own custom versions 
+Let's see how we could write our own custom versions 
 of such functions.
 
 \subsubsection{my-map, a pure Perl version of map}
@@ -1661,7 +1661,7 @@ lazy lists. For example, this:
 
 \begin{verbatim}
 my $lazylist := (0, 1 ... 200);
-say $lazylist[42];                 # -> 42
+say $lazylist[42];                  # -> 42
 \end{verbatim}
 
 produces a lazy list of successive integers between 0 and 200. 
@@ -1710,8 +1710,8 @@ an arithmetic sequence:
 \index{arithmetic sequence}
 
 \begin{verbatim}
-my $odds = (1, 3 ... 15);          # (1 3 5 7 9 11 13 15)
-my $evens = (0, 2 ... 42);         # (0 2 4 6 8 ... 40 42)
+my $odds = (1, 3 ... 15);           # (1 3 5 7 9 11 13 15)
+my $evens = (0, 2 ... 42);          # (0 2 4 6 8 ... 40 42)
 \end{verbatim}
 
 You may remember that, in Section~\ref{sequence} of the chapter 
@@ -1721,7 +1721,7 @@ precedence reasons. The above code is one such example: try
 to run that code without parentheses and observe the content 
 of the \verb'$odds' and \verb'$evens' variables.
 
-When three numbers in geometric progression are supplied, the 
+When three initial numbers in geometric progression are supplied, the 
 sequence operator will produce a geometric sequence, as in 
 this example producing the powers of two:
 \index{geometric sequence}
