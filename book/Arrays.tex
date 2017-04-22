@@ -179,16 +179,19 @@ parentheses, \verb"()":
 \index{empty list}
 \index{list!empty}
 
-But this is rarely useful, since just declaring an array 
-without defining it has the same effect:
+This code is really assigning an empty list to the array. But 
+this syntax is usually not needed when creating a new empty array, 
+since just declaring an array without defining it has the same 
+effect:
 
 \begin{verbatim}
 > my @empty;
 []
 \end{verbatim}
 
-So using the empty parentheses would be needed essentially for 
-resetting an existing array to an empty array.
+So using the empty parentheses (i.e., assigning an empty list) 
+would be needed essentially for resetting an existing array to 
+an empty array.
 
 
 \section{Arrays Are Mutable}
@@ -611,7 +614,10 @@ my @out_array = splice @array, $start, $num_elems, @replacement;
 The arguments for {\tt splice} are the input array, the index 
 of the first element on which to make changes, the number of 
 elements to be affected by the operation, and a list of 
-replacements for the elements to be removed. For example, 
+replacements for the elements to be removed\footnote{Notice that 
+the \verb'splice'} function on arrays has almost the same syntax 
+as the \verb'substr' function on strings. This may make it easier 
+to understand them and remember their syntax.}. For example, 
 to perform the slice assignment shown just above, it is 
 possible to do this:
 
@@ -871,7 +877,7 @@ associated to the input according to their lexicographic
 \begin{verbatim}
 my @letters = 'a'..'e';
 for @letters.kv { 
-    say $^a ~ " -> " ~ $^b; 
+    say "$^a -> $^b"; 
 }
 \end{verbatim}
 %
@@ -1056,8 +1062,9 @@ say [\+] 1, 2, 3, 4;          # -> (1 3 6 10)
 \end{verbatim}
 
 This metaoperator can be used to transform basically any 
-associative infix operator into a list operator returning 
-a single value.
+associative infix operator\footnote{An \emph{infix} operator 
+is an operator that is placed between its two operands.} 
+into a list operator returning a single value.
 
 The factorial function can now be rewritten as:
 \index{factorial}
@@ -1427,26 +1434,17 @@ Liz
 \end{verbatim}
 
 It is possible to have more than two dimensions. For example, 
-we may have a \verb'@pixels' array in which the first two 
-dimensions are the ``x'' and ``y'' coordinates of a dot in
-a picture and the third dimension is the RGB colors:
+we could have a tridimensional matrix to store the temperatures 
+in a chemical reactor, measured in various locations identified 
+by their x, y, and z coordinates:
 
 \begin{verbatim}
-> my @pixels;
-[]
-> @pixels[0; 0] = [ <0 78 255> ];
-[0 78 255]
-> @pixels[1; 0] = [ <7 74 246> ];
-[7 74 246]
-> @pixels[0; 1] = [ 9, 55, 232 ];
-[9 55 232]
-> say @pixels[0;1];
-[9 55 232]
-> say @pixels[0;1;1]
-55
-> say @pixels;
-[[[0 78 255] [9 55 232]] [[7 74 246]]]
-\end{verbatim} 
+my @temp;
+@temp[1;3;4] = 80;
+\end{verbatim}
+
+For this type of data, however, it is often easier to use the 
+data structure that we will cover in the next chapter, hashes.
 
 Multidimensional arrays can also have a fixed size. For 
 example, this may be a declaration for two-dimensional array 
@@ -1514,7 +1512,7 @@ needs. So, for example, this code will perform
 the type of sort that you probably expect:
 
 \begin{verbatim}
-say sort <a ab abc ac bc cb ca>; # ->(a ab abc ac bc ca cb)
+say sort <ac a bc ab abc cb ca>; # ->(a ab abc ac bc ca cb)
 \end{verbatim}
 
 Even with mixed data types, {\tt sort} can do a pretty good 
@@ -1522,8 +1520,8 @@ job at providing a result that may very well be what
 you are looking for:
 
 \begin{verbatim}
-say sort <1 11 5 4 12 a ab abc ac bc ca cb>;
-         # -> (1 4 5 11 12 a ab abc ac bc ca cb)
+say sort <1 b 11 5 cb 4 12 a ab abc 42 ac bc ca >;
+         # -> (1 4 5 11 12 42 a ab abc ac b bc ca cb)
 \end{verbatim}
 
 There are cases, however, where this simple use of the 
