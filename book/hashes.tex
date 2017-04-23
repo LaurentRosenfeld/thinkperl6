@@ -368,7 +368,7 @@ times each letter appears.  There are several ways you could do it:
 \item You could create 26 variables, one for each letter of the
 alphabet.  Then you could traverse the string and, for each
 character, increment the corresponding counter, probably using
-a chained conditional.
+an ugly and huge 26-part chained conditional.
 
 \item You could create an array with 26 elements.  Then you could
 convert each character to a number (using the built-in function
@@ -953,6 +953,7 @@ One solution is to keep track of values that have already been
 computed by storing them in a hash.  A previously computed value
 that is stored for later use is called a {\bf memo}.  Here is a
 ``memoized'' version of {\tt fibonacci}:
+\index{Fibonacci!memoized}
 
 \begin{verbatim}
 my %known = 0 => 1, 1 => 1;
@@ -1089,7 +1090,8 @@ to activate.
 \index{lexical variable}
 \index{variable!lexical}
 
-In the previous example, \verb'%known' is created outside the subroutine,
+In the memoized Fibonacci example above, the 
+\verb'%known' hash is created outside the subroutine,
 so it belongs to the whole main package.
 Such variables are sometimes called {\bf global} 
 because they can be accessed from any function.  Unlike ``local'' 
@@ -1125,6 +1127,31 @@ considered poor practice to use a global variable, because
 it creates dependencies and unexpected ``action-at-a-distance'' 
 behaviors between various parts of a program and may lead to 
 difficult-to-track bugs.
+
+In the case of our memoized \verb'fibonacci' subroutine, the 
+\verb'%known' hash is useful only within the subroutine. We 
+can improve the implementation by using the \verb'state' 
+declarator within the subroutine:
+\index{state}
+\index{Fibonacci!memoized with a state variable}
+
+\begin{verbatim}
+say fibonacci(10);
+sub fibonacci ($n) {
+    state %known = 0 => 1, 1 => 1;
+    return %known{$n} if %known{$n}:exists;
+    %known{$n} = fibonacci($n-1) + fibonacci($n-2);
+    return %known{$n};
+}
+\end{verbatim}
+%
+The \verb'state' declarator makes the variable local to the 
+subroutine and persistent from one call to the subroutine to 
+another: the code line with the \verb'state' statement is 
+executed only once (at the first call of the subroutine) 
+and the content of variable, the \verb'%known' hash in this 
+case, is kept from one call to the next.
+
 
 
 \section{Debugging}
