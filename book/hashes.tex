@@ -24,8 +24,8 @@ they can be (almost) anything.
 A hash contains a collection of indices, which are called 
 {\bf keys}, and a collection of values.  Each key is associated with a single value.  A key and a value together form a pair 
 (an object of the Pair type), or a {\bf key-value pair}. A 
-hash can be viewed as a collection of key-value pairs, which 
-are sometimes called {\bf items} or elements.  
+hash can be viewed as a collection of key-value pairs. The 
+values in a hash can also be called items or elements, as with arrays.
 \index{item}
 
 In other programming languages, hashes are sometimes called 
@@ -47,8 +47,8 @@ a new hash, you just declare it this way:
 \end{verbatim}
 
 This creates an empty hash. To add items to the hash, 
-you can use braces a.k.a. curly brackets (sometimes also 
-called ``curlies''):
+you can use curly braces (a.k.a. curly brackets and 
+sometimes simply ``curlies''):
 \index{curly bracket}
 \index{bracket!curly}
 \index{brace}
@@ -161,8 +161,13 @@ as on arrays; it returns the number of key-value pairs:
 %
 The {\tt :exists} adverb also works on hashes as on 
 arrays; it tells you whether something appears as 
-a {\em key} in the hash (appearingas a value is not 
-good enough):
+a {\em key} in the hash (appearing as a value is not 
+good enough)\footnote{Evaluating the value in a Boolean 
+context would also work with our example, but this would 
+return something wrong when the key exists, but the value 
+is not defined or otherwise evaluates to a false value 
+(for example if it is equal to {\tt False}, zero, or 
+an empty string).}:
 \index{membership!hash}
 \index{exists adverb}
 \index{adverb!:exists}
@@ -285,15 +290,6 @@ is added to the array):
 {apr => 4, feb => 2, jan => [1 01], jun => 6, mar => 3, may => 5}
 \end{verbatim}
 
-To check whether an element exists, use the {\tt :exists} 
-subscript adverb:
-\index{exists adverb}
-\index{adverb!:exists}
-\begin{verbatim}
-> say True if  %months<jan>:exists;
-True
-\end{verbatim}
-
 To check whether a value is defined for a given key, 
 use {\tt defined}:
 \index{defined}
@@ -324,6 +320,9 @@ apr => 4, feb => 2, jan => 1, jud => 7, jun => 6, mar => 3, may => 5
 > say %months
 apr => 4, feb => 2, jan => 1, jun => 6, mar => 3, may => 5
 \end{verbatim}
+
+Note that the {\tt :delete} adverb also returns the value that 
+is being removed.
 
 To iterate over a hash, use:
 \index{kv function or method}
@@ -1206,7 +1205,7 @@ corresponding values.
 \index{hash}
 
 \item[key-value pair:] The representation of the mapping from
-a key to a value.
+a single key to its value.
 \index{key-value pair}
 
 \item[Item] In a hash, another name for a key-value
