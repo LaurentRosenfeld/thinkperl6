@@ -382,6 +382,7 @@ sub is-divisible(Int $x, Int $y) {
         return True;
     } else {
         return False;
+    }
 }
 \end{verbatim}
 %
@@ -743,6 +744,7 @@ Let's now translate the recursive definition into Perl. It looks like this:
 sub fibonacci ($n) {
     return 1 if $n == 0 or $n == 1;
     return fibonacci($n-1) + fibonacci($n-2)
+}
 \end{verbatim}
 %
 If you try to follow the flow of execution here, even for fairly

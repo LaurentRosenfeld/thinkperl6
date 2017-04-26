@@ -922,8 +922,9 @@ say "$a $b";  # -> 2 1
 \index{pseudo-code}
 
 In Knuth's paper, this is just a pseudocode shortcut 
-to discuss more easily Tony Hoare's quicksort algorithm, but 
-we can easily implement that symbol:
+to discuss more easily Tony Hoare's quicksort algorithm 
+(described in exercise~\index{quicksort}), 
+but we can easily implement that symbol:
 \index{swap operator}
 \index{sort!quick sort}
 \index{Hoare, Charles Antony Richard}
@@ -939,6 +940,7 @@ Note that this can also be written this way:
 \begin{verbatim}
 multi sub infix:<:=:> ($a is rw, $b is rw) {
     ($a, $b) .= reverse;   # equivalent to: ($a, $b) = ($a, $b).reverse 
+}
 \end{verbatim}
 
 We can now test it for real on the following examples:
@@ -1222,7 +1224,7 @@ suggested by the authors of the original publications
 presenting the algorithm.
 \index{sort!bubble sort}
 
-\subsection{An Iterator Version of map}
+	\subsection{An Iterator Version of map}
 \index{iter!map}
 \index{map}
 
@@ -1393,7 +1395,7 @@ sub create-iter(@array) {
     my $max-index = @array.end;
     return sub { 
         return False if $index >= $max-index; 
-        return ("a_pair" => @array[$index++]) 
+        return ("a_pair" => @array[$index++]);
     }
 }
 my @array = 1..5;
@@ -1504,14 +1506,14 @@ my @evens = gather {take $_ * 2 for 1.. 5}; # [2 4 6 8 10]
 And we could simulate a {\tt grep} similarly:
 
 \begin{verbatim}
-my @evens = gather {take $_ if $_ %% 2 for 1..10}
+my @evens = gather {take $_ if $_ %% 2 for 1..10};
 \end{verbatim}
 
 Since {\tt take} also admits a method syntax, this could 
 be rewritten as:
 
 \begin{verbatim}
-my @evens = gather {.take if $_ %% 2 for 1..10}
+my @evens = gather {.take if $_ %% 2 for 1..10};
 \end{verbatim}
 
 \index{map}
@@ -2462,7 +2464,7 @@ or method that you want to unit-test. You may want to check:
 \item Truthfulness: 
 \begin{verbatim}
 ok($value, $description?); 
-nok($condition, $description?)
+nok($condition, $description?);
 \end{verbatim}
 \index{ok function (testing)}
 \index{nok function (testing)}
@@ -2808,7 +2810,7 @@ sub quicksort(@input) {
     }
     qsort(0, @input.end)
 }
-my @array = pick 20, 1..100;;
+my @array = pick 20, 1..100;
 quicksort @array;
 say @array;
 \end{verbatim}

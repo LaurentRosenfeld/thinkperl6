@@ -157,7 +157,7 @@ sub do-twice($code, $message) {
 }
 sub print-twice($value) {
     say $value;
-    say $value
+    say $value;
 }
 do-twice &print-twice, "What's up doc";
 \end{verbatim}
@@ -175,7 +175,7 @@ sub do-twice($code, $message) {
 }
 sub print-twice($value) {
     say $value;
-    say $value
+    say $value;
 }
 sub do-four ($code, $message) {
     do-twice $code, $message;
@@ -1145,7 +1145,7 @@ calls. For example, might write two subroutines:
 
 \begin{verbatim}
 sub gcd1(Int $c, Int $d) {
-    return gcd1($d, $c - $d) if $c > $d;;
+    return gcd1($d, $c - $d) if $c > $d;
     return gcd1($c, $d - $c) if $d > $c;
     return $c;
 }
