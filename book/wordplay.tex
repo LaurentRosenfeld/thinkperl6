@@ -487,7 +487,7 @@ Percentage of words without 'e': 33.07 %
 \end{verbatim}
 
 So, less than one third of the words of 
-our list have no ``e''.
+our list have no ``e.''
 
 \subsection{Avoiding Other Letters (Solution)}
 
@@ -598,7 +598,7 @@ we can call the {\tt uses-only} subroutine and write:
 
 \begin{verbatim}
 sub uses-all ($word, $required) {
-    return uses-only required, $word;
+    return uses-only $required, $word;
 }
 \end{verbatim}
 %

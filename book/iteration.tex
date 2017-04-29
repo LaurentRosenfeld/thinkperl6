@@ -263,7 +263,7 @@ The {\tt while} statement can also be used as a statement modifier (or postfix s
 
 \begin{verbatim}
 my $val = 5;
-print $val while $val-- > 0;   # prints 43210
+print "$val " while $val-- > 0;   # prints 4 3 2 1 0
 print "\n";
 \end{verbatim}
 
@@ -276,7 +276,7 @@ is false:
 \begin{verbatim}
 my $val = 1;
 until $val > 5 {
-    print $val++;              # prints 12345
+    print $val++;                 # prints 12345
 }
 print "\n";
 \end{verbatim}
