@@ -58,7 +58,7 @@ say $_ for 1, 2, 3;
 \end{verbatim}
 %
 
-You don't need the parentheses to create a list, but they are 
+You don't need parentheses to create a list, but they are 
 often useful to delimit it, i.e., to stipulate where 
 it starts and where it ends, and, in some cases, to override 
 precedence.
@@ -975,6 +975,7 @@ sub add_all (@numbers) {
         $total += $x;
     }
     return $total;
+}
 \end{verbatim}
 %
 {\tt \$total} is initialized to 0.  Each time through the loop,

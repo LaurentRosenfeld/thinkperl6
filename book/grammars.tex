@@ -975,7 +975,7 @@ For our purposes, the first rule above will be sufficient.
 \index{curly bracket}
 
 JSON objects are lists of key-value pairs. Lists are 
-delimited by curly brackets and pairs separated by 
+delimited by curly braces and pairs separated by 
 commas. A key-value pair is a string followed by a colon, 
 followed by a value (to be defined later). This can be 
 defined as follows:
@@ -1033,7 +1033,7 @@ Values are objects, arrays, string, numbers, Booleans
 \begin{verbatim}
 token value { | <object> | <array> | <string> | <number> 
               | true     | false   | null 
-    }
+}
 \end{verbatim}
 
 \subsection{The JSON Grammar}
@@ -1512,7 +1512,7 @@ by Perl, whereas the AST contains information deemed useful and
 explicitly inserted by the programmer.
 
 \index{actions!class}
-\item[Actions class] a class used in conjunction with a grammar 
+\item[actions class] a class used in conjunction with a grammar 
 to perform certain actions when a grammar rule matches 
 something in the input data. If a method with the same name 
 as a rule in the grammar exists in the actions class, it will 
