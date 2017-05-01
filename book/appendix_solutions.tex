@@ -521,7 +521,7 @@ is-triangle $a.Int , $b.Int , $c.Int;
 \end{verbatim}
 
 
-\subsection{Exercise~\ref{fibonacci}: The Fibonacci Numbers? (p.~\pageref{fibonacci})}
+\subsection{Exercise~\ref{fibonacci}: The Fibonacci Numbers (p.~\pageref{fibonacci})}
 \label{sol_fibonacci}
 \index{Fibonacci}
 \index{Fibonacci!numbers}
@@ -1227,11 +1227,11 @@ Newton's method.
 \index{Newton's method}
 \index{Newton, Isaac}
 
-For this exercise, we've made the following somewhat 
+For this exercise, I've made the following somewhat 
 arbitrary decisions:
 \begin{itemize}
-\item We have chosen an \emph{epsilon} value of $10^{-11}$ (or {\tt 1e-11}).
-\item We have used \verb'$a/2' as the initial estimate 
+\item I have chosen an \emph{epsilon} value of $10^{-11}$ (or {\tt 1e-11}).
+\item I have used \verb'$a/2' as the initial estimate 
 of $\sqrt{\$a}$. 
 \end{itemize}
 
@@ -1244,7 +1244,7 @@ value and might therefore be able to provide a better
 initial estimate, leading the algorithm to converge toward 
 the solution slightly faster.
 
-Here's out implementation of Newton's method for computing 
+Here's an implementation of Newton's method for computing 
 the square root of a number:
 \index{Newton's method}
 
@@ -1762,7 +1762,7 @@ the \verb'\w' character class) in the string:
 
 \begin{verbatim}
 my $string = "The greatest thing you'll ever learn " ~
-             "is just to love and be loved in return" ~
+             "is just to love and be loved in return. " ~
              "(Nature Boy, Nat King Cole)";
 say ~$0 if $string ~~ /(\w +)/;  # -> The
 \end{verbatim}
@@ -2816,7 +2816,7 @@ say @filt;                                  # -> [9 16]
 This is working fine with the sample data of the example test, 
 but the program will abort if we try it with a negative input 
 value. We want to avoid that exception and just 
-consider that a negative number is not a perfect square.
+consider that a negative number can never be a perfect square.
 
 Since the code block here would be getting a bit more 
 complicated, we might prefer to use a function 
