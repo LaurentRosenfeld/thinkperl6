@@ -446,11 +446,11 @@ class Point2D {
         return (self.abscissa, self.ordinate)
     }
     
-    method distanceToCenter {
+    method distance2center {
         (self.abscissa ** 2 + self.ordinate ** 2) ** 0.5
     }
-    method polarCoordinates {
-        my $radius = self.distanceToCenter;
+    method polar-coordinates {
+        my $radius = self.distance2center;
         my $theta = atan2 self.ordinate, self.abscissa;
         return $radius, $theta;
     }
@@ -464,15 +464,15 @@ coordinates;
 \index{coordinates!Cartesian}
 \index{Cartesian coordinates}
 
-\item{\tt distanceToCenter}, a method to compute and return 
+\item{\tt distance2center}, a method to compute and return 
 the distance between the object and the origin;
 
 \index{polar coordinates}
 \index{coordinates!polar}
-\item{\tt polarCoordinates}, a method to compute the radius 
+\item{\tt polar-coordinates}, a method to compute the radius 
 and azimuth (\verb'$theta') of the object in the polar 
-coordinates system (notice that {\tt polarCoordinates} 
-invokes the {\tt distanceToCenter} method to find the radius 
+coordinates system (notice that {\tt polar-coordinates} 
+invokes the {\tt distance2center} method to find the radius 
 component of the polar coordinates).
 \end{itemize}
 
@@ -547,8 +547,8 @@ my $point =  Point2D.new(
     ordinate => 3
 );
 say $point.coordinates;         # -> (4 3)
-say $point.distanceToCenter;    # -> 5
-say $point.polarCoordinates;    # -> (5 0.643501108793284)
+say $point.distance2center;    # -> 5
+say $point.polar-coordinates;    # -> (5 0.643501108793284)
 \end{verbatim}
 
 \index{topical variable}
@@ -571,8 +571,8 @@ variable with the \verb'$point' object, we can write:
 \begin{verbatim}
 given $point {
     say .coordinates;          # -> (4 3)                       
-    say .distanceToCenter;     # -> 5                 
-    .polarCoordinates.say;     # -> (5 0.643501108793284)
+    say .distance2center;     # -> 5                 
+    .polar-coordinates.say;     # -> (5 0.643501108793284)
 }    
 \end{verbatim}
 
@@ -651,7 +651,7 @@ class Rectangle {
     has Point2D $.corner;     # lower left vertex 
 
     method area { return $.width * $.height }
-    method topLeft { $.corner.abscissa, $.corner.ordinate + $.height; }
+    method top-left { $.corner.abscissa, $.corner.ordinate + $.height; }
     # other methods, e.g. for other corners' coordinates, center, etc.
 }
 \end{verbatim}
@@ -661,8 +661,8 @@ definition is that the \verb'Rectangle' class can now use the
 {\tt Point2D} type created previously for defining the corner 
 attribute. 
 
-The {\tt topLeft} method returns the coordinates of 
-the top left angle of the rectangle. This {\tt topLeft} 
+The {\tt top-left} method returns the coordinates of 
+the top left angle of the rectangle. This {\tt top-left} 
 method gives us an opportunity to explain a bit more 
 the difference between the \verb'$.' and \verb'$!' twigils. We have 
 used \verb'$.corner.abscissa' to obtain the abscissa of 
@@ -675,7 +675,7 @@ method definition:
 \index{method invocation}
 
 \begin{verbatim}
-    method topLeft { $!corner.abscissa, $!corner.ordinate + $!height; }
+    method top-left { $!corner.abscissa, $!corner.ordinate + $!height; }
 \end{verbatim}
 
 But it would not be possible to use \verb'$!corner!abscissa' or 
@@ -695,7 +695,7 @@ We can now create a {\tt Rectangle} object:
 my $start-pt =  Point2D.new(abscissa => 4, ordinate => 3);
 my $rect = Rectangle.new(corner => $start-pt, height => 10, width => 5);
 
-say "Topleft coord.: ", $rect.topLeft;   # -> Topleft coord.: (4 13)
+say "top-left coord.: ", $rect.top-left;   # -> top-left coord.: (4 13)
 say "Rectangle area: ", $rect.area;      # -> Rectangle area: 50
 \end{verbatim}
 
@@ -744,7 +744,7 @@ the {\tt Rectangle} class can have methods returning
 instances of {\tt Point2D} for the other corners:
 
 \begin{verbatim}
-    method topRightPoint {
+    method top-right-point {
         return Point2D.new(
             abscissa => $!corner.abscissa + $!width, 
             ordinate => $!corner.ordinate + $!height
@@ -760,7 +760,7 @@ constructor and return it on the fly.
 We can use the new method as follows:
 
 \begin{verbatim}
-my $topRightPt = $rect.topRightPoint;
+my $topRightPt = $rect.top-right-point;
 say "Top right corner: ", $topRightPt;
 # -> Top right corner: Point2D.new(abscissa => 9, ordinate => 13)
 \end{verbatim}
@@ -771,10 +771,10 @@ could play it safe and declare a {\tt Point2D} type for
 \verb'$topRightPt':
 
 \begin{verbatim}
-my Point2D $topRightPt = $rect.topRightPoint;
+my Point2D $topRightPt = $rect.top-right-point;
 \end{verbatim} 
 
-This way, the code will raise an error if the {\tt topRightPoint} 
+This way, the code will raise an error if the {\tt top-right-point} 
 happens to return something other than a {\tt Point2D} instance.
 
 Similarly, the \verb"find-center" method invoked on a 
@@ -1033,16 +1033,16 @@ my $point = MovablePoint.new(
     );
 
 say "Coordinates : ", $point.coordinates;
-say "Distance to origin: ", $point.distanceToCenter.round(0.01);
+say "Distance to origin: ", $point.distance2center.round(0.01);
 printf "%s: radius = %.4f, theta (rad) = %.4f\n", 
-    "Polar coordinates", $point.polarCoordinates;
+    "Polar coordinates", $point.polar-coordinates;
 
 say "--> Moving the point.";
 $point.move(4, 5);
 say "New coordinates: ", $point.coordinates;
-say "Distance to origin: ", $point.distanceToCenter.round(0.01);
+say "Distance to origin: ", $point.distance2center.round(0.01);
 printf "%s: radius = %.4f, theta (rad) = %.4f\n", 
-    "Polar coordinates", $point.polarCoordinates;
+    "Polar coordinates", $point.polar-coordinates;
 \end{verbatim}
 
 This produces the following output:
@@ -1060,7 +1060,7 @@ Polar coordinates: radius = 15.6205, theta (rad) = 0.8761
 \index{polar coordinates}
 \index{coordinates!polar}
 Here, when the user code invokes the {\tt coordinates}, 
-{\tt distanceToCenter}, and {\tt polarCoordinates} methods, 
+{\tt distance2center}, and {\tt polar-coordinates} methods, 
 Perl finds that they do not exist in {\tt MovablePoint}. But,  
 as \verb'MovablePoint' subclasses {\tt Point2D}, the program 
 looks for methods having these names in the parent class and 
@@ -1523,7 +1523,7 @@ Schiller
 Polymorphism is a way to supply a common or close interface 
 to different types. In a certain way, the inheritance examples 
 studied previously offer a form of polymorphism: the 
-{\tt coordinates}, {\tt distanceToCenter}, and {\tt PolarCoordinates} 
+{\tt coordinates}, {\tt distance2center}, and {\tt polar-coordinates} 
 methods are polymorphic, since they can apply to 
 {\tt Point2D}, {\tt movablePoint}, and {\tt pixel} types. But 
 these are trivial forms of polymorphism. We will speak of 
@@ -1558,19 +1558,19 @@ class Point3D {
     method coordinates () {      # accessor to the 3 coordinates
         return $.x, $.y, $.z
     }
-    method distanceToCenter () {
+    method distance2center () {
         return ($.x ** 2 + $.y ** 2 + $.z ** 2) ** 0.5
     }
-    method polarCoordinates () {
-    	return self.sphericalCordinates;
+    method polar-coordinates () {
+    	return self.spherical-coordinates;
     }
-    method sphericalCoordinates {
-    	my $rho = $.distanceToCenter;
+    method spherical-coordinates {
+    	my $rho = $.distance2center;
     	my $longitude = atan2 $.y, $.x;          # theta
     	my $latitude = acos $.z / $rho;          # phi 
     	return $rho, $longitude, $latitude;
     }
-    method cylindricalCoordinates {
+    method cylindrical-coordinates {
     	# ...
     }
 }
@@ -1581,7 +1581,7 @@ The methods in this new class are not the same as those in
 the same name; it is thus possible to use either class 
 without being lost with different names. 
 
-The {\tt distanceToCenter} method has exactly the same interface. 
+The {\tt distance2center} method has exactly the same interface. 
 The {\tt coordinates} method returns a list of three values 
 instead of two, but the calling convention is the same. Note 
 that it might also have been possible to design {\tt Point2D} 
@@ -1600,7 +1600,7 @@ The notion of polar coordinates does not have a well-defined
 meaning in a 3D space, but I have chosen here to keep the name 
 in our interface because it is intuitively quite similar to 
 the idea of spherical coordinates; it does nothing more 
-than invoke the \verb'sphericalCoordinates' method on 
+than invoke the \verb'spherical-coordinates' method on 
 its invocant and to return the return values.
 \index{invocant}
 
@@ -1971,7 +1971,7 @@ implementation of the class, and yet keep the same interface.
 In order to do that, we would need the constructor 
 to convert input parameters from 
 Cartesian into polar coordinates, and store the latter in the 
-object attribute. The {\tt polarCoordinates} method would 
+object attribute. The {\tt polar-coordinates} method would 
 return the stored attributes, whereas methods returning the 
 Cartesian coordinates may have to do the backward conversion 
 (or may perhaps be stored separately in private attributes). 
