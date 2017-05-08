@@ -2069,7 +2069,7 @@ character (only plain ASCII lower case characters, not
 Unicode characters). The following subroutine:
 
 \begin{verbatim}[fontshape=up]
-sub is-lower (Str $input) { 
+sub is-lower (Str $char) { 
     return so $char ~~ /^<[a..z]>$/
 }
 \end{verbatim}
