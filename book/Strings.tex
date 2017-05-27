@@ -992,7 +992,7 @@ the following code, the \verb'\d+' matches one or more
 digits (three digits in this case):
 
 \begin{verbatim}
-say ~$/ if 'Bond 007' ~~ /\w\D\s\d\+/;  # -> "nd 007"
+say ~$/ if 'Bond 007' ~~ /\w\D\s\d+/;  # -> "nd 007"
 \end{verbatim}
 %
 
