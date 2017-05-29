@@ -2825,7 +2825,7 @@ reference instead:
 \begin{verbatim}
 sub is-square (Numeric $num} { 
     return False if $num < 0;
-    my $sq = sqtr $num;
+    my $sq = sqrt $num;
     return $sq == $sq.Int;
 } 
 my @filt = grep &is-square, 3, 9, -6, 16;   # -> [9 16]
