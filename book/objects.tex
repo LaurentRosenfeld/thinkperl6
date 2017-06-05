@@ -909,7 +909,7 @@ say "Original colors: ", $pix.color;
 $pix.change_color({:red(195), :green(110), :blue(70),});
 say "Modified colors: ", $pix.color;
 say "New pixel caracteristics:";
-printf \tAbscissa: %.2f\n\tOrdinate: %.2f\n\tColors: R: %d, G: %d, B: %d\n",
+printf "\tAbscissa: %.2f\n\tOrdinate: %.2f\n\tColors: R: %d, G: %d, B: %d\n",
        $pix.abscissa, $pix.ordinate, 
        $pix.color<red>, $pix.color{"green"}, $pix.color{"blue"};
 
