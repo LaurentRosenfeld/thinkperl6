@@ -517,7 +517,8 @@ it like so:
     ==> split(/<[;-]>/) 
     ==> reverse() 
     ==> join(",") 
-    ==> my @out;  # @out is now: [2015,05,13,id1]
+    ==> my @out; # @out is an array containing one item: a string.
+say @out.perl;   # ["2015,05,13,id1"]
 \end{verbatim}
 
 By the way, if you're using such pipeline operations on 
