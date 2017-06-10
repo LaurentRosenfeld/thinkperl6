@@ -1826,7 +1826,7 @@ the same as the capture:
 \index{capture}
 
 \begin{verbatim}
-say ~$0 if 'appeal' ~~ /((\w)$0);  # -> pp
+say ~$0 if 'appeal' ~~ /((\w)$0)/;          # -> pp
 \end{verbatim}
 
 For capturing the second group of repeated letters:
@@ -1838,7 +1838,12 @@ say ~$1 if 'coffee' ~~ /(\w)$0.*((\w)$0)/;  # -> ee
 And for the third group:
 
 \begin{verbatim}
-say ~$2 if 'Mississippi' ~~ /(\w)$0.*(\w)$0.*((\w)$0)/; # -> pp
+say ~$2 if 'Mississippi' ~~ /(\w)$0.*((\w)$0).*((\w)$0)/;  # -> pp
+\end{verbatim}
+
+or possibly:
+\begin{verbatim}
+say ~$2 if 'Mississippi' ~~ /(\w)$0.*(\w)$1.*((\w)$0)/;    # -> pp
 \end{verbatim}
 
 

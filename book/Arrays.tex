@@ -625,7 +625,7 @@ possible to do this:
 my @digits = <1 2 3 6 5 4 7 8 9>
 my @removed_digits = splice @digits, 3, 3, 4, 5, 6;
 say @removed_digits;     # -> [6 5 4]
-say @digits;             # -> [1 2 4 5 6 7 8 9]
+say @digits;             # -> [1 2 3 4 5 6 7 8 9]
 \end{verbatim}
 %
 Here, the {\tt splice} statement removed three elements (6, 5, 4) 
