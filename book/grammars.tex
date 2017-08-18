@@ -598,7 +598,7 @@ that are defined afterwards (which again would have not
 been possible with rules used outside a grammar). This is 
 important because, within a grammar, you can have many rules 
 that call each other (or rules that call themselves 
-recursively), which would be unpractical if the order of 
+recursively), which would be impractical if the order of 
 the rule definitions mattered.
 \index{recursive rules}
 
@@ -743,7 +743,7 @@ simpler to explore and to use than the match object tree,
 or it can do any other thing deemed to be useful.
 
 In this somewhat simplistic example of a basic arithmetic  
-calculator, the actions don't try to build an AST, but simply 
+calculator, the actions don't try to build a complete AST, but simply 
 do the bulk of the calculation work between the various tokens
 matched by the grammar:
 \index{arithmetic calculator}
@@ -817,11 +817,11 @@ an actual object that would have to be constructed beforehand.
 Whenever the {\tt TOP} rule succeeds, the {\tt TOP} method 
 of class {\tt ArithmActions} is invoked with the match 
 object for the current rule as the argument.  This method 
-calls the {\tt make} method on the match object and 
-returns the result of the actual arithmetic operation 
-between the two numbers. Then, the {\tt made} method 
-in the caller code (within the {\tt for} loop) returns 
-that result.
+calls the {\tt make} method on the match object, implicitly 
+populates the AST, and returns the result of the actual 
+arithmetic operation between the two numbers. Then, the 
+{\tt made} method in the caller code (within the 
+{\tt for} loop) returns that result that was set by {\tt make}.
 
 \section{A grammar for Parsing JSON}
 \index{JSON grammar}
