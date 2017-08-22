@@ -1698,7 +1698,7 @@ say @lazyarray[200];                # -> (Any)
 say @lazyarray.elems;               # -> 200
 \end{verbatim}
 
-Here, the \verb'@lazylist' array is originally lazy. 
+Here, \verb'@lazyarray' is originally lazy. 
 Evaluating one item past the last element of the array 
 forces Perl to actually generate the full array (and the 
 array is no longer lazy). After that, no further elements 

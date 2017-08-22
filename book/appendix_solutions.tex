@@ -1936,7 +1936,7 @@ sub count_index (Str $word, Str $letter) {
     }
     return $count;
 }
-say count_index "When in the Course of human events...", "n"; # 5
+say count_index "When in the Course of human events...", "n"; # 4
 \end{verbatim}
 
 Counting a given letter in a given word with the {\tt substr} 
@@ -1952,7 +1952,7 @@ sub count_substr (Str $word, Str $letter) {
     }
     return $count;
 }
-say count_substr "I have a dream that one day...", "a"; # -> 4
+say count_substr "I have a dream that one day...", "a"; # -> 5
 \end{verbatim}
 
 \subsection{Exercise~\ref{islower}: Lowercase Letters (p.~\pageref{islower})}
