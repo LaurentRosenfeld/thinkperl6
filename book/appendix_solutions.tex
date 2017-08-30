@@ -1875,7 +1875,7 @@ sub is-reverse(Str $word1, Str $word2) {
     my $j = $word2.chars - 1;
 
     while $j >= 0 {
-        return False if substr($word1, $i, 1) ne substr($word1, $j, 1);
+        return False if substr($word1, $i, 1) ne substr($word2, $j, 1);
         $i++; $j--;
     }
     return True;
