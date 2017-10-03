@@ -1165,7 +1165,7 @@ class JSON-actions {
         make $<pairlist>.made.hash.item;
     }
     method pairlist($/) {
-        make $<pair>>>.made.flat;
+        make $<pair>».made.flat;
     }
     method pair($/) {
         make $<string>.made => $<value>.made;
