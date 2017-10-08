@@ -1097,7 +1097,7 @@ of strings and returns a new list that contains capitalized
 strings:
 
 \begin{verbatim}
-sub capitalize_all(@words):
+sub capitalize_all(@words){
     my @result;
     push @result, $_.uc for @words;
     return @result;
