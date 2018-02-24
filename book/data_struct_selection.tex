@@ -512,7 +512,12 @@ For the purpose of presenting the solutions to the above
 exercises, I've used the plain text of {\em Emma} (1816), the 
 novel by Jane Austen, downloaded from the Gutenberg project 
 (\url{http://www.gutenberg.org/files/158/158-0.txt}) and 
-saved in a file called \emph{emma.txt}. Use the same 
+saved in a file called \emph{emma.txt} \footnote{The Gutenberg 
+project slightly modified the format of this file after this 
+chapter was written. To avoid any problem associated with this 
+change (and any other future changes), you can download the 
+original file from my Github repository: 
+\url{https://github.com/LaurentRosenfeld/thinkperl6/blob/master/Supplementary/emma.txt}.} Use the same 
 text if you want to compare your solutions and results 
 with mine.
 \index{Austin, Jane}
@@ -552,7 +557,10 @@ each line, calls \verb"process-line".
 The \verb"process-line" subroutine skips the header lines 
 (i.e., all the lines until a line containing the string
 ``*END*THE SMALL PRINT!'' 
-is met). It replaces dashes and apostrophes with spaces, removes 
+is met \footnote{This line is no longer present in the new version of 
+the Emma file currently on the Gutenberg project site. So this will 
+work only with my version of this file on my Github repository:  
+\url{https://github.com/LaurentRosenfeld/thinkperl6/blob/master/Supplementary/emma.txt}.}). It replaces dashes and apostrophes with spaces, removes 
 various punctuation characters, and sets the line to lower case. 
 Finally, it splits the line into individual words that are 
 stored and counted with an accumulator in the \verb'%histogram' 

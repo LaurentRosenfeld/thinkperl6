@@ -504,7 +504,7 @@ you have to search. Third, it might be time-consuming if
 the hash is large.
 
 Here is a function that takes a value and returns the first
-key that maps to that value:
+key that maps to that value:	
 \index{reverse lookup}
 
 \begin{verbatim}
@@ -540,7 +540,7 @@ r
 And an unsuccessful one:
 
 \begin{verbatim}
-> say reverse_lookup %histo, "3";
+> say reverse-lookup %histo, "3";
 Nil
 \end{verbatim}
 %
@@ -549,7 +549,7 @@ Another more concise way to do reverse lookup would be to
 use {\tt grep} to retrieve a list of values satisfying our 
 condition:
 \begin{verbatim}
- say grep { .value == 2 }, %histo.pairs;   # (r => 2)
+say grep { .value == 2 }, %histo.pairs;   # -> (r => 2)
 \end{verbatim}
 
 Another option is to use an expression with the {\tt first} 
@@ -1018,7 +1018,7 @@ sub run-stop  { ... };
 sub run-start { ... };
 my $param = get-param;
 if $param eq "stop" {
-    run_stop;
+    run-stop;
 } elsif $param eq "start" {
     run-start;
 } elsif $param = "h" {
@@ -1280,6 +1280,10 @@ each callee.
 \item[Memo] A computed value stored to avoid unnecessary future 
 computation.
 \index{memo}
+
+\item[Memoize] To store a computed value in memory to avoid having 
+to recompute it. Memoizing is a form of caching.
+\index{memoize}
 
 \item[Global variable]  A variable defined outside any 
 subroutine or other block.  Global variables can be 
