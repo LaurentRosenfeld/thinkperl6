@@ -1,0 +1,191 @@
+### Scripts pour le livre Programmation fonctionnelle en Perl
+# Chapitre 2
+
+__________________
+
+# 2.2.1. Enchaînements d'opérateurs
+
+my @tab_trie = sort map { sprintf '%02d', $_ }
+               map { $_ * 2, $_ * 3, $_*4 } 
+               1..5;
+
+__________________
+
+my @tab_trie = map { s/^0//; $_ } 
+               sort map { sprintf '%02d', $_  } 
+               map { $_ * 2, $_ * 3, $_*4 } 
+               1..5;
+
+__________________
+
+my ($dupl, $prev) =  ("", "");
+my @tab_trie =  grep {
+                    $dupl = ($_ == $prev ? 0: 1); 
+                    $prev = $_; $dupl
+                } 
+                map { s/^0//g; $_ } 
+                sort map { sprintf '%02d', $_ } 
+                map { $_ * 2, $_ * 3, $_*4 } 1..5;
+
+__________________
+
+print grep {
+          $dupl = ($_ == $prev ? 0: 1); 
+          $prev = $_; $dupl
+      }  
+      map { s/^0//g; $_ } 
+      sort map { sprintf '%02d', $_ } 
+      map { $_ * 2, $_ * 3, $_*4 } 1..5;
+
+__________________
+
+print join '-', grep { 
+                    $dupl = ($_ == $prev ? 0: 1); 
+                    $prev = $_; $dupl
+                }  
+                map { s/^0//g; $_ } 
+                sort map { sprintf '%02d', $_ }
+                map { $_ * 2, $_ * 3, $_*4 } 1..5;
+                
+__________________
+
+# 2.2.2. Retour sur la fonction sort
+
+
+my @tab_trie = sort { $a <=> $b } 
+                   map { $_ * 2, $_ * 3, $_*4 } 1..5;
+
+__________________
+
+print join '-', 
+      grep { $a = $b == $_? 0: 1; $b = $_; $a;} 
+      sort {$a <=> $b} 
+      map { $_ * 2, $_ * 3, $_*4 } 1..5;
+
+__________________
+
+print join "-",
+      grep { $_ % 2 == 0 && $_ % 3 == 0 } 
+      1..50; # noter le && au lieu du ||
+      
+__________________
+
+# 2.3.1. Tri des noms de famille : version naïve
+
+sub compare {
+     my $aa = $1 if $a =~ /(\w+)$/; 
+         # extrait le nom de famille du premier nom
+     my $bb = $1 if $b =~ /(\w+)$/; 
+         # extrait le nom de famille du second nom
+     return $aa cmp $bb}; 
+         # cmp renvoie la valeur attendue (-1, 0, 1)
+}
+
+my @noms = ('François Hollande', 'Nicolas Sarkozy', 
+            'François Fillon', 'Jean-Marc Ayrault', 
+            'Ségolène Royal', 'Brice Hortefeux', 
+            'Lionel Jospin', 'George W. Bush', 
+            'Barack Obama', 'Lorie');
+
+my @noms_tries =  sort {compare($a, $b)} @noms;
+print join ' ,', @noms_tries;
+
+__________________
+
+#2.3.2. La transformation de Schwartz
+
+print map { $_->[0] }
+      sort { $a->[1] cmp $b->[1] }
+      map { [$_, /(\S+)$/] } @noms;
+__________________
+
+# 2.3.3. La transformation de Guttman Rosler
+
+my @articles = (
+     'Le Figaro; 10/04/2007; titre1',
+     'Le Monde; 17/12/2003; titre2',
+     'La Dépêche du Midi; 28/02/2012; titre3',
+     'Ouest-France; 14/06/2013; titre 4',
+     'Le Canard enchaîné; 18/10/2011; titre 5',
+     'La Voix du Nord; 14/11/2009; titre 6'
+              );
+print   map {s/^\d{8};//; $_."\n"} 
+        sort
+        map {my $date = "$3$2$1" if m[;(\d\d)/(\d\d)/(\d{4});]; 
+             "$date;$_";}
+        @articles;
+__________________
+
+use strict;
+use warnings; 
+
+my @files =  map {s/-0(\d)(\.gz)$/-$1$2/; $_} 
+             sort
+             map { s/-(\d)(\.gz)$/-0$1$2/; $_ } <DATA>;
+
+print $_ for @files; 
+
+__DATA__ 
+abcd1_abc_123456.abc1a_A.201307290800-0900-0.gz
+abcd1_abc_123456.abc1a_A.201307290800-0900-1.gz
+abcd1_abc_123456.abc1a_A.201307290800-0900-10.gz
+abcd1_abc_123456.abc1a_A.201307290800-0900-11.gz
+abcd1_abc_123456.abc1a_A.201307290800-0900-2.gz
+abcd1_abc_123456.abc1a_A.201307290800-0900-3.gz
+abcd1_abc_123456.abc1a_A.201306290800-0900-0.gz
+abcd1_abc_123456.abc1a_A.201306290800-0900-1.gz
+abcd1_abc_123456.abc1a_A.201306290800-0900-10.gz
+abcd1_abc_123456.abc1a_A.201305290800-0900-11.gz
+abcd1_abc_123456.abc1a_A.201308290800-0900-2.gz
+abcd1_abc_123456.abc1a_A.201302290800-0900-3.gz
+abcd1_abc_123456.abc1a_A.201306290800-1000-1.gz
+abcd1_abc_123456.abc1a_A.201306290800-1000-10.gz
+abcd1_abc_123456.abc1a_A.201305290800-1000-11.gz
+abcd1_abc_123456.abc1a_A.201308290800-1000-2.gz
+abcd1_abc_123456.abc1a_A.201302290800-1000-3.gz
+
+# 2.3.4.2. Une analyse linguistique rudimentaire
+
+my %mots;
+my $phrase = "Maître Corbeau,   sur un arbre perché, tenait   en son bec un fromage.";
+print join "-", split /[,. ]+/, $phrase;
+
+__________________
+
+print map {$mots{$_}, "\t$_\n"} 
+      reverse sort {$mots{$a} <=> $mots{$b}} 
+      keys %mots;
+__________________
+
+# 2.3.4.3. Analyse d'un texte plus long
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my %mots;
+my $texte;
+{
+    local $/ = undef; 
+    $texte = <>; 
+}
+
+$mots{$_}++ foreach 
+    map {$_= lc; tr/àâéèêëîôùûç/aaeeeeiouuc/; $_;} 
+    split /[,.:;"?!'\n ]+/, $texte;
+
+print map {$mots{$_}, "\t$_\n"} 
+      sort {$mots{$b} <=> $mots{$a} || $a cmp $b} 
+      keys %mots;
+__________________
+
+# 2.3.4.4. Analyse de livres entiers
+
+$mots{$_}++ foreach
+            map { $_= lc; tr/àâéèêëïîôùûç/aaeeeeiiouuc/; $_;}
+            grep {length > 2} 
+            split /[,.:;"?!'\n ]+/, $texte;
+__________________
+
+
+
