@@ -1,0 +1,353 @@
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 3
+
+__________________
+
+# 3.1.1. Transposition lignes-colonnes
+
+use strict;
+use warnings;
+
+my @transposed_array;
+while (<DATA>) {
+    print;
+    my $i;
+    map {$transposed_array[$i++] .= $_;} split;
+}
+print join "  ", script uni
+    map {my $count = s/OO/00/g; $count? $count : 0;}
+    @transposed_array;
+
+__DATA__
+A1 A2 A3 A4 A5
+CC NA OO UV OO
+NA OO OO OO CP
+TR OO UU RR OO
+
+__________________
+
+$ perl -pe '$i = 0; map {@c[$i++] .= $_;} split; END {print join "  ", map {$d = s/OO/00/g; $d ? $d : 0;} @c}' data.txt
+
+__________________
+
+# 3.1.3. Trier un tableau en se basant sur l'ordre de tri d'un autre tableau
+
+my @noms = qw (marie nicolas isabelle yves);
+my @salaires = qw (1500 1250 1700 2000);
+my %noms_sal;
+@noms_sal{@noms} = @salaires;
+print map {"$_: $noms_sal{$_} \n"} 
+    sort {$noms_sal{$a} <=> $noms_sal{$b} } 
+    keys  %noms_sal;
+
+__________________
+
+# 3.1.4. Un exemple exagéré ?
+
+while (my $line = <$FILE_IN>) {
+    my ($start, $end) = split /##/, $line;
+    my @fields =  map { 
+        my ($id, @values) = split /;/, $_;
+        @values = map { (split /-/, $_)[0]} @values; 
+        map { [$id, $_] }  @values;
+    } split /@/, $end;
+    my $out_line = $start . "##" . join ";",
+            map { $_->[0] }
+            sort { $a->[1] <=> $b->[1] } @fields;
+        # on peut  utiliser $out_line
+}
+
+__________________
+
+
+while (my $line = <$FILE_IN>) { 
+    my ($start, $end) = split /##/, $line;
+    my $out_line = $start . "##" . join ";",
+        map {$_->[0]}
+        sort {$a->[1] <=> $b->[1]} 
+        map { my ($id, @values) = split /;/, $_;
+            @values = map { 
+                (split /-/, $_)[0]
+            } @values;
+            map { [$id, $_] } @values;
+        } split /@/, $end;
+}
+
+__________________
+
+
+# 3.2.1.  Un exemple très simple de récursion
+
+use strict;
+use warnings;
+use feature "say";
+sub compte_a_rebours {
+    my $duree_restante = shift;
+    if ($duree_restante <= 0) {
+        say "Feu !";
+    } else {
+        say $duree_restante;
+        compte_a_rebours($duree_restante - 1);
+    }
+}
+compte_a_rebours 3;
+
+__________________
+
+use strict;
+use warnings;
+use feature "say";
+sub compte_a_rebours {
+    my $duree_restante = shift;
+    while ($duree_restante > 0) {
+        say $duree_restante;
+        $duree_restante--;
+    }
+    say "Feu !";
+}
+compte_a_rebours 3; 
+
+__________________
+
+sub affiche_n_fois {
+    my ($sentence, $n) = @_;
+    return if $n <= 0;
+    say $sentence;
+    affiche_n_fois($sentence, $n - 1);
+}
+affiche_n_fois "Bonjour tout le monde", 4;
+
+__________________
+
+# 3.2.2. La fonction factorielle
+
+__________________
+
+sub fact{
+    my $n = shift;
+    if ($n == 0) {
+        return 1;
+    } else {
+        my $recurse = fact($n-1);
+        my $result = $n * $recurse;
+        return $result;
+    }
+}
+say fact 4;     # affiche 24
+
+__________________
+
+# version plus concise et idiomatique
+sub fact{
+    my $n = shift;
+    return 1 if $n == 0;
+    return $n * fact($n-1);
+}
+say fact 10;      # affiche 3628800
+
+__________________
+
+# Version itérative
+sub fact{
+    my $n = shift;
+    my $factorielle = 1;
+    while ($n > 0) {
+        $factorielle *= $n;
+        $n --;
+    }
+    return $factorielle;
+}
+say fact 10;     # affiche 3628800
+
+__________________
+
+# 3.2.3.1. Fibonacci : mise en œuvre récursive
+
+# Version de base
+use strict;
+use warnings;
+use feature 'say';
+sub fibo {
+    my $n = shift;
+    if ($n < 2) {
+        return $n;
+    } else {
+        return fibo ($n-1) + fibo ($n-2);
+    }
+}
+say fibo $_ for 6..8;  # Affiche 8, 13, 21
+
+__________________
+
+
+# Version avec cache
+
+use strict;
+use warnings;
+use feature 'say';
+my @cache = qw /0 1/; # deux valeurs de départ pour
+                      # fibo(0) et fibo(1) 
+sub fibo {
+    my $n = shift;
+    $cache[$n] = fibo($n-1) + fibo($n-2) 
+        unless defined $cache[$n];
+    return $cache[$n];
+}
+say fibo shift;
+
+__________________
+
+# 3.3.1. Une implémentation non-fonctionnelle du tri fusion
+
+# Version procédurale ou impérative
+use strict;
+use warnings;
+use feature "say";
+
+sub tri_fusion {
+    my ($out_ref, $a_trier_ref, $start, $end) = @_;
+    $start = 0 unless defined $start;
+    $end = scalar @$a_trier_ref unless defined $end;
+    return if $end - $start < 2;
+    my $middle = sprintf '%d', ($end + $start) / 2;
+    tri_fusion($a_trier_ref, $out_ref, 
+        $start, $middle);
+    tri_fusion($a_trier_ref, $out_ref, $middle, $end);
+    fusionne_listes($out_ref, $a_trier_ref, 
+        $start, $middle, $end);
+}
+sub fusionne_listes {
+    my  ($out, $in, $start, $middle, $end) = @_;
+    my $i = $start;
+    my $j = $middle;
+    for my $k ($start..$end - 1) {
+        if ($i < $middle and 
+            ($j >= $end or $in->[$i] <= $in->[$j])) {
+                $out->[$k] = $in->[$i];
+                $i++;
+        } else {
+            $out->[$k] = $in->[$j];
+            $j++;
+        } 
+    }
+}
+my @array = map { sprintf "%d", rand 100 } 1..15;
+my @output = @array;
+say "@array";
+tri_fusion \@output, \@array;
+say "@output";
+
+__________________
+
+# 3.3.2.  Implémentation fonctionnelle du tri fusion
+
+use strict;
+use warnings;
+use feature "say";
+
+sub tri_fusion {
+    my @a_trier = @_;
+    return @a_trier if @a_trier < 2;
+    my $middle = sprintf '%d', @a_trier / 2;
+    my @first = tri_fusion(@a_trier[0 .. $middle - 1]);
+    my @second = tri_fusion(@a_trier[$middle 
+        .. $#a_trier]);
+    return fusionne_listes(\@first, \@second);
+}
+sub fusionne_listes {
+    my ($un, $deux) = @_;
+    my @result;
+    while (1) {
+        return (@result, @$deux) unless @$un;
+        return (@result, @$un) unless @$deux;
+        push @result, $un->[0] < $deux->[0] ? 
+            shift @$un : shift @$deux;
+    }
+} 
+my @array = map { sprintf "%d", rand 100 } 1..15;
+say "@array";
+my @output = tri_fusion @array;
+say "@output"; 
+
+__________________
+
+# Version fonctionnelle plus concise
+
+sub merge_sort {
+    my @x = @_;
+    return @x if @x < 2;
+    my $m = int @x / 2;
+    my @a = merge_sort(@x[0 .. $m - 1]);
+    my @b = merge_sort(@x[$m .. $#x]);
+    for (@x) {
+        $_ = !@a ? shift @b : !@b ? shift @a
+           : $a[0] <= $b[0] ? shift @a : shift @b;    
+    }
+    @x;
+}
+
+__________________
+
+# 3.4.1. Version non-fonctionnelle du tri rapide
+
+use strict;
+use warnings;
+use feature "say";
+
+my @output;
+sub swap {
+    my ($in, $x, $y) = @_;
+    ($in->[$x], $in->[$y]) = ($in->[$y], $in->[$x]);
+}
+sub qsort {
+    my ($left, $right) = @_;
+    my $pivot = $output[int (($left + $right )/2)];
+    my $i = $left;
+    my $j = $right;
+    while ($i < $j) {
+        $i++ while $output[$i] < $pivot;
+        $j-- while $output[$j] > $pivot;
+        if ($i <= $j) {
+            swap \@output, $i, $j;
+            $i++;
+            $j--;
+        }
+    }
+    qsort($left, $j) if $left < $j;
+    qsort($i, $right) if $j < $right;
+}
+sub tri_rapide {
+    @output = @_;
+    qsort(0, $#output)
+}
+my @array = map { sprintf "%d", rand 100 } 1..15;
+say "@array";
+tri_rapide @array;
+say "@output";
+
+__________________
+
+# 3.4.3. Tri rapide fonctionnel en Perl
+
+sub qs {
+    my @a = @_;
+    return @a if @a < 2;
+    my $p = splice @a, int @a/2, 1;
+    qs(grep $_ < $p, @a), $p, qs(grep $_ >= $p, @a);
+} 
+
+__________________
+
+# Version plus concise (possiblement moins performante dans certains cas partioculiers)
+
+sub qs {
+    return @_ if @_ < 2;
+    my ($p, @a) = @_;
+    qs(grep $_ < $p, @a), $p, qs(grep $_ >= $p, @a);
+} 
+
+

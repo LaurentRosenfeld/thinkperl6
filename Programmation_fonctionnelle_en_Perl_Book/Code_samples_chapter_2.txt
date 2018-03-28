@@ -1,4 +1,8 @@
 ### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
 # Chapitre 2
 
 __________________
@@ -143,6 +147,8 @@ abcd1_abc_123456.abc1a_A.201306290800-1000-10.gz
 abcd1_abc_123456.abc1a_A.201305290800-1000-11.gz
 abcd1_abc_123456.abc1a_A.201308290800-1000-2.gz
 abcd1_abc_123456.abc1a_A.201302290800-1000-3.gz
+
+__________________
 
 # 2.3.4.2. Une analyse linguistique rudimentaire
 
