@@ -1,0 +1,907 @@
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 4
+
+__________________
+
+# 4.2.1.1. Les références sur des variables scalaires
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use feature 'say';
+
+my $c = 5;
+say $c;           # imprime 5
+my $c_ref = \$c;  # \ prend une référence. $c_ref est une référence vers $c
+say $c_ref;       # Imprime: SCALAR(0x80359e18), l'adresse mémoire de $c
+say $$c_ref;      # Imprime la valeur référencée par $c_ref, soit 5
+$$c_ref ++;       # Incrémente la valeur référencée par $c_ref, ce qui donne 6
+say  $$c_ref;     # imprime 6
+say $c;           # Imprime 6: le contenu de la variable $c a été modifié par l'incrémentation de $$c_ref.
+__________________
+
+# 4.2.1.2. Les références sur des variables de tableaux
+
+my @t = qw / 5 6 7/;
+say "@t";          # Imprime 5 6 7
+my $t_ref= \@t;    # $t_ref est une référence vers le tableau @t
+say $t_ref;        # Imprime ARRAY(0x80355bb0), l'adresse mémoire de @t
+say "@$t_ref";     # Imprime le contenu du tableau référencé par $t_ref, soit 5, 6, 7
+$$t_ref[1] = 18;   # Modifie la 2e valeur du tableau référencé par $t_ref
+say "@$t_ref";     # Imprime 5 18 7
+say "@t";          # Le tableau @t a bien été modifié, imprime 5 18 7
+
+__________________
+
+# 4.2.1.3. Benchmark du passage d'arguments à une fonction
+
+use strict;
+use warnings;
+use Benchmark;
+
+my @tableau = 0..100000;
+
+sub valeur { 
+    my @array = @_; 
+    my $c = $array[10000]; 
+    print $c if $c == 17; 
+}
+sub alias {
+    my $c = $_[10000]; print $c if $c == 17; 
+};
+sub reference { 
+    my $a_ref = shift; 
+    my $c = $a_ref->[10000]; 
+    print $c if $c == 17;  
+}
+
+timethese ( 10000, {
+    "valeur"     => sub { valeur(@tableau); },
+    "alias"      => sub { alias(@tableau) },
+    "reference"  => sub { reference(\@tableau) }
+} );
+
+__________________
+
+# 4.2.1.4. Les références sur des variables anonymes pour créer des structures de données complexes
+
+my @$d_ref = qw /14 13 12/; # peut aussi s'écrire:   my $d_ref = [14, 13, 12];
+my @$e_ref = qw /34 35 36/; # ou:  my $e_ref = [34, 35, 36];
+my @f = ($t_ref, $d_ref, $e_ref); # @f est un tableau de refs vers des tableaux
+say "@f"; # imprime ARRAY(0x80355bb0) ARRAY(0x80355a30) ARRAY(0x8034f508)
+
+
+__________________
+
+say $f[0][1];       # Imprime le deuxième élément du premier tableau, soit 18
+say $f[2][0];       # Imprime 34
+say $f[2]->[0];     # Notation "fléchée", affiche également 34
+my $i_ref = $f[2];  # $i_ref est une nouvelle référence contenant ARRAY(0x8034f508)
+say $$i_ref[0];     # affiche encore 34
+$f[3][1] = 87;      # crée un nouveau tableau dans le AoA et met 89 à l'indice 1
+__________________
+
+# 4.2.2.1. Les références à des fonctions passées aux opérateurs sort et map
+
+my @tableau = qw / 1 7 17 12 15 3 10 /;
+my @tri_1   = sort @tableau;
+print "@tri_1 \n";      # imprime: 1 10 12 15 17 3 7
+my @tri_2 = sort {$a <=> $b} @tableau;
+print "@tri_2 \n";      # imprime: 1 3 7 10 12 15 17
+
+__________________
+
+4.2.2.3. Réaliser une fonction de rappel 
+
+sub imprime_fichier {
+     my $fichier = shift;
+     print $fichier, "\n";
+}
+
+sub parcours_dir {
+    my ($path) = @_;
+    my @dir_entries = glob("$path/*");
+    foreach my $entry (@dir_entries) {
+        imprime_fichier($entry) if -f $entry;
+        parcours_dir($entry) if -d $entry;
+    }
+}
+
+parcours_dir($chemin_de_depart);
+
+__________________
+
+sub imprime_fichier {
+     my $fichier = shift;
+     print $fichier, "\n";
+}
+my $imprime_fic_ref = \&imprime_fichier;   # crée une référence sur la fonction
+
+__________________
+
+sub parcours_dir {
+    my ($code_ref, $path) = @_;
+    my @dir_entries = glob("$path/*");
+    foreach my $entry (@dir_entries) {
+        $code_ref->($entry) if -f $entry;
+        parcours_dir($code_ref, $entry) if -d $entry;
+    }
+}
+
+__________________
+
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $dir_depart = $ARGV[0];
+chomp $dir_depart;
+
+sub imprime_fichier {
+     my $fichier = shift;
+     print $fichier, "\n";
+}
+my $code_ref = \&imprime_fichier; 
+         # crée une référence sur la fonction
+
+parcours_dir($code_ref, $dir_depart);
+
+sub parcours_dir {
+    my ($code_ref, $path) = @_;
+    my @dir_entries = glob("$path/*");
+    foreach my $entry (@dir_entries) {
+        $code_ref->($entry) if -f $entry;
+        parcours_dir($code_ref, $entry) if -d $entry;
+    }
+}
+
+__________________
+
+my $glob_size;
+my $code_ref = \&find_total_size;
+parcours_dir($code_ref, $dir_depart);
+print "Taille totale: $glob_size \n";
+
+sub find_total_size {
+    my $fichier = shift;
+    my $size = -s $fichier;
+    print $fichier, ' ', $size, "\n";
+    $glob_size += $size;
+}
+
+__________________
+
+
+# 4.2.2.4. D'autres moyens syntaxiques de prendre des références vers des fonctions 
+
+sub imprime_fichier {
+    my $fichier = shift;
+    print $fichier, "\n";
+}
+my $imprime_fic_ref = \&imprime_fichier;
+parcours_dir($imprime_fic_ref, $dir_depart);
+
+__________________
+
+sub imprime_fichier {
+    my $fichier = shift;
+    print $fichier, "\n";
+}
+parcours_dir(\&imprime_fichier, $dir_depart);
+
+__________________
+
+my $imprime_fic_ref = sub {
+    my $fichier = shift;
+    print $fichier, "\n";
+}
+
+__________________
+
+# 4.2.3. Les tables de distribution
+
+my ($oper, $rest) = shift, join ' ', @ARGV;
+my $stop = 'stop';
+my $force_stop = 'force_stop';
+# ...
+if ($oper eq $stop) {
+    run_stop ($rest);
+    cleanup();
+}
+elsif ($oper eq $force_stop) {
+    run_force_stop ($rest);
+    cleanup();
+}
+elsif ($oper eq 'start') {
+    run_start ($rest);
+}
+elsif   ($oper eq 'force_start') {
+     run_stop ($rest);
+    cleanup();
+    run_start ($rest);
+}
+# ...
+else {
+    die "Opération $oper inconnue";
+}
+
+
+__________________
+
+my %dispatch_table = (
+    stop => sub {run_stop($rest); cleanup();},
+    force_stop  => sub { run_force_stop($rest);
+                         cleanup();
+                       },
+    start       => /&run_start(@rest),
+    force_start => sub { run_stop ($rest); cleanup();
+                         run_start ($rest);
+                       },
+    cleanup     => sub {unlink $ENV{$flags}}
+);
+
+my ($oper, $rest) = shift, join ' ', @ARGV;
+if (defined $dispatch_table{$oper}) {
+    $dispatch_table{$oper}->($rest); 
+} else {
+    die "Opération $oper inconnue";
+}
+
+__________________
+
+my %dispatch_table = (
+    stop => sub {run_stop($rest); cleanup();},
+    force_stop  => sub { run_force_stop($rest);
+                         cleanup();
+                       },
+    start       => /&run_start(@rest),
+    force_start => sub { run_stop ($rest); cleanup();
+                         run_start ($rest);
+                       },
+    help        => sub { print $help;},
+    cleanup     => sub {unlink $ENV{$flags}}
+);
+
+__________________
+
+# 4.3.1.3. La solution qui marche : premier exemple de fermeture
+
+{   my $nombre = 0;
+    sub fournit_carre {
+        $nombre ++;
+        return $nombre ** 2;
+    }
+}
+
+__________________
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use feature "state";
+
+my $square = fournit_carre();
+print $square, "\n";
+
+my $new_square = fournit_carre();
+print $new_square, "\n";
+
+sub fournit_carre {
+    state $nombre = 0;
+    return ++$nombre ** 2;
+}
+
+__________________
+
+# 4.3.2.2. Une version simplifiée de l'interface d'accès
+
+package Mon_interface;
+use strict;
+use warnings;
+use Low_level_api;
+
+our @ISA = qw/Exporter/;
+our @EXPORT = qw (init_connection);
+our @EXPORT_OK = qw (recherche_objet …);
+
+my ($error_buff_p, $connexion_id, $transaction_id);
+my $init_done = 0;
+
+sub init_connection {
+    my ($param1, $param2 …) = @_;
+    my $ebuf_p = API_create_buff($some_param);
+    my $connect_id = API_connect($some_other_param …);
+    my $trans_id = open_transaction($ebuf_p,
+        $connect_id, $autres_params …);
+    # quelques autres opérations
+    ($error_buff_p, $connexion_id, $transaction_id) = ($ebuf_p, $connect_id, $trans_id);
+    $init_done = 1;
+    return ($ebuf_p, $connect_id, $trans_id);
+}
+
+sub  open_transaction {
+    my ($ebuf_p, $connect_id, $param1, $param2 …) = @_;
+    # ...fait quelques petites choses supplémentaires
+    my $transaction_id = API_create_transaction ($ebuf_p, $connect_id, #various_params...);
+    # ... fait d'autres petites choses
+    return  $transaction_id;
+} 
+
+# ... nombreuses fonctions diverses 
+
+sub recherche_objet {
+    my $search_string_ref = shift;
+    die_error ("Appelez d'abord la fonction init_connection\n" unless $init_done);
+    my $search_struct_p = string_to_struct_convert ($error_buff_p, $search_string_ref);
+    die_error($search_string) if  error_detected($error_buff_p);
+    my $return_struct_p = API_object_search
+        ($error_buff_p, $transaction_id, $connexion_id,
+        $search_struct_p);
+    die_error (…) if error_detected($error_buff_p);
+    my $return_string =
+        struct_to_string_convert($error_buff_p, $return_struct_p);
+    die_error( $search_string) if error_detected($error_buff_p);
+    free_memory($_) for ($search_struct_p, $return_struct_p);
+    return \$return_string;
+}
+1;
+
+__________________
+
+use strict;
+use warnings;
+use Mon_interface;
+
+chomp @ARGV;
+my $config_file = shift;
+my %config = read_config($config_file);
+#...
+# les paramètres $ebuf, $connect_id, $trans_id sont 
+# en principe inutiles ici, mais sont tout de même
+# récupérés au cas où l'on voudrait appeler une 
+# fonction de l'API de bas niveau
+my ($ebuf, $connect_id, $trans_id) =
+    init_connection($some_params);
+# ...
+my $search_string = "...";
+my $result_ref =  recherche_objet($search_string);
+# exploitation de $result_ref, etc.
+# ...
+
+
+__________________
+
+# 4.3.2.3. Variables globales, variables locales, fonctions globales, fonctions locales…
+
+{
+    my ($error_buff_p, $connexion_id, $transaction_id);
+    my $init_done = 0;
+    sub get_val {return ($error_buff_p, $connexion_id,
+        $transaction_id, $init_done);};
+    sub set_val { ($error_buff_p, $connexion_id, 
+        $transaction_id, $init_done) = @_;};
+}
+
+__________________
+
+sub recherche_objet {
+    my $search_string_ref = shift;
+    my ($error_buff_p, $connexion_id, $transaction_id,
+        init_done) = get_val();
+    die_error ("Appelez d'abord la fonction
+        init_connection\n" unless $init_done);
+    # ...
+}
+
+__________________
+
+# 4.3.2.4. Fonctions locales ou globales, un exemple plus dépouillé
+
+use strict;
+use warnings;
+package Essai_loc_func;
+require Exporter;
+our @ISA = qw/Exporter/;
+our @EXPORT_OK = qw (init read_val);
+my ($set_val_ref, $get_val_ref);
+{
+    my $val;
+    $set_val_ref = sub { $val = shift; };
+    $get_val_ref = sub { return $val ; };
+}
+sub init     { $set_val_ref->(shift);   };
+sub read_val { return $get_val_ref->(); };
+1;
+
+
+__________________
+
+use strict;
+use warnings;
+use Essai_loc_func qw (init read_val) ;
+
+init(7);
+my $ret_val = read_val();
+print $ret_val, "\n";         # imprime 7
+
+__________________
+
+# 4.3.3. Utilisation de fermetures anonymes pour renvoyer des fonctions
+
+my $set_val_ref;
+my $get_val_ref;
+{
+    my $val;
+    $set_val_ref = sub {
+        $val = shift;
+        return sub { return $val ; };
+    };
+}
+
+sub init { 
+    $get_val_ref = $set_val_ref->(shift);
+}
+sub read_val { return $get_val_ref->(); }
+
+
+__________________
+
+my $get_val_ref;
+my $set_val_ref = sub {
+    my $val = shift;
+    return sub { return $val ; };
+};
+
+sub init     { $get_val_ref = $set_val_ref->(shift); }
+sub read_val { return $get_val_ref->(); }
+
+__________________
+
+sub cree_fermeture {
+    my $val = shift;
+    # modifie éventuellement $val
+    # ...
+    return sub { 
+        # utilise $val pour générer une valeur $valeur
+        # ...
+        return $valeur ;
+    }
+}
+my $fonction_ref =
+    cree_fermeture("some_initial_value");
+        # (utilisation possible de $fonction_ref)
+
+__________________
+
+# 4.3.4. Retour sur les itérateurs
+
+sub cree_fermeture {
+    my $val = shift;
+    return sub { return $val += 2;}
+}
+my $iter_pair = cree_fermeture(0);
+my $iter_impair = cree_fermeture(1);
+
+print $iter_pair->(), " " for 1..5;     print "\n";
+print $iter_impair->(), " " for 1..15;  print "\n";
+print $iter_pair->(), " " for 1..5;     print "\n";
+
+__________________
+
+sub cree_fermeture {
+    my $val = shift;
+    sub { $val += 2;}
+}
+
+__________________
+
+# 4.3.5.1. Un itérateur de fichier personnalisé 
+
+sub return_iter_cust {
+    my $file_in = shift;
+    my $line;
+    open my $IN,  "<", $file_in or 
+        die "cannot open input file $file_in $!";
+    return sub {
+        my @cust_lines;
+        $line = <$IN> unless defined $line;
+        chomp $line;
+        push @cust_lines, [split /;/, $line];
+        while ($line = <$IN>) {
+            chomp $line;
+            if ($line =~ /^0;/) {   # type de ligne 
+                return \@cust_lines;
+            } else {
+                push @cust_lines, [split /;/, $line];
+            }
+        }
+    }
+}
+
+# création des deux itérateurs sur les fichiers A et V
+my $a_iter = return_iter_cust ($file_a);
+my $v_iter = return_iter_cust ($file_v);
+    #    utilisation des itérateurs
+while (my $full_a_cli_ref = $a_iter->()) {
+    my $full_v_cli_ref = $v_iter->();
+    # ...
+}
+
+__________________
+
+# 4.3.5.2. Parcours de deux arbres binaires en parallèle
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $c = [ 1, [ 2, [ 3, [ 4, 5 ] ] ] ];
+my $d = [ 1, [ [ 2, 3 ], [ 4, 5 ] ] ];
+my $e = [ [ [ [ 1, 2 ], 3 ], 4 ], 5 ];
+sameFringe( $c, $c );
+sameFringe( $c, $d );
+sameFringe( $c, $e );
+
+sub sameFringe {
+    my $next_el1 = create_iterator(shift);
+    my $next_el2 = create_iterator(shift);
+    my $match = 1;
+    while (1) {
+        my $left = $next_el1->();
+        my $right = $next_el2->();
+        no warnings 'uninitialized';
+        print $left, " ", $right, "\n";
+        unless ($left eq $right) {$match = 0 ; last} ;
+        last unless defined $left;
+    }
+    $match ? print "the trees match\n": print "the trees don't match\n";
+}
+
+sub create_iterator {
+    my $ref = shift;
+    my @ref_list;
+    return sub {
+        while (ref $ref eq 'ARRAY') {
+            unshift @ref_list, @$ref;
+            $ref = shift @ref_list;
+        } 
+        my $leaf = $ref;
+        $ref = shift @ref_list;
+        return $leaf;
+    }
+}
+
+
+
+__________________
+
+
+4.3.5.3. Un itérateur générique ?
+
+use strict;
+use warnings;
+
+sub create_iter {
+     my ($code_string, @rest) = @_;
+     eval $code_string;
+}
+
+my $fibo1 = create_iter (
+    ' return sub {my ($c, $d) = @rest;
+             my $e = $c + $d; @rest = ($d, $e); 
+             return $e;}
+    ',
+    1, 1);
+print "Fibo 1: \n";
+print $fibo1->(), " ", for 1..7; # 
+
+my $fibo2 = create_iter (
+    q {
+        return sub {@rest[0,1] = ($rest[1], $rest[0] + $rest[1]);
+         return $rest[1];}
+    },
+     1, 1);
+print "\n\nFibo2, premier appel: \n";
+print $fibo2->(), " " for 1..5;
+
+my $fact = create_iter (<<'EOS'
+    return sub { $rest[0]++; $rest[1] *= $rest[0];};
+EOS
+    , 1, 1);
+print "\n\nFact: \n";
+print $fact->(), " ", for 1..5;
+
+print "\n\nFibo2, second appel: \n";
+print $fibo2->(), " " for 1..5;
+
+my $carres = create_iter ('sub { (++$rest[0])**2 }', 1);
+print "\n\nCarres: \n";
+print $carres->(), " " for 1..5;
+
+
+__________________
+
+# 4.3.5.4. Une file d'attente (FIFO) et une pile (LIFO)
+
+use strict;
+use warnings;
+
+sub create_fifo {
+    my @fifo_arr;
+    return (
+        sub {return shift @fifo_arr;}, 
+        sub {push @fifo_arr, shift;}
+    );
+}
+my ($fifo_get, $fifo_put) = create_fifo ();
+$fifo_put->($_) for 1..10;
+print $fifo_get->() for 1..5;
+print "\n";
+
+sub create_lifo {
+    my @lifo_arr;
+    return (
+        sub {return pop @lifo_arr;}, 
+        sub {push @lifo_arr, shift;}
+    );
+}
+my ($lifo_get, $lifo_put) = create_lifo ();
+$lifo_put->($_) for 1..10;
+print $lifo_get->() for 1..5;
+
+__________________
+
+# 4.3.5.5. Exemple réel : chargement de hachages de paramétrage
+
+sub load_params {
+    my $file_name = shift;
+    my @files = glob ("$data_path${file_name}*.txt");
+    my $file = pop @files;
+    my %param;
+    open my $IN, "<", $file 
+        or die "Ouverture impossible de $file $!";
+    while (<$IN>) {
+        chomp;
+        next if /^\s*$/;
+        my ($key, $val) = split /;/, $_;
+        $param{$key} = $val
+    }
+    close $IN;
+    return sub {
+        my $key = shift;
+        return unless defined $param{$key};
+        return $param{$key};
+    }
+}
+
+__________________
+
+my $offer_mapping_ref        =
+    load_params("B_mapping_offer-mapping_");
+my $migration_mapping_ref    =
+    load_params("B_mapping_migration-status_");
+
+__________________
+
+sub load_params {
+     my $file_name = shift;
+     my @files = glob ("$data_path${file_name}*.txt");
+     my $file = pop @files;
+     my %param;
+     open my $IN, "<", $file or die "Ouverture impossible de $file $!";
+     while (<$IN>) {
+         chomp;
+         next if /^\s*$/;
+         my ($key, $val) = split /;/, $_;
+         $param{$key} = $val
+     }
+     close $IN;
+     return %param;
+}
+
+
+
+__________________
+
+# 4.3.5.6. Écrire dans des fichiers multiples (répartir des données)
+# Premier exemple d'écriture dans des fichiers multiples
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my ($jour, $mois) =  (localtime time)[3, 4];
+my $date = sprintf  "%02d%02d", ++$mois, $jour;
+my $root_name = "99$date-";
+my $chemin = './RESULT';
+
+my $write_od1 =
+   create_file_writer("$chemin/B$root_name");
+my $write_od2 =
+   create_file_writer("$chemin/E$root_name");
+my $write_od3 =
+   create_file_writer("$chemin/H$root_name");
+# fichiers de suppression de BV
+my $write_suppr = create_file_writer("$chemin/majmv-");
+
+my %dispatch_table = (
+    'COD1' => $write_od1,
+    'COD2' => $write_od2,
+    'COD3' => $write_od3,
+    'SUPP' => $write_suppr 
+);
+
+# note: on aurait pu écrire directement les fonctions
+# dans la table:
+# $dispatch_table{'COD1'} = 
+#    create_file_writer("$chemin/B$root_name");
+# et ainsi de suite. Nous l'avons laissé en deux étapes
+# pour des raisons pédagogiques, afin de rester 
+# simple et clair. 
+
+my $file_in = "./TMP/CORRECTION_MV.TMP";
+open my $INFILE, "<", $file_in or 
+    die "Ouverture impossible du fichier $file_in -$!";
+while (my $line = <$INFILE>) {
+    my $plateforme = substr $line, 52, 4;
+    $dispatch_table{$plateforme}->($line);
+}
+
+sub create_file_writer {
+    my $root_file_name = shift;
+    my $line_count = 0;
+    my (@count_file, $fh);
+    my $old_dos = "";
+    return sub {
+        my $line = shift;
+        if ($line_count == 0) {  
+              # cas où il va falloir changer de fichier
+            my $new_dos = substr $line, 4, 10;
+              # on ne change de fichier que si c'est 
+              #un nouveau dossier
+            print $fh and return if 
+                $new_dos eq $old_dos; 
+            close $fh if defined $fh;
+            @count_file =
+                incremente_compteur(@count_file);
+            my $sequence = join '', @count_file;
+            my $file_name =              
+                "$root_file_name$sequence.txt";
+
+            open $fh , ">", $file_name or 
+                die "Ne peut ouvrir $file_name$!";
+        }
+        print $fh $line;
+        $line_count ++;
+        if ( $line_count >= 19990) {
+            # max = 20000, mais ne pas dégrouper 
+            $line_count = 0;
+            $old_dos = substr $line, 4, 10;
+        }
+    }
+}    
+            
+sub incremente_compteur {
+    # la gestion des numéros de séquence alphabétiques
+    # n'est pas si simple et mérite une procédure 
+    # séparée, mais ne présente pas d'intérêt 
+    # particulier dans notre exemple
+    # ...
+     return @new_counter;
+}
+
+
+__________________
+
+# Second exemple d'écriture dans des fichiers multiples
+my $GB_BACKFILL = "$pwd/BADDEBT-BACKFILL_FILE-GB";
+my $DE_BACKFILL = "$pwd/BADDEBT-BACKFILL_FILE-DE";
+my $FR_BACKFILL = "$pwd/BADDEBT-BACKFILL_FILE-FR";
+my $ES_BACKFILL = "$pwd/BADDEBT-BACKFILL_FILE-ES";
+my $IT_BACKFILL = "$pwd/BADDEBT-BACKFILL_FILE-IT";
+
+open (GB_BACKFILL, "> $GB_BACKFILL") or 
+    die "unable to open output file: $!";
+open (DE_BACKFILL, "> $DE_BACKFILL") or 
+    die "unable to open output file: $!";
+open (FR_BACKFILL, "> $FR_BACKFILL") or 
+    die "unable to open output file: $!";
+open (ES_BACKFILL, "> $ES_BACKFILL") or 
+    die "unable to open output file: $!";
+open (IT_BACKFILL, "> $IT_BACKFILL") or 
+    die "unable to open output file: $!";
+
+while (my $line=<BADDEBT>) {
+    my @row = split (",",$line);
+
+    $date = $row[1];
+    $esid = $row[4];
+    $amount = $row[5];
+    $ppcl_id=$row[8];
+    $cur=$row[6];
+    $cust_id =$row[9]; 
+    if ($custid)
+    {
+       if($ppcl_id == 3)
+       {
+           print GB_BACKFILL "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n ";
+       }
+       elsif($ppcl_id==4)
+       {
+           print DE_BACKFILL "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n";
+       }
+       elsif($ppcl_id==5)
+       {
+           print FR_BACKFILL "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n ";
+       }
+       elsif ($ppcl_id==44551)
+       {
+           print ES_BACKFILL "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n";
+       }
+       elsif($ppcl_id == 35691)
+       {
+           print IT_BACKFILL "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n ";
+       }
+    }
+}
+
+__________________
+
+# Première solution proposée (abrégée)
+open my $US_BACKFILL, '>', 'usfile.txt' or die "$!"; 
+open my $CA_BACKFILL, '>', 'cafile.txt' or die "$!"; 
+open my $BR_BACKFILL, '>', 'brfile.txt' or die "$!"; 
+# etc. pour les autres fichiers
+# ...
+ 
+my $BACKFILL = $ppcl_id ==      1 ? $US_BACKFILL 
+             : $ppcl_id ==      7 ? $CA_BACKFILL 
+             : $ppcl_id == 526970 ? $BR_BACKFILL 
+             # : etc.
+             :                      undef 
+             ; 
+if (defined $BACKFILL) { 
+   print {$BACKFILL} "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n ";  
+}
+
+
+__________________
+
+# # Première solution proposée (abrégée)
+my %BACKFILL; 
+ 
+open $BACKFILL{1}, '>', 'US_backfill.txt' or die "failed to open 'US_BACKFILL.txt' $!"; 
+open $BACKFILL{6}, '>', 'JP_BACKFIll.txt' or die "failed to open 'JP_BACKFILL.txt' $!"; 
+open $BACKFILL{7}, '>', 'CA_backfill.txt' or die "failed to open 'CA_BACKFILL.txt' $!"; 
+# ...
+ 
+# Des accolades sont nécessaires autour du 
+# descripteur de fichier 
+print {$BACKFILL{$ppcl_id}} "$custid|$date|391|$esid|-$amount|$cur|$ppcl_id|8\n ";
+
+__________________
+
+# Solution complète
+
+my %dispatch; 
+$dispatch{3}      = create_func( "$pwd/BADDEBT-BACKFILL_FILE-GB"); 
+$dispatch{4}      = create_func( "$pwd/BADDEBT-BACKFILL_FILE-DE"); 
+$dispatch{5}      = create_func( "$pwd/BADDEBT-BACKFILL_FILE-FR"); 
+$dispatch{44551}  = create_func( "$pwd/BADDEBT-BACKFILL_FILE-ES"); 
+$dispatch{35691}  = create_func( "$pwd/BADDEBT-BACKFILL_FILE-IT"); 
+
+while (my $line = <BADDEBT>) {
+    my ($date, $esid, $amount, $ppcl_id, $cur, $custid) = (split ",", $line)[1,4,5,8,6,9];
+    $dispatch{$ppcl_id}->("$custid|$date|391|$esid|$amount|$cur|$ppcl_id|8") if $custid; 
+}
+sub create_func { 
+    open my $FH, ">", $_[0] or die "could not open $_[0] $!"; 
+    return sub { print $FH shift, "\n"; } 
+}
+
+
