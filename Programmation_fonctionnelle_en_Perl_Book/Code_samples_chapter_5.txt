@@ -1,0 +1,438 @@
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 5
+
+__________________
+
+# 5.1.1. Fonction map : premiers essais
+
+# Version triviale
+
+print join " ", my_map (sub{$_ * 2}, 1..5);
+
+sub my_map {
+    my $code_ref = shift;
+    return map {$code_ref->($_)} @_;
+}
+# imprime 2 4 6 8 10
+
+
+__________________
+
+print join " ", my_map (sub{$_ * 2}, 1..5);
+
+sub my_map {
+    my $code_ref = shift;
+    my @d ;
+    while ($_ = shift ) {
+        push @d, $code_ref->($_);
+    }
+    return @d;
+}
+
+__________________
+
+print join " ", my_map (sub{$_ * 2}, 1..5);
+
+sub my_map {
+    my $code_ref = shift;
+    my @d ;
+    push @d, $code_ref->($_) for @_;
+    return @d;
+}
+
+
+__________________
+
+my @array = (1, 4, 9);
+@array = push_square(@array, 4, 5);
+print "@array", "\n";  # imprime 1 4 9 16 25
+
+sub push_square {
+    my @valeurs = splice @_, $#_ - 1, 2; # retire et récupère les deux dernières valeurs de @_
+    my @array = @_;
+    $_ = $_ * $_ foreach @valeurs;
+    push @array, @valeurs;
+    return @array;
+}
+
+__________________
+
+my @array = (1, 4, 9);
+push_square(\@array, 4, 5);
+print "@array", "\n";   # imprime 1 4 9 16 25
+
+sub push_square {
+    my $array_ref = shift; 
+    push @$array_ref, map $_ ** 2, @_;
+}
+
+
+__________________
+
+sub push_square(\@@);
+
+my @array = (1, 4, 9);
+push_square @array, 4, 5;
+print "@array", "\n";   # imprime 1 4 9 16 25
+
+sub push_square(\@@) {
+    my $array_ref = shift; 
+    push @$array_ref, map $_ ** 2, @_;
+}
+__________________
+
+sub push_square(\@@) {
+    my $array_ref = shift; 
+    push @$array_ref, map $_ ** 2, @_;
+}
+
+my @array = (1, 4, 9);
+push_square @array, 4, 5;
+print "@array", "\n";   # imprime 1 4 9 16 25
+
+__________________
+
+# 5.1.3. Des fonctions my_map et my_grep fonctionnelles
+
+# version avec proto et sans parenthèse
+sub my_map(&@);  # le prototype doit être avant l'appel
+
+my @tableau = 1..5;
+
+print join " ", my_map {$_ * 2} @tableau;
+
+sub my_map (&@){
+    my $code_ref = shift;
+    my @d;
+    push @d, $code_ref->($_) for @_;
+    return @d;
+}
+# imprime: 2 4 6 8 10
+
+__________________
+
+# Version fonctionnelle "pure", sans effet de bord
+sub my_map(&@);    # prototype avant l'appel
+
+my @tableau = 1..5;
+
+print "Nouveau tableau: ", 
+    join " ", my_map {++$_} @tableau;
+print "\nTableau d'origine: ", "@tableau", "\n";
+
+sub my_map (&@){
+    my $code_ref = shift;
+    my @d = @_;
+    $_ = $code_ref->($_) for @d;
+    return @d;
+}
+# imprime:
+# Nouveau tableau: 2 3 4 5 6
+# Tableau d'origine: 1 2 3 4 5
+
+__________________
+
+sub my_grep (&@) {
+    my $code_ref = shift;
+    my @result;
+    push @result, $code_ref->($_) ? $_: () for @_;
+    return @result;
+}
+print join " ", my_grep {not $_ %2} (1..10);
+# imprime 2 4 6 8 10
+
+__________________
+
+# 5.2. Écrire une fonction sort originale
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub comb_sort (&\@) {
+    my $code_ref = shift;
+    my $v_ref = shift;
+    my $max = scalar (@$v_ref);
+    my $gap = $max;
+    while (1) {
+        my $swapped = 0;
+        $gap = int ($gap / 1.3);
+        $gap = 1 if $gap < 1;
+        my $lmax = $max - $gap - 1;
+        foreach my $i (0..$lmax) {
+            local ($a, $b) = 
+                ($$v_ref[$i], $$v_ref[$i+$gap]);
+            ($$v_ref[$i], $$v_ref[$i+$gap], $swapped) =
+                ($$v_ref[$i+$gap], $$v_ref[$i], 1)
+                if $code_ref->($a, $b) > 0;
+        }
+        last if $gap == 1 and $swapped == 0;
+    }
+}
+
+my @v;
+my $max = 500;
+
+$v[$_] = int rand(20000) foreach (0..$max);
+
+comb_sort {$a<=>$b} @v;
+print "@v";
+
+__________________
+
+# 5.3.1. Le générateur d'itérateurs
+
+my @tableau = 1..5;
+my $iterateur = create_iter(@tableau);
+for (1..4) { 
+    my $val = $iterateur->(); 
+    print $val, "\n" if defined $val;
+}
+
+sub create_iter {
+    my @array = @_;
+    return sub { shift @array}
+}
+
+__________________
+
+sub create_iter(\@); # la déclaration avec le prototype
+                     # doit figurer avant l'appel
+my @tableau = 1..5;
+my $iterateur = create_iter(@tableau);
+for (1..4) { 
+    my $val = $iterateur->(); 
+    print $val, "\n" if defined $val;
+}
+
+sub create_iter(\@) {
+    my $array_ref = shift;
+    my $index = 0;
+    return sub { $array_ref->[$index++];}
+}
+
+
+__________________
+
+# 5.3.2.1. Implémentation de la fonction lazy_map
+
+sub lazy_map(&$);    # prototype avant l'appel
+sub create_iter(\@);
+
+my @tableau = reverse 1..7;
+my $iterateur = create_iter(@tableau);
+
+for (1..5) {
+    my $val = lazy_map {$_**2} $iterateur;
+    print "Itération N° $_ : $val \n" if defined $val;
+}
+
+sub lazy_map (&$){
+    my ($code_ref, $iter) = @_;
+    local $_ = $iter->(); # lazy_map travaille sur $_
+                          # comme map
+    return unless defined $_;
+    return $code_ref->();
+}
+
+sub create_iter(\@) {
+    my $array_ref = shift;
+    my $index = 0;
+    return sub { $array_ref->[$index++];}
+}
+
+__________________
+
+# 5.3.2.2. Benchmark des fonctions lazy_map et map
+
+use strict; 
+use warnings;
+use Benchmark;
+
+my @tableau = ();# voir plus bas les deux cas;
+my $iterateur = create_iter (@tableau);
+
+sub lazy_map (&$){
+    my ($code_ref, $iter) = @_;
+    local $_ = $iter->(); # lazy_map travaille sur $_
+                          # comme map
+    return unless defined $_;
+    return $code_ref->();
+}
+
+sub create_iter {
+    my $array_ref = \@_;
+    my $index = 0;
+    return sub { $array_ref->[$index++];}
+}
+
+sub try_map {
+    my @c = grep {$_ == 15000} map { $_ * 2 } @tableau;
+}
+sub try_lazy_map {
+    my $iterateur = create_iter(@tableau);
+    while (1) {
+        my $val = lazy_map {$_*2} $iterateur;
+        last unless defined $val;
+        last if $val == 15000;
+    }
+}
+
+timethese ( 1000, {
+                "map"         => sub { try_map(); },
+                "lazy_map"     => sub { try_lazy_map() },
+} );
+
+__________________
+
+# 5.4. Une fonction lazy_grep
+
+my @tableau = reverse 1..10;
+my $iterateur = create_iter(@tableau);
+
+sub lazy_grep (&$){
+    my ($code_ref, $iter) = @_;
+    local $_ = $iter->(); 
+    return unless defined $_;
+    return $_ if $code_ref->();
+    return;
+}
+for (1..9) {
+    my $val = lazy_grep {$_%2} $iterateur;
+    print "Itération N° $_ : $val \n" if defined $val;
+}
+
+__________________
+
+sub lazy_grep (&$){
+    my ($code_ref, $iter) = @_;
+    while (1) {
+        local $_ = $iter->() ; 
+        return unless defined $_; # éviter une boucle
+                                  # infinie
+        return $_ if $code_ref->();
+    }
+}
+
+my @tableau = reverse 1..10;
+my $iterateur = create_iter(@tableau);
+
+for my $i (1..8) {
+    my $val = lazy_grep {$_%2} $iterateur;
+    print "Itération N° $i : $val \n" if defined $val;
+}
+
+__________________
+
+sub create_iter(\@) {
+    my $array_ref = shift;
+    my $index = 0;
+    my $max = $#{$array_ref}; # dernier élément
+    return sub { 
+        return undef if $index > $max;
+        \$array_ref->[$index++];        
+    }
+}
+
+__________________
+
+# 5.4.2. Fonctions lazy_grep et lazy_map : versions finales
+
+sub lazy_grep (&$){
+    my ($code_ref, $iter) = @_;
+    while (1) {
+        my $iref = $iter->(); 
+        return unless $iref; # sort si tableau épuisé
+        local $_ = $$iref;
+        next unless defined $_; 
+            # (reboucle si la valeur n'est pas définie)
+        return $_ if $code_ref->();
+    }
+}
+
+
+__________________
+
+sub lazy_map (&$) {
+    my ($code_ref, $iter) = @_;
+    local $_ = ${$iter->()}; 
+    return unless defined $_;
+    return $code_ref->();
+}
+
+__________________
+
+# 5.5.1. Consommer et renvoyer deux valeurs à chaque demande
+
+sub create_iter_n($\@) {
+    my ($nb_items, $array_ref) = @_;
+    my $index = 0;
+    my $max = $#{$array_ref} + 1; 
+        # dernier élément du tableau + 1 
+        # car on teste $index après l'incrémentation
+    return sub { 
+        my @return_array;
+        push @return_array, $array_ref->[$index++] 
+            for 1..$nb_items;
+        return undef if $index > $max;
+        return @return_array;        
+    }
+}
+
+__________________
+
+my @input_array = 1..20;
+    # itérateur de paires :
+my $get_2_items = create_iter_n 2, @input_array; 
+    # itérateur de triplets :
+my $get_3_items = create_iter_n 3, @input_array;
+    # itérateur de quadruplets :
+my $get_4_items = create_iter_n 4, @input_array; 
+
+print "\nPaires:\n";
+for (1..7) {
+    print join " ", grep defined $_, $get_2_items->();
+    print "\n";
+}
+print "\nTriplets:\n";
+for (1..5) {
+    print join " ", grep defined $_, $get_3_items->();
+    print "\n";
+}
+print "\nQuadruplets:\n";
+for (1..10) {
+    print join " ", grep defined $_, $get_4_items->();
+    print "\n";
+}
+
+__________________
+
+# 5.5.2. Consommer une valeur et en renvoyer deux (ou plus)
+
+use strict;
+use warnings;
+
+sub create_iter_1_2(\@) {
+    my $array_ref = shift;
+    my $index = 0;
+    my $max = $#{$array_ref} + 1; 
+    return sub { 
+        return undef if $index > $max;
+        return ($array_ref->[$index++], 
+            $array_ref->[$index]);
+    }
+}
+
+my @input_array = (1..5, 7, 11, 18, 34..39);
+my $get_2_items = create_iter_1_2 @input_array; 
+
+while (1) {
+    my ($c, $d) = $get_2_items->();
+    last unless defined $d;
+    print "$c $d\n" and last if $d - $c > 5;
+}
+
