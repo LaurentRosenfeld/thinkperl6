@@ -1,0 +1,135 @@
+
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 9
+
+__________________
+
+# 9.1.1. La fonction combine
+
+sub combine (&\@\@) {
+    my ($code_ref, $l1_ref, $l2_ref) = @_;
+    my @result;
+    while (1) { 
+        local ($a, $b);
+        ($a, $b) = (shift @$l1_ref, shift @$l2_ref);
+        return @result unless defined $a 
+            and defined $b;
+        push @result, $code_ref->($a, $b);
+    }
+}
+
+sub add2 (\@\@) {
+    my ($l1, $l2) = @_;
+    return combine {$a + $b} @$l1, @$l2;
+} 
+
+sub avg2(\@\@) {
+    my ($l1, $l2) = @_;
+    return combine {($a + $b) /2} @$l1, @$l2;
+}
+
+__________________
+
+use strict;
+use warnings;
+use Combine qw/combine add2/;
+
+my @list1 = qw /1 5 7 98 32/;
+my @list2 = grep $_%2, 1..10; # nombres impairs entre 1 et 10
+
+print join " ", add2(@list1, @list2), "\n";
+__________________
+
+# Version ne modifiant pas les tableaux reçus en arguments
+sub combine (&\@\@) {
+    my ($code_ref, $l1_ref, $l2_ref) = @_;
+    my @result;
+    my $i = 0;
+    while (1) { 
+       local ($a, $b) = 
+           ($l1_ref->[$i], $l2_ref->[$i++]);
+       return @result unless defined $a and defined $b;
+       push @result, $code_ref->($a, $b);
+    }
+}
+__________________
+
+# 9.2. Une fonction intermédiaire de création de fonctions
+
+sub create_function2 {
+    my $code_ref = shift;
+    return sub { 
+        my ($l1_ref, $l2_ref) = @_;
+        return combine {&$code_ref} @$l1_ref, @$l2_ref;
+    }
+}
+
+
+__________________
+
+sub create_function2(&) {
+    my $code_ref = shift;
+    return sub  { 
+        return combine {&$code_ref} @{$_[0]}, @{$_[1]};
+    }
+}
+__________________
+
+my $add2 = create_function2(sub {$a + $b});
+
+my @list1 = qw /1 5 7 98 32/;
+my @list2 = grep $_%2, 1..10;
+
+print join " ", $add2->(\@list1, \@list2), "\n";
+
+sub create_function2 {
+    my $code_ref = shift;
+    sub  { combine {&$code_ref} @{$_[0]}, @{$_[1]};
+    }
+}
+
+__________________
+
+# 9.2.1. Créer une bibliothèque de fonctions
+
+my $add2  = create_function2( sub { $a + $b } );
+my $avg2  = create_function2( sub {( $a + $b ) / 2 } );
+my $substr2  = create_function2( sub { $a - $b } );
+my $diff2 = create_function2( sub { abs( $a - $b ) } );
+my $mult2 = create_function2( sub { $a * $b } );
+my $eq_nr = create_function2( sub { $a if $a == $b } );
+my $eq_str = create_function2( sub {$a if $a eq $b } );
+my $each_array = create_function2( sub { $a, $b } );
+# ...
+
+__________________
+
+my @list1 = qw /1 32 5 7 98/;
+my @list2 = grep $_%2, 1..10;
+
+print join " ", $add2->(\@list1, \@list2), "\n";
+print join " ", $avg2->(\@list1, \@list2), "\n";
+print join " ", $substr2->(\@list1, \@list2), "\n";
+print join " ", $diff2->(\@list1, \@list2), "\n";
+print join " ", $mult2->(\@list1, \@list2), "\n";
+print join " ", $equal_nr->(\@list1, \@list2), "\n";
+print join " ", $equal_str->(\@list1, \@list2), "\n";
+print join " ", $each_array->(\@list1, \@list2), "\n";
+__________________
+
+# 9.2.2.  Simplification syntaxique
+
+sub add2 (\@\@) {
+     my ($list1, $list2) = @_;
+     return $add2->(\@list1, \@list2);
+}
+
+my @list1 = qw /1 32 5 7 98/;
+my @list2 = grep $_%2, 1..10;
+
+print join " ", add2(@list1, @list2), "\n";
+
