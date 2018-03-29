@@ -1,0 +1,219 @@
+
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 8
+
+__________________
+
+# 8.1. L'idée de base de la curryfication
+
+sub add { 
+    my $ajout = shift; 
+    return sub {$ajout + shift}
+};
+my $add_2 =  add(2);
+print $add_2->(3); # imprime 5
+
+
+__________________
+
+# 8.3. Curryfication de la fonction parcours_dir
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub create_func {
+    my $code_ref = shift;
+    my $func;
+    $func  = sub {
+        my $path = shift;
+        my @dir_entries = glob("$path/*");
+        foreach my $entry (@dir_entries) {
+            $code_ref->($entry) if -f $entry;
+            $func->($entry) if -d $entry;
+        }
+    }
+}
+my $print_dir = create_func(sub { print shift, "\n"; });
+$print_dir->($ARGV[0]);
+
+__________________
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub create_func {
+    my ($code_ref, $tot_size_ref) = @_;
+    my $func;
+    $func  = sub {
+        my $path = shift;
+        my @dir_entries = glob("$path/*");
+        foreach my $entry (@dir_entries) {
+            $func->($entry) and next if -d $entry;
+            $code_ref->($tot_size_ref, $entry) 
+                if -f $entry;
+        }
+    }
+}
+my $tot_size = 0;
+my $size_dir_func_ref = create_func(
+    sub {
+        my $size_ref = shift; 
+        $$size_ref += (-s shift)
+    }, \$tot_size);
+$size_dir_func_ref->($ARGV[0]);
+print $tot_size, "\n";
+
+
+__________________
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub create_func {
+    my $code_ref = shift;
+    my $func;
+    $func  = sub {
+        my $path = shift;
+        my @dir_entries = glob("$path/*");
+        foreach my $entry (@dir_entries) {
+            $func->($entry) and next if -d $entry;
+            $code_ref->($entry) if -f $entry;
+        }
+    }
+}
+
+sub parcours_dir {
+    my $tot_size = 0;
+    my $size_dir_func_ref =  
+        create_func( sub { $tot_size += (-s shift)} );
+    $size_dir_func_ref->($_[0]);
+    return $tot_size, "\n";
+}
+print parcours_dir($ARGV[0]);
+
+__________________
+
+# 8.4. Une version curryfiée de reduce
+
+use strict;
+use warnings;
+
+sub reduce (&) {
+    my $code_ref = shift;
+    my $func = sub {        
+        my $result = shift;
+        for (@_ ) {
+            local ($a, $b) = ($result, $_ );
+            $result = $code_ref->($a, $b );
+        }
+        return $result;
+    };
+    return $func;
+}
+
+my $max = sub { reduce { $a > $b ? $a : $b } }; 
+my $maximum = $max->()->(1..10);
+print "Le max est: $maximum \n";
+
+
+__________________
+
+sub reduce (&) {
+    my $code_ref = shift;
+    return sub {        
+        my $result = shift;
+        for (@_ ) {
+            local ($a, $b) = ($result, $_ );
+            $result = $code_ref->($a, $b );
+        }
+        return $result;
+    };
+}
+__________________
+
+use strict;
+use warnings;
+
+sub reduce (&@) {
+    my $code_ref = shift;
+    return sub {        
+        my $result = shift;
+        for (@_ ) {
+            local ($a, $b) = ($result, $_ );
+            $result = $code_ref->($a, $b );
+        }
+        return $result;
+    };
+}
+*max = reduce { $a > $b ? $a : $b }; 
+my $maximum = max(1..10);
+print "Le max est: $maximum \n";   # imprime "Le max est:  10"
+
+__________________
+
+*max reduce { $a > $b ? $a : $b };
+*min reduce { $a > $b ? $b : $a };
+*product reduce { $a * $b }; 
+# etc.
+
+__________________
+
+# 8.5. La curryfication automatique
+
+
+use strict;
+use warnings;
+
+sub curry (\&@) { 
+    my $code = shift;
+    my @args = @_;
+    sub {
+        unshift @_, @args;
+        goto &$code;
+   };
+}
+
+my $curried_add = curry(&add, 6);
+print $curried_add->(5);  # imprime 11
+
+sub add {
+    my ($c, $d) = @_;
+    return $c + $d;
+}
+__________________
+
+sub subtract {
+    my ($c, $d) = @_;
+    return $c - $d;
+}
+
+my $curried_subtr = curry(&subtract, 6);
+print $curried_subtr->(5);     # imprime 1
+__________________
+
+sub subtract {
+    my ($c, $d) = @_;
+    return $d - $c;
+}
+my $subtract_1 = curry(&subtract, 1);
+print $subtract_1->(4);       # imprime 3
+
+__________________
+
+# 8.6. Prototypes et curryfication automatique : la fonction comb_sort
+
+my @v;
+my $max = 500;
+$v[$_] = int rand(20000) foreach (0..$max);
+
+my $curried_comb_sort = curry (&comb_sort, sub {$a<=>$b});
+$curried_comb_sort->(\@v);
+print "@v";
+
