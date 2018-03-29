@@ -1,0 +1,96 @@
+
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 10
+
+__________________
+
+# 10. Implanter les fonctions gather et take de Perl 6
+
+use strict;
+use warnings;
+
+{
+    my @result;
+
+    sub gather(&) {
+        my $code_ref = shift;
+        @result = ();
+        $code_ref->();
+        return @result;
+    }
+
+    sub take(@) {
+        my @caller = caller 2;
+        die "Appel à take hors d'un bloc gather" 
+            unless $caller[3] =~ /gather/;
+        push @result, @_;
+        return scalar @result;
+    }
+}
+
+__________________
+
+# 10.2. Exemples d'utilisation simple
+
+print join " ", gather { take $_ * 2 for (1..10) };
+
+__________________
+
+print join " ", gather {$_ % 2 and take $_ 
+    for (1..10)};
+# imprime 1 3 5 7 9
+__________________
+
+print join " ", gather {$_ % 2  and take $_ ** 3 for  (1..10)};
+# imprime 1 27 125 343 729
+
+__________________
+
+# 10.3. Gather et take pour construire une fonction my_map 
+
+sub my_map (&@) {
+   my $coderef = shift;
+   my @list = @_;
+   return gather {
+      take $coderef->($_) for @list;
+   };
+}
+
+print join " ", my_map {$_ * 2} 1..10;
+print "\n";
+
+__________________
+
+#10.4. ...Ou my_grep
+
+sub my_grep (&@) {
+   my $coderef = shift;
+   my @list = @_;
+   return gather {
+      $coderef->($_) and take $_ for @list;
+   };
+}
+
+print join " ", my_grep {$_ % 2} 1..20;
+
+__________________
+
+sub grep_and_map {
+    my $coderef_grep = shift;
+    my $coderef_map = shift;
+    my @list = @_;
+    return gather {
+        $coderef_grep->($_) and take $coderef_map->($_)
+            for @list;
+    };
+}
+
+print join " ", grep_and_map ( 
+    sub {$_ % 2}, sub {$_ ** 2}, 0..20
+);
+# affiche: 1 9 25 49 81 121 169 225 289 361
+
