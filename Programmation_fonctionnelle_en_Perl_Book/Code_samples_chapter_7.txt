@@ -1,0 +1,306 @@
+
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 7
+
+__________________
+
+#7.1. Afficher une trace des appels à une fonction
+
+use strict;
+use warnings;
+use feature 'say';
+
+affiche_la_reponse();
+
+sub affiche_la_reponse {
+    say "42";
+}
+
+
+__________________
+
+my $count = 0;
+sub trace_appels {
+   $count++;
+   say "Appel numéro $count de la fonction surveillée";
+   affiche_la_reponse();
+}
+trace_appels() for 1..3;
+
+__________________
+
+my $count = 0;
+sub enrichit {
+   my $fonction = shift;
+   $count++;
+   say "Appel numéro $count de la fonction surveillée";
+   $fonction->();
+}
+enrichit(\&affiche_la_reponse) for 1..3;
+__________________
+
+sub enrichit {
+   my $fonction = shift;
+   $count++;
+   say "Appel numéro $count de la fonction surveillée";
+   $fonction->(@_);
+}
+enrichit(\&fonction_surveillee, $param1, $param2);
+
+__________________
+
+# 7.2. Créer la fonction décoratrice
+
+use strict;
+use warnings;
+use feature 'say';
+
+sub triplement {
+    return 3 * shift;
+}
+
+my $triplement_decore = decorateur(\&triplement);
+say $triplement_decore->($_) for 10, 15, 20;
+
+sub decorateur { 
+   my $coderef = shift; 
+   return sub { 
+     say "Appel de la fonction avec les arguments: @_"; 
+     my $resultat = $coderef->(@_); 
+     say "Valeur de retour: $resultat."; 
+     return $resultat; 
+   } 
+}
+__________________
+
+# 7.2.1. Enrichir le décorateur
+
+sub decorateur { 
+    my $coderef = shift;
+    my $num_appel = 1;
+    return sub { 
+        say "Appel numéro $num_appel de la fonction avec les arguments: @_"; 
+        $num_appel++;
+        my $resultat = $coderef->(@_); 
+        say "Valeur de retour: $resultat."; 
+        return $resultat; 
+    } 
+}
+
+__________________
+
+# 7.2.2. Décorateur en contexte scalaire ou de liste ?
+
+sub multiplie234 {
+    return $_[0] * 2, $_[0] * 3, $_[0] * 4;
+}
+
+my $multiplie_decore = decorateur(\&multiplie234);
+say $_ for $multiplie_decore->(20);
+
+sub decorateur { 
+    my $coderef = shift;
+    my $num_appel = 1;
+    return sub { 
+        say "Appel numéro $num_appel de la fonction avec les arguments: @_"; 
+        $num_appel++;
+        my @resultat = $coderef->(@_); 
+        say "Valeurs de retour: @resultat."; 
+        return @resultat; 
+    } 
+}
+
+__________________
+
+my $multiplie_decore = decorateur(\&multiplie234);
+say $_ for $multiplie_decore->(20);
+my $triplement_decore = decorateur(\&triplement);
+say $triplement_decore->($_) for 5, 10, 15;
+
+__________________
+
+# 7.2.3.1. Et hop, un petit tour de magie blanche
+
+*main::triplement = decorateur(\&triplement);
+say triplement($_) for 10, 15;
+
+__________________
+
+7.2.3.4. Suppression de l'avertissement de redéfinition
+
+{   
+    no warnings 'redefine';
+    *main::triplement = decorateur(\&triplement);
+}
+say triplement($_) for 15, 30;
+__________________
+
+# 7.2.3.5. La table des symboles d'un module particulier
+
+#!/usr/bin/perl
+
+package Multiplie;
+
+use strict;
+use warnings;
+
+require Exporter;
+our @ISA = qw/Exporter/;
+our @EXPORT = qw (quadruplement);
+
+sub quadruplement {
+    return 4 * shift;
+};
+# ... autres fonctions éventuelles
+1;
+__________________
+
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use feature 'say';
+use Multiplie;
+
+say quadruplement($_) for 5, 15;
+__________________
+
+{   
+    no warnings 'redefine';
+    *{Multiplie::quadruplement} = decorateur(\&quadruplement);
+}
+
+sub quadruplement {
+    return 4 * shift;
+};
+
+sub decorateur { 
+    my $coderef = shift;
+    my $num_appel = 1;
+    return sub { 
+        say "Appel n° $num_appel de la fonction avec les arguments: @_"; 
+        $num_appel++;
+        my $resultat = $coderef->(@_); 
+        say "Valeur de retour: $resultat."; 
+        return $resultat; 
+    } 
+}
+__________________
+
+{   
+    no warnings 'redefine';
+    no strict 'refs';
+    *{__PACKAGE__ . "::quadruplement"} = decorateur(\&quadruplement);
+}
+
+__________________
+
+{   
+    no warnings 'redefine';
+    *main::quadruplement = decorateur(\&quadruplement);
+}
+
+say quadruplement($_) for 5, 15;
+
+
+sub decorateur { 
+    my $coderef = shift;
+    my $num_appel = 1;
+    return sub { 
+        say "Appel numéro $num_appel de la fonction avec les arguments: @_"; 
+        $num_appel++;
+        my $resultat = $coderef->(@_); 
+        say "Valeur de retour: $resultat."; 
+        return $resultat; 
+    } 
+}
+__________________
+
+# 7.2.4. Automatiser l'installation du décorateur
+
+sub decore {
+    my ($sub_name, $decorator) = @_;
+    no warnings 'redefine';
+    no strict 'refs';
+    *{"main::$sub_name"} = $decorator->(\&{$sub_name});
+}
+# Mettre en place la décoration est maintenant simple:
+decore ("triplement", \&decorateur);
+say triplement($_) for 15, 30;
+
+
+__________________
+
+# 7.3. Retour à la fonction de Fibonacci
+
+sub fibo {
+    my $n = shift;
+    if ($n < 2) {
+        return $n;
+    } else {
+        return fibo ($n-1) + fibo ($n-2);
+    }
+}
+
+sub cache {
+    my $code_ref = shift;
+    my @memo = (0, 1);
+    return sub {
+        my $n = shift;
+        $memo[$n] = $code_ref->($n) unless defined $memo[$n];
+        return $memo[$n];
+    }
+}
+
+decore("fibo", \&cache);
+say fibo(shift);
+
+__________________
+
+# 7.3.2. Le module memoize
+
+sub cache {
+    my $code_ref = shift;
+    my %memo;
+    return sub {
+        my $n = shift;
+        $memo{$n} = $code_ref->($n) 
+            unless defined $memo{$n};
+        return $memo{$n};
+    }
+}
+__________________
+
+use strict;
+use warnings;
+use feature 'say';
+
+
+sub fibo {
+    my $n = shift;
+    return $n if $n < 2; 
+    return fibo ($n-1) + fibo ($n-2);
+}
+
+sub memoize {
+    my $sub_name = shift;
+    my %memo;
+    my $code_ref = \&{$sub_name};
+    my $new_func = sub {
+        my $n = shift;
+        $memo{$n} = $code_ref->($n) unless defined $memo{$n};
+        return $memo{$n};
+    };
+    no warnings 'redefine';
+    no strict 'refs';
+    *{"main::$sub_name"} = $new_func;
+}
+
+memoize("fibo");
+say fibo(shift);
+
+
