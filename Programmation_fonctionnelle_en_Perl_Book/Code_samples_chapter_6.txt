@@ -1,0 +1,246 @@
+
+### Scripts pour le livre Programmation fonctionnelle en Perl
+Copyright (c) 2018 Laurent Rosenfeld
+These code snippets are free software and can be redistributed and/or modified under the same terms as Perl itself.
+__________________
+
+# Chapitre 6
+
+__________________
+
+# 6.1. Expression du besoin
+
+sub max {
+    my $max = shift; # initialise $max au 
+                     # 1er élément du tableau
+    for (@_) { $max = $_ if $_ > $max; };
+    return $max;
+}
+
+sub min {
+    my $min = shift;
+    for (@_) { $min = $_ if $_ < $min; };
+    return $min;
+}
+
+sub somme {
+    my $sum = shift;
+    for (@_) { $sum += $_; };
+    return $sum;
+}
+
+
+__________________
+
+# 6.1.1. Essais avec une fonction de rappel
+
+use strict;
+use warnings;
+
+my @c = 1..10;
+my $sum_ref = sub {
+    my $value = shift; 
+    for (@_) { $value += $_; }; 
+    return $value;
+};
+my $somme = traite($sum_ref, @c);
+
+sub traite {
+    my $code_ref = shift;
+    return $code_ref->(@_);
+}
+print "\n $somme \n";
+
+
+__________________
+
+# 6.1.2. Un générateur de fermetures anonymes
+
+use strict;
+use warnings;
+
+my @c = 1..10;
+my $somme = sum(@c);
+
+sub traite {
+    my $code_ref = shift;
+    local $a = $code_ref->($_) for @_;
+    return $a;
+}
+
+sub sum {
+    return traite (sub { $a += $_ }, @_);
+}
+print "\n $somme \n";
+__________________
+
+6.2. La fonction reduce, première version
+
+sub reduce(&@) {
+    my $code_ref = shift;
+    my $result = shift;
+    $result = $code_ref->($result, $_) for  @_;
+    return $result;
+}
+
+my $max = reduce {
+     my ($result, $new_val) = @_; 
+     return $result if $result > $new_val;
+     return $new_val;
+     } @tableau;
+
+__________________
+
+my $max = reduce {$_[0] > $_[1] ? $_[0] : $_[1]} 1..20; 
+my $min = reduce {$_[0] > $_[1] ? $_[1] : $_[0]} 1..20; 
+my $sum = reduce {$_[0] + $_[1]} 1..20;
+
+__________________
+
+sub max { reduce {$_[0] > $_[1] ? $_[0] : $_[1]} @_}
+sub min { reduce {$_[0] > $_[1] ? $_[1] : $_[0]} @_} 
+sub sum { reduce {$_[0] + $_[1]} @_}
+
+__________________
+
+# 6.3.1. Code de la nouvelle version de reduce
+
+sub reduce (&@) {
+    my $code_ref = shift;
+    my $result = shift;
+    for (@_ ) {
+        local ($a, $b) = ($result, $_ );
+        $result = $code_ref->($a, $b )
+    }
+    return $result;
+}
+
+my $max = reduce { $a > $b ? $a : $b } @_;
+_________________
+
+# 6.3.2. Le problème de la liste vide
+
+my @a = 1..10;
+print join " ", max(@a), sum(@a);
+
+sub max { reduce { $a > $b ? $a : $b } @_; }
+sub sum { reduce { $a + $b } @_; }
+__________________
+
+my @a = ();
+my $maximum = max(@a);
+print $maximum, "\n" if defined $maximum;
+
+sub max { reduce { $a > $b ? $a : $b } @_; }
+
+__________________
+
+sub sum { 
+     return 0 unless scalar @_;
+     reduce { $a + $b } @_;
+}
+
+__________________
+
+my @a = ();
+print sum(@a);
+
+sub sum { reduce { $a + $b } 0, @_; }
+__________________
+
+my $nr_elmnts = count (reverse 1..10);
+print "$nr_elmnts \n";
+
+sub count { reduce { $a + 1 } 0, @_; };
+
+__________________
+
+# 6.4.1. Fonctions de listes simples
+
+sub max {
+    reduce { $a > $b ? $a : $b } @_; 
+}
+sub min {
+    reduce { $a > $b ? $b : $a } @_; 
+}
+sub sum {
+    reduce { $a + $b } 0, @_; 
+}
+sub product {
+    reduce { $a * $b } @_; 
+}
+sub avg {      # moyenne
+    return undef unless @_; # éviter une division par 0
+    sum (@_)/scalar @_;
+}
+sub variance {
+    return undef unless @_; # éviter une division par 0
+    my $moyenne = avg (@_);
+    sum ( map {($_ - $moyenne)**2} @_ )/ scalar @_;
+    # cette dernière ligne pourrait s'écrire plus 
+    # simplement: avg ( map {($_ - $moyenne)**2} @_ );
+}
+sub std_dev {      # écart-type
+    sqrt variance (@_);
+}
+sub maxstr {
+    reduce { $a gt $b ? $a : $b } @_; 
+}
+sub minstr {
+    reduce { $a gt $b ? $b : $a } @_; 
+}
+sub longest_str {
+    reduce { length $a > length $b ? $a : $b } @_;
+}
+sub shortest_str {
+    reduce { length $a > length $b ? $b : $a } @_;
+}
+sub concatenate {
+    return reduce { $a . $b } @_;
+    # si l'on préfère considérer que la concaténation
+    # d'une liste vide est une chaîne vide, mettre:
+    # return reduce { $a . $b } "", @_;
+}
+__________________
+
+# 6.4.2. Fonctions de listes composées
+
+sub any {
+    my $code_ref = shift;
+    reduce { $a or $code_ref->(local $_ = $b) } @_;
+}
+sub all {
+    my $code_ref = shift;
+    reduce { $a and $code_ref->(local $_ = $b) } @_;
+}
+sub none {
+    my $code_ref = shift;
+    reduce { $a and not $code_ref->(local $_ = $b) }
+        @_;
+}
+sub notall {
+    my $code_ref = shift;
+    reduce { $a or not $code_ref->(local $_ = $b) } @_;
+}
+
+__________________
+
+sub any(&@) {
+    my $code_ref = shift;
+    reduce { $a or $code_ref->(local $_ = $b) } 0, @_;
+}
+sub all(&@) {
+    my $code_ref = shift;
+    reduce { $a and $code_ref->(local $_ = $b) } 1, @_;
+}
+sub none(&@) {
+    my $code_ref = shift;
+    reduce { $a and not $code_ref->(local $_ = $b) } 
+        1, @_;
+}
+sub notall(&@) {
+    my $code_ref = shift;
+    reduce { $a or not $code_ref->(local $_ = $b) }
+        0, @_;
+}
+
