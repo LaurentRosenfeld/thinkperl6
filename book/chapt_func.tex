@@ -422,8 +422,8 @@ Cannot modify an immutable Int
 
 \index{subroutine}
 So far, we have only been using the functions that come with Perl,
-but it is also possible to add new functions. In Perl, user-
-defined functions are often called subroutines, but you might choose 
+but it is also possible to add new functions. In Perl, user-defined
+functions are often called subroutines, but you might choose 
 either word for them. 
 
 A {\bf function definition} starts with the {\tt sub} keyword (for
@@ -821,7 +821,7 @@ the previous example is shown in Figure~\ref{fig.stack}.
 
 The frames are arranged in a stack that indicates which function
 called which, and so on.  In this example, \verb"print-twice"
-was called by \verb"cat_twice", and \verb"cat_twice" was called by 
+was called by \verb"concat_twice", and \verb"concat_twice" was called by 
 \verb"main", which is a special name for the topmost frame.  When
 you create a variable outside of any function, it belongs to 
 \verb"main".
@@ -1024,7 +1024,7 @@ a number, divided it by two, and printed out the expected result:
 \index{coercion!type}
 
 \begin{verbatim}
-sub half( $number) { $number / 2 }
+sub half($number) { $number / 2 }
 say half "84"; # -> 42
 \end{verbatim}
 
@@ -1251,7 +1251,7 @@ can really have no name at all, consider this:
 do-twice(sub {say "Hello World!"} );
 \end{verbatim}
 
-It will happily print "Hello World" twice. If the \verb"$do-twice"
+It will happily print "Hello World" twice. If the \verb"do-twice"
 function was declared earlier, you can even simplify the syntax 
 and omit the parentheses:
 
