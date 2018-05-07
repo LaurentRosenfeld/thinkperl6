@@ -880,8 +880,21 @@ as well as the methods such as {\tt coordinates} defined
 in the parent class. The child class  has a new 
 attribute (the color) and two new methods.
 
-In the preceding code example, we have written two different 
-methods for changing the color 
+Instantiating a {\tt Pixel} object is just about as easy as 
+before, we only need to add an additional attribute parameter 
+in the call to the {\tt new} constructor:
+
+\begin{verbatim}
+my $pix = Pixel.new(
+    :abscissa(3.3),
+    :ordinate(4.2),
+    color => {red => 34, green => 233, blue => 145}, 
+    );
+say "The original pixel has the following colors: ", $pix.color;
+\end{verbatim}
+
+In the {\tt Pixel} class definition, we have written 
+two different methods for changing the color 
 only to illustrate two possible syntax formats, for pedagogical 
 purposes. The first one receives a hash as a parameter, and 
 the second one uses positional parameters, which forces 
