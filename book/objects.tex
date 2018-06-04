@@ -1791,7 +1791,7 @@ say $_ for $a.get;
 \index{attribute!private}
 \index{attribute!public}
 In this example, we have declared \verb'$.x' and \verb'$.y' 
-as ``public'' (so to speak) attributes, and \verb'$.z' as 
+as ``public'' (so to speak) attributes, and \verb'$!z' as a
 a truly private attribute. Running this code displays this:
 
 \begin{verbatim}
@@ -2284,7 +2284,7 @@ We'll cover a couple of additional goodies, though.
 It is possible to set trace points on specific lines of code 
 and variables (or expressions), with the command {\tt tp add 
 line \$var}. This will record the value of \verb'$var' each 
-time the programs hits the chosen line. Then you simply run 
+time the program hits the chosen line. Then you simply run 
 the program for a while and, at some point, you can visualize 
 how the variable changed over time, using the command 
 {\tt tp show}.
