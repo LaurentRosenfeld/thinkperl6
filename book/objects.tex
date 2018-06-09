@@ -844,11 +844,11 @@ class Pixel is Point2D {
     has %.color is rw;
 
     method change_color(%hue) {
-        %!color = %hue
+        self.color = %hue
     }
     method change_color2(Int $red, Int $green, Int $blue) {
         # signature using positional parameters
-        %!color = (red => $red, green => $green, blue => $blue)
+        self.color = (red => $red, green => $green, blue => $blue)
     }
 }
 \end{verbatim}
