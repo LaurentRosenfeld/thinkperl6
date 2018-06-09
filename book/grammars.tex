@@ -1200,6 +1200,12 @@ token value { <val=object> | <val=array> | <val=string>
               | <val=number> | true | false | null
 }
 \end{verbatim}
+We also need to add capturing parentheses to the {\tt string} token
+(to enable the {\tt string} method to retrieve the string:
+
+\begin{verbatim}
+token string   {  \" ( <[ \w \s \- ' ]>+ ) \"  }
+\end{verbatim}
 
 We can now call our grammar with the following syntax:
 
