@@ -12,7 +12,7 @@ alonside other intermediate files created during the compilation process.
 
 To move the created pdf to the directory `PDF` in the root directory, run:
 ```
-make PDF
+make pdf
 ```
 
 To remove `tmpDir`, run:
