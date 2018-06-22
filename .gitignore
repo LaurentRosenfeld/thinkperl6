@@ -1,0 +1,8 @@
+book/*.aux
+book/*.idx
+book/*.log
+book/*.out
+book/*.synctex.gz
+book/*.toc
+book/*.pdf
+book/tmpDir/*
