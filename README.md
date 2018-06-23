@@ -22,4 +22,6 @@ make clean
 **Note**: The chances of a successful compilation increase if you have an almost
 complete installation of a recent TeX Live distribution.
 
+Also note that a PDF version is available (https://github.com/LaurentRosenfeld/thinkperl6/tree/master/PDF).
+
 
