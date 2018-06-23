@@ -544,6 +544,7 @@ sub process-line(Str $line is copy) {
     for $line.words -> $word {
         %histogram{$word}++;
     }
+	$skip = True if $line ~~ /^finis$/;
 }
 process-line $_ for "emma.txt".IO.lines; 
 \end{verbatim}
@@ -875,7 +876,7 @@ to use two hashes as operands:
 my %unknown-words = %histogram - %word-list;
 \end{verbatim}
 
-The rest or the program works just as before.
+The rest of the program works just as before.
 
 \index{extending the language}
 This ease or creating new operators is one of the facilities 
