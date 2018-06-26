@@ -519,7 +519,7 @@ reverse the outer and the inner loops:
 \begin{verbatim}
 sub avoids (Str $word, Str $forbidden) {
     for 0..$word.chars - 1 -> $idx {
-        my $letter = substr $words, $idx, 1;
+        my $letter = substr $word, $idx, 1;
         return False if defined index $forbidden, $letter;
     }
     True;
