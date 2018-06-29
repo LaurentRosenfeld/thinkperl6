@@ -431,7 +431,7 @@ above subroutine would need to be modified if it might
 be called with words containing uppercase letters. 
 
 Since the {\tt defined} function returns a Boolean value, we 
-could shorten our subroutine to this::
+could shorten our subroutine to this:
 \begin{verbatim}
 sub has-no-e (Str $word) {
     not defined index $word, "e";
@@ -565,8 +565,8 @@ sub uses-only (Str $word, Str $available) {
 \end{verbatim}
 %
 Instead of a list of forbidden letters, we have a list 
-of available letters.  If we find a letter in {\tt word} that 
-is not in {\tt available}, we can return {\tt False}. And 
+of available letters.  If we find a letter in {\tt \$word} that 
+is not in {\tt \$available}, we can return {\tt False}. And 
 we return {\tt True} if we reach the loop end.
 
 \subsection{Using All Letters of a List (Solution)}
