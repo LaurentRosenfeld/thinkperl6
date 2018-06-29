@@ -1,7 +1,7 @@
 ### Input and output files/dir
 FILENAME = thinkperl6
 OUTPUT_NAME = thinkperl6
-PDF_OUTPUT = xelatex
+PDF_OUTPUT = pdflatex
 DIR_NAME = tmpDir
 
 
@@ -20,7 +20,7 @@ TEXINPUTS = .:$(DIR_NAME)/
 TEXMFOUTPUT = $(DIR_NAME)
 
 ### Choose TeX engine
-FLAGS = $(XELATEX_FLAGS)
+FLAGS = $(PDFLATEX_FLAGS)
 
 ### Compile tex into pdf
 all: $(DIR_NAME)/$(FILENAME).pdf
