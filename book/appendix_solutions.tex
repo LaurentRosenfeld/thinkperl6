@@ -3854,7 +3854,7 @@ letters):
 \begin{verbatim}
 sub intersplit (Str $word) {
     my (@evens, @odds);
-    for $word.comb -> $even, $odd {
+    for $word.comb -> $even, $odd='' { # default value for $odd if letter count is not even
         push @evens, $even;
         push @odds, $odd;
     }
