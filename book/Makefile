@@ -33,6 +33,8 @@ $(DIR_NAME)/$(FILENAME).aux: $(DIR_NAME)/
 
 $(DIR_NAME)/$(FILENAME).pdf: $(DIR_NAME)/$(FILENAME).aux
 	$(PDF_OUTPUT) $(FLAGS) $(FILENAME)
+	makeindex $(DIR_NAME)/$(OUTPUT_NAME).idx
+	$(PDF_OUTPUT) $(FLAGS) $(FILENAME)
 
 ### Clean
 # Clean temporary files (including created PDF file) by removing
