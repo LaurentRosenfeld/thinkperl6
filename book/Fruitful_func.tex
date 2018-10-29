@@ -343,7 +343,7 @@ Encapsulating these steps in a function, we get:
 \begin{verbatim}
 sub circle-area($x-c, $y-c, $x-p, $y-p) {
     my $radius = distance($x-c, $y-c, $x-p, $y-p);
-    my $result = area($radius)
+    my $result = area($radius);
     return $result;
 }
 \end{verbatim}
