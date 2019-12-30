@@ -203,7 +203,7 @@ Since {\tt grep} defaults to a smart match, this can be
 made even more concise:
 
 \begin{verbatim}
-say "Found it!" if grep {'uno'}, %eng2sp.values;  # -> Found it!
+say "Found it!" if grep 'uno', %eng2sp.values;  # -> Found it!
 \end{verbatim}
 
 When looking for values, the program has to search the 
@@ -226,8 +226,8 @@ faster than the bisection search solution
 
 \label{ex_employees}
 As an exercise, use the sample employee data of the 
-multidimensional array of Section~\ref{multidimensional array} 
-(p.~\pageref{multidimensional array}), load it into a hash, and 
+multidimensional array of Section~\ref{multidimensional_array} 
+(p.~\pageref{multidimensional_array}), load it into a hash, and 
 look up some salaries. Hint: you don't need a 
 multidimensional structure for doing that with a hash.
 Solution: \ref{sol_ex_employees}
