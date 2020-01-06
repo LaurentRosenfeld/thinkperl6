@@ -3101,11 +3101,15 @@ list with a sorted version of the same:
 
 \begin{verbatim}
 sub is-sorted (@array) {
-    return @array eqv @array.sort;
+    return @array.Seq eqv @array.sort;
 }
 say is-sorted < 2 4 5 7 7 8 9>;    # -> True
 say is-sorted < 2 4 5 7 6 8 9>;    # -> False
 \end{verbatim}
+
+Note that since the {\tt sort} routine returns a sequence, 
+we need to coerce the input into a {\tt Seq} for the 
+{\tt eqv} operator to properly compare the sequences of values.
 
 While this leads to short and simple code, this is not 
 an optimal solution, because it forces the program to 
@@ -5275,9 +5279,9 @@ in the {\tt Dateish} role. For example:
 \index{is-leap-year function}
 
 \begin{verbatim}
-> say Dateish.is-leap-year(2016)
+> say DateTime.new(:year<2020>).is-leap-year;
 True
-> say Dateish.is-leap-year(2015)
+> say DateTime.new(:year<2019>).is-leap-year;
 False
 \end{verbatim}
 
@@ -5302,7 +5306,7 @@ checking all dates for February:
 sub feb-date-not-valid ($year, $day) {
     return False if $day <= 28;
     return True if $day > 29;
-    return False if Dateish.is-leap-year($year);
+    return False if DateTime.new(year => $year).is-leap-year;
     True;
 }
 \end{verbatim}
