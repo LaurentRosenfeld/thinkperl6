@@ -6,3 +6,5 @@ book/*.synctex.gz
 book/*.toc
 book/*.pdf
 book/tmpDir/*
+book/*.ind
+book/*.ilg
